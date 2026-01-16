@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea">
+  <title>Quản lý Nhiệm vụ - Class Hub</title>
+  <link rel="stylesheet" href="../style/nv.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="../index.html" class="back-btn">←</a>
+      <h1>📌 Quản Lý Nhiệm Vụ</h1>
+      <p>Theo dõi và hoàn thành các task</p>
+    </div>
+  </header>
+
+  <section class="tasks-section">
+    <div class="task-input-area">
+      <input type="text" id="taskInput" placeholder="Thêm nhiệm vụ mới..." class="task-input">
+      <input type="date" id="deadlineInput" class="deadline-input">
+      <button class="add-btn" onclick="addTask()">+</button>
+    </div>
+
+    <div class="filter-buttons">
+      <button class="filter-btn active" onclick="filterTasks('all')">Tất cả</button>
+      <button class="filter-btn" onclick="filterTasks('pending')">Đang làm</button>
+      <button class="filter-btn" onclick="filterTasks('done')">Hoàn thành</button>
+    </div>
+
+    <ul class="task-list" id="taskList">
+      <!-- Nhiệm vụ sẽ được thêm vào đây -->
+    </ul>
+  </section>
+
+  <footer class="footer">
+    <p>&copy; 2025 Lớp 10A1</p>
+  </footer>
+
+  <script src="../script/nv.js"></script>
+</body>
+</html>

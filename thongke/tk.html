@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea">
+  <title>Thống Kê - Class Hub</title>
+  <link rel="stylesheet" href="../style/tk.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="../index.html" class="back-btn">←</a>
+      <h1>📊 Thống Kê</h1>
+      <p>Tổng hợp dữ liệu học tập</p>
+    </div>
+  </header>
+
+  <section class="stats-overview">
+    <div class="stat-card">
+      <div class="stat-label">📋 Tổng Nhiệm vụ</div>
+      <div class="stat-value" id="totalTasks">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">✅ Hoàn thành</div>
+      <div class="stat-value" id="completedTasks">0</div>
+      <div class="stat-percent" id="completedPercent">0%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">🔄 Đang làm</div>
+      <div class="stat-value" id="pendingTasks">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">⏰ Sắp hết hạn</div>
+      <div class="stat-value" id="urgentTasks">0</div>
+    </div>
+  </section>
+
+  <section class="charts-section">
+    <div class="chart-container">
+      <h2>📈 Tỉ lệ Hoàn thành</h2>
+      <div class="progress-ring-container">
+        <svg class="progress-ring" width="200" height="200">
+          <circle cx="100" cy="100" r="90" class="progress-ring-base"></circle>
+          <circle cx="100" cy="100" r="90" class="progress-ring-circle" id="progressRing"></circle>
+        </svg>
+        <div class="progress-text">
+          <div class="progress-value" id="progressValue">0%</div>
+          <div class="progress-label">Hoàn thành</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h2>📅 Nhiệm vụ theo trạng thái</h2>
+      <div class="status-bars">
+        <div class="status-bar-item">
+          <div class="status-label">✅ Hoàn thành</div>
+          <div class="status-bar">
+            <div class="status-fill done" style="width: 0%"></div>
+          </div>
+          <div class="status-count" id="statusDone">0</div>
+        </div>
+        <div class="status-bar-item">
+          <div class="status-label">🔄 Đang làm</div>
+          <div class="status-bar">
+            <div class="status-fill pending" style="width: 0%"></div>
+          </div>
+          <div class="status-count" id="statusPending">0</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity-section">
+    <h2>📌 Hoạt động gần đây</h2>
+    <div class="activity-list" id="activityList">
+      <!-- Hoạt động sẽ được thêm vào đây -->
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>&copy; 2025 Lớp 10A1</p>
+  </footer>
+
+  <script src="../script/tk.js"></script>
+</body>
+</html>

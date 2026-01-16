@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea">
+  <title>Thông Báo - Class Hub</title>
+  <link rel="stylesheet" href="../style/tb.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="../index.html" class="back-btn">←</a>
+      <h1>🔔 Thông Báo</h1>
+      <p>Tất cả thông báo của bạn</p>
+    </div>
+  </header>
+
+  <section class="notification-section">
+    <div class="notification-input-area">
+      <input type="text" id="notificationInput" placeholder="Thêm thông báo mới..." class="notification-input">
+      <select id="notificationType" class="notification-type">
+        <option value="info">ℹ️ Thông tin</option>
+        <option value="warning">⚠️ Cảnh báo</option>
+        <option value="success">✅ Thành công</option>
+        <option value="error">❌ Lỗi</option>
+      </select>
+      <button class="add-notification-btn" onclick="addNotification()">+</button>
+    </div>
+
+    <div class="filter-buttons">
+      <button class="filter-btn active" onclick="filterNotifications('all')">Tất cả</button>
+      <button class="filter-btn" onclick="filterNotifications('info')">Thông tin</button>
+      <button class="filter-btn" onclick="filterNotifications('warning')">Cảnh báo</button>
+      <button class="filter-btn" onclick="filterNotifications('success')">Thành công</button>
+    </div>
+
+    <ul class="notification-list" id="notificationList">
+      <!-- Thông báo sẽ được thêm vào đây -->
+    </ul>
+  </section>
+
+  <footer class="footer">
+    <p>&copy; 2025 Lớp 10A1</p>
+  </footer>
+
+  <script src="../script/tb.js"></script>
+</body>
+</html>
