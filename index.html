@@ -18,8 +18,10 @@
 
   <header class="header">
     <div class="header-content">
-      <h1>📚 HUB LỚP 10A1</h1>
-      <p>Trung tâm quản lý học tập</p>
+      <div class="header-left">
+        <h1>📚 HUB LỚP 10A1</h1>
+        <p>Trung tâm quản lý học tập</p>
+      </div>
       <div class="header-right">
         <button class="admin-toggle" id="adminToggle" onclick="toggleAdminMode()" style="display:none;" title="Chế độ Admin">⚙️</button>
         <button class="logout-btn" onclick="handleLogout()" title="Đăng xuất">
@@ -29,73 +31,108 @@
     </div>
   </header>
 
+  <!-- Welcome Banner -->
+  <section class="welcome-section">
+    <div class="welcome-content">
+      <h2>👋 Xin chào, <span id="welcomeName">bạn</span>!</h2>
+      <p id="welcomeMessage">Chúc bạn một ngày học tập hiệu quả!</p>
+    </div>
+  </section>
+
   <!-- Thống kê -->
   <section class="stats-section">
+    <h2 class="section-title">📊 Tổng Quan Học Tập</h2>
     <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-icon">📋</span>
+      <div class="stat-card" onclick="go('/nhiemvu/nv.html')">
+        <div class="stat-icon-wrapper">
+          <span class="stat-icon">📋</span>
+        </div>
         <div class="stat-content">
           <span class="stat-label">Tổng Task</span>
           <span class="stat-value" id="totalTask">0</span>
         </div>
+        <div class="stat-indicator"></div>
       </div>
-      <div class="stat-card">
-        <span class="stat-icon">🔄</span>
+      <div class="stat-card" onclick="go('/nhiemvu/nv.html')">
+        <div class="stat-icon-wrapper">
+          <span class="stat-icon">🔄</span>
+        </div>
         <div class="stat-content">
           <span class="stat-label">Đang mở</span>
           <span class="stat-value" id="openTask">0</span>
         </div>
+        <div class="stat-indicator"></div>
       </div>
-      <div class="stat-card">
-        <span class="stat-icon">✅</span>
+      <div class="stat-card" onclick="go('/thongke/tk.html')">
+        <div class="stat-icon-wrapper">
+          <span class="stat-icon">✅</span>
+        </div>
         <div class="stat-content">
           <span class="stat-label">Hoàn thành</span>
           <span class="stat-value" id="doneTask">0</span>
         </div>
+        <div class="stat-indicator success"></div>
       </div>
-      <div class="stat-card">
-        <span class="stat-icon">⏰</span>
+      <div class="stat-card" onclick="go('/nhiemvu/nv.html')">
+        <div class="stat-icon-wrapper">
+          <span class="stat-icon">⏰</span>
+        </div>
         <div class="stat-content">
           <span class="stat-label">Sắp hết hạn</span>
           <span class="stat-value" id="nearDeadline">0</span>
         </div>
+        <div class="stat-indicator warning"></div>
       </div>
     </div>
   </section>
 
   <!-- Điều hướng -->
   <section class="nav-section">
-    <h2>Điều hướng</h2>
+    <h2 class="section-title">🚀 Điều Hướng Nhanh</h2>
     <div class="nav-grid">
       <button class="nav-btn nav-btn-primary" onclick="go('/nhiemvu/nv.html')">
         <span class="nav-icon">📌</span>
         <span class="nav-text">Nhiệm vụ</span>
+        <span class="nav-desc">Quản lý công việc</span>
       </button>
       <button class="nav-btn nav-btn-success" onclick="go('/thongke/tk.html')">
-        <span class="nav-icon">✅</span>
+        <span class="nav-icon">📊</span>
         <span class="nav-text">Thống kê</span>
+        <span class="nav-desc">Xem tiến độ</span>
       </button>
       <button class="nav-btn nav-btn-info" onclick="go('/thongbao/tb.html')">
-        <span class="nav-icon">📊</span>
+        <span class="nav-icon">🔔</span>
         <span class="nav-text">Thông báo</span>
+        <span class="nav-desc">Cập nhật tin tức</span>
       </button>
-      <button class="nav-btn nav-btn-info" onclick="go('/lich/lich.html')">
+      <button class="nav-btn nav-btn-calendar" onclick="go('/lich/lich.html')">
         <span class="nav-icon">📅</span>
         <span class="nav-text">Lịch học</span>
+        <span class="nav-desc">Xem thời khoá biểu</span>
       </button>
     </div>
   </section>
 
   <!-- Task gần nhất -->
   <section class="recent-section">
-    <h2>⏰ Task gần nhất</h2>
-    <ul class="recent-list" id="recentTasks">
-      <!-- Nội dung được tạo bởi script -->
-    </ul>
+    <div class="section-header">
+      <h2>⏰ Task Gần Hạn</h2>
+      <a href="/nhiemvu/nv.html" class="view-all">Xem tất cả →</a>
+    </div>
+    <div class="recent-container">
+      <ul class="recent-list" id="recentTasks">
+        <!-- Nội dung được tạo bởi script -->
+      </ul>
+      <div class="empty-state" id="emptyState" style="display: none;">
+        <span class="empty-icon">🎉</span>
+        <p>Không có task sắp hết hạn!</p>
+      </div>
+    </div>
   </section>
 
   <footer class="footer">
     <p>&copy; 2025 Lớp 10A1. Tất cả quyền được bảo lưu.</p>
+    <p class="online-status" id="onlineStatus">🟢 Online</p>
   </footer>
 
 <script src="script/hub.js"></script>
@@ -127,9 +164,7 @@
             const newWorker = registration.installing;
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Có service worker mới
-                console.log('🔄 Phiên bản mới có sẵn! Nhấn F5 để cập nhật.');
-                // Tự động reload trang sau 2 giây
+                console.log('🔄 Phiên bản mới có sẵn! Cập nhật tự động...');
                 setTimeout(() => {
                   window.location.reload();
                 }, 2000);
@@ -158,6 +193,20 @@
     if (isAdmin()) {
       document.getElementById('adminToggle').style.display = 'inline-block';
     }
+
+    // Cập nhật welcome message
+    updateWelcomeMessage();
+    
+    // Load stats
+    loadStats();
+    
+    // Cập nhật trạng thái kết nối
+    updateOnlineStatus();
+    
+    // Tải lại stats mỗi 30 giây
+    setInterval(() => {
+      loadStats();
+    }, 30000);
   });
 
   // Xử lý đăng xuất
@@ -168,12 +217,11 @@
     }
   }
 
-  // Toggle chế độ Admin (ẩn/hiện nút admin)
+  // Toggle chế độ Admin
   let adminMode = false;
   function toggleAdminMode() {
     adminMode = !adminMode;
     console.log(adminMode ? '🔓 Chế độ Admin ON' : '🔒 Chế độ Admin OFF');
-    // Có thể thêm logic để hiện/ẩn nút quản lý dữ liệu
   }
 
   // Gợi ý người dùng cài đặt ứng dụng
@@ -181,7 +229,6 @@
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
     deferredPrompt = event;
-    // Bạn có thể hiển thị nút cài đặt tại đây nếu muốn
   });
 
   // Kiểm tra kết nối mạng
