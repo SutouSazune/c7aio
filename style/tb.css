@@ -252,6 +252,54 @@ body {
   font-weight: 500;
 }
 
+.notification-checkbox-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border: none;
+  border-radius: 50%;
+  background: #f0f0f0;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.notification-checkbox-btn:hover {
+  background: #e0e0e0;
+  transform: scale(1.1);
+}
+
+.notification-checkbox-btn.active {
+  background: #4CAF50;
+  color: white;
+}
+
+.notification-checkbox-btn:active {
+  transform: scale(0.95);
+}
+
+.notification-item.completed .notification-message {
+  opacity: 0.7;
+  text-decoration: line-through;
+}
+
+.notification-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 0.5rem;
+}
+
+.notification-completion {
+  font-weight: 600;
+  color: #4CAF50;
+}
+
 .footer {
   text-align: center;
   padding: 2rem;

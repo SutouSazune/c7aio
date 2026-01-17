@@ -1,0 +1,359 @@
+// Firebase Utilities - Cung cấp các hàm tiện ích cho Firebase
+// Hỗ trợ Realtime + Offline + Sync
+
+// Khởi tạo Firebase
+const db = firebase.database();
+const auth = firebase.auth();
+
+// ============= AUTHENTICATION =============
+
+// Đăng nhập email
+async function loginWithEmail(email, password) {
+  try {
+    const result = await auth.signInWithEmailAndPassword(email, password);
+    console.log('✅ Đăng nhập thành công:', result.user.email);
+    return result.user;
+  } catch (error) {
+    console.error('❌ Lỗi đăng nhập:', error.message);
+    throw error;
+  }
+}
+
+// Đăng ký email
+async function registerWithEmail(email, password, displayName) {
+  try {
+    const result = await auth.createUserWithEmailAndPassword(email, password);
+    await result.user.updateProfile({ displayName });
+    console.log('✅ Đăng ký thành công:', email);
+    return result.user;
+  } catch (error) {
+    console.error('❌ Lỗi đăng ký:', error.message);
+    throw error;
+  }
+}
+
+// Đăng nhập Google
+async function loginWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try {
+    const result = await auth.signInWithPopup(provider);
+    console.log('✅ Đăng nhập Google thành công:', result.user.email);
+    return result.user;
+  } catch (error) {
+    console.error('❌ Lỗi đăng nhập Google:', error.message);
+    throw error;
+  }
+}
+
+// Đăng xuất
+async function logout() {
+  try {
+    await auth.signOut();
+    console.log('✅ Đã đăng xuất');
+  } catch (error) {
+    console.error('❌ Lỗi đăng xuất:', error.message);
+    throw error;
+  }
+}
+
+// Lấy user hiện tại
+function getCurrentUser() {
+  return auth.currentUser;
+}
+
+// Lắng nghe thay đổi authentication state
+function onAuthStateChanged(callback) {
+  auth.onAuthStateChanged(user => {
+    callback(user);
+  });
+}
+
+// ============= DATABASE - TASKS =============
+
+// Lấy tất cả tasks
+async function getTasks() {
+  const user = getCurrentUser();
+  if (!user) {
+    console.warn('⚠️ User chưa đăng nhập');
+    return [];
+  }
+
+  try {
+    const snapshot = await db.ref(`users/${user.uid}/tasks`).once('value');
+    const tasks = [];
+    snapshot.forEach(child => {
+      tasks.push({
+        id: child.key,
+        ...child.val()
+      });
+    });
+    console.log('📥 Tải tasks từ Firebase:', tasks.length);
+    return tasks;
+  } catch (error) {
+    console.error('❌ Lỗi lấy tasks:', error.message);
+    return [];
+  }
+}
+
+// Thêm task
+async function addTask(taskName, deadline) {
+  const user = getCurrentUser();
+  if (!user) {
+    throw new Error('User chưa đăng nhập');
+  }
+
+  try {
+    const newTaskRef = db.ref(`users/${user.uid}/tasks`).push();
+    await newTaskRef.set({
+      name: taskName,
+      deadline: deadline,
+      done: false,
+      createdAt: new Date().toISOString()
+    });
+    console.log('✅ Thêm task:', taskName);
+    return newTaskRef.key;
+  } catch (error) {
+    console.error('❌ Lỗi thêm task:', error.message);
+    throw error;
+  }
+}
+
+// Cập nhật task
+async function updateTask(taskId, updates) {
+  const user = getCurrentUser();
+  if (!user) {
+    throw new Error('User chưa đăng nhập');
+  }
+
+  try {
+    await db.ref(`users/${user.uid}/tasks/${taskId}`).update(updates);
+    console.log('✅ Cập nhật task:', taskId);
+  } catch (error) {
+    console.error('❌ Lỗi cập nhật task:', error.message);
+    throw error;
+  }
+}
+
+// Xóa task
+async function deleteTask(taskId) {
+  const user = getCurrentUser();
+  if (!user) {
+    throw new Error('User chưa đăng nhập');
+  }
+
+  try {
+    await db.ref(`users/${user.uid}/tasks/${taskId}`).remove();
+    console.log('✅ Xóa task:', taskId);
+  } catch (error) {
+    console.error('❌ Lỗi xóa task:', error.message);
+    throw error;
+  }
+}
+
+// Lắng nghe thay đổi tasks (real-time)
+function onTasksChanged(callback) {
+  const user = getCurrentUser();
+  if (!user) {
+    console.warn('⚠️ User chưa đăng nhập');
+    return () => {};
+  }
+
+  const ref = db.ref(`users/${user.uid}/tasks`);
+  ref.on('value', snapshot => {
+    const tasks = [];
+    snapshot.forEach(child => {
+      tasks.push({
+        id: child.key,
+        ...child.val()
+      });
+    });
+    callback(tasks);
+  });
+
+  // Return hàm unsubscribe
+  return () => ref.off('value');
+}
+
+// ============= DATABASE - EVENTS =============
+
+// Lấy sự kiện
+async function getEvents() {
+  const user = getCurrentUser();
+  if (!user) return {};
+
+  try {
+    const snapshot = await db.ref(`users/${user.uid}/events`).once('value');
+    return snapshot.val() || {};
+  } catch (error) {
+    console.error('❌ Lỗi lấy events:', error.message);
+    return {};
+  }
+}
+
+// Thêm sự kiện
+async function addEvent(dateKey, eventName) {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User chưa đăng nhập');
+
+  try {
+    const eventRef = db.ref(`users/${user.uid}/events/${dateKey}`).push();
+    await eventRef.set({
+      name: eventName,
+      createdAt: new Date().toISOString()
+    });
+    return eventRef.key;
+  } catch (error) {
+    console.error('❌ Lỗi thêm event:', error.message);
+    throw error;
+  }
+}
+
+// Xóa event
+async function deleteEvent(dateKey, eventId) {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User chưa đăng nhập');
+
+  try {
+    await db.ref(`users/${user.uid}/events/${dateKey}/${eventId}`).remove();
+  } catch (error) {
+    console.error('❌ Lỗi xóa event:', error.message);
+    throw error;
+  }
+}
+
+// Lắng nghe sự kiện real-time
+function onEventsChanged(callback) {
+  const user = getCurrentUser();
+  if (!user) return () => {};
+
+  const ref = db.ref(`users/${user.uid}/events`);
+  ref.on('value', snapshot => {
+    callback(snapshot.val() || {});
+  });
+
+  return () => ref.off('value');
+}
+
+// ============= DATABASE - NOTIFICATIONS =============
+
+// Lấy thông báo
+async function getNotifications() {
+  const user = getCurrentUser();
+  if (!user) return [];
+
+  try {
+    const snapshot = await db.ref(`users/${user.uid}/notifications`).once('value');
+    const notifications = [];
+    snapshot.forEach(child => {
+      notifications.push({
+        id: child.key,
+        ...child.val()
+      });
+    });
+    return notifications;
+  } catch (error) {
+    console.error('❌ Lỗi lấy notifications:', error.message);
+    return [];
+  }
+}
+
+// Thêm thông báo
+async function addNotification(message, type = 'info') {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User chưa đăng nhập');
+
+  try {
+    const notifRef = db.ref(`users/${user.uid}/notifications`).push();
+    await notifRef.set({
+      message: message,
+      type: type,
+      createdAt: new Date().toISOString()
+    });
+    return notifRef.key;
+  } catch (error) {
+    console.error('❌ Lỗi thêm notification:', error.message);
+    throw error;
+  }
+}
+
+// Xóa thông báo
+async function deleteNotification(notifId) {
+  const user = getCurrentUser();
+  if (!user) throw new Error('User chưa đăng nhập');
+
+  try {
+    await db.ref(`users/${user.uid}/notifications/${notifId}`).remove();
+  } catch (error) {
+    console.error('❌ Lỗi xóa notification:', error.message);
+    throw error;
+  }
+}
+
+// Lắng nghe thông báo real-time
+function onNotificationsChanged(callback) {
+  const user = getCurrentUser();
+  if (!user) return () => {};
+
+  const ref = db.ref(`users/${user.uid}/notifications`);
+  ref.on('value', snapshot => {
+    const notifications = [];
+    snapshot.forEach(child => {
+      notifications.push({
+        id: child.key,
+        ...child.val()
+      });
+    });
+    callback(notifications);
+  });
+
+  return () => ref.off('value');
+}
+
+// ============= FALLBACK - Offline Support =============
+
+// Nếu offline, sử dụng localStorage tạm thời
+function getLocalStorageData(key) {
+  return localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : [];
+}
+
+function saveLocalStorageData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// Sync offline data với Firebase khi online
+async function syncOfflineData() {
+  try {
+    const offlineTasks = getLocalStorageData('c7aio_tasks_detail');
+    const user = getCurrentUser();
+
+    if (user && offlineTasks.length > 0) {
+      console.log('🔄 Đang sync dữ liệu offline...');
+      for (const task of offlineTasks) {
+        if (!task.id || task.id.toString().length < 15) {
+          // Task mới (được tạo offline)
+          await addTask(task.name, task.deadline);
+        }
+      }
+      localStorage.removeItem('c7aio_tasks_detail');
+      console.log('✅ Sync hoàn tất');
+    }
+  } catch (error) {
+    console.error('❌ Lỗi sync:', error.message);
+  }
+}
+
+// Kiểm tra kết nối
+window.addEventListener('online', () => {
+  console.log('✅ Kết nối lại - Đang sync...');
+  syncOfflineData();
+});
+
+console.log('📱 Firebase Utilities loaded');
+
+// ============= SHORTCUTS / ALIASES =============
+// Các hàm viết tắt để dễ sử dụng trong các script khác
+
+const getTasks_Firebase = getTasks;
+const addTask_Firebase = addTask;
+const updateTask_Firebase = updateTask;
+const deleteTask_Firebase = deleteTask;

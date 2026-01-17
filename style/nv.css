@@ -176,11 +176,34 @@ body {
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
 }
 
-.task-checkbox {
-  width: 24px;
-  height: 24px;
+.task-item.completed {
+  opacity: 0.8;
+  background: #f9f9f9;
+}
+
+.task-checkbox-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border: 2px solid #667eea;
+  background: white;
+  border-radius: 8px;
   cursor: pointer;
-  accent-color: #667eea;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.task-checkbox-btn:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+
+.task-checkbox-btn:active {
+  transform: scale(0.95);
 }
 
 .task-content {
@@ -208,6 +231,12 @@ body {
 
 .task-deadline.urgent {
   color: #e74c3c;
+  font-weight: 600;
+}
+
+.task-completion {
+  font-size: 0.8rem;
+  color: #667eea;
   font-weight: 600;
 }
 

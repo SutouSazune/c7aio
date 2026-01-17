@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea">
+  <title>Chọn Người Dùng - Class Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .login-container {
+      background: white;
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .login-header-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-header h1 {
+      font-size: 1.8rem;
+      color: #667eea;
+      margin-bottom: 0.3rem;
+      font-weight: 700;
+    }
+
+    .login-header p {
+      color: #999;
+      font-size: 0.9rem;
+    }
+
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .student-btn {
+      padding: 1rem;
+      background: white;
+      border: 2px solid #f0f0f0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: #333;
+      will-change: transform, border-color;
+    }
+
+    .student-btn:hover {
+      border-color: #667eea;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    .student-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .student-icon {
+      font-size: 2rem;
+    }
+
+    .student-name {
+      font-size: 0.85rem;
+      text-align: center;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+
+    .admin-section {
+      border-top: 2px solid #f0f0f0;
+      padding-top: 2rem;
+      margin-top: 2rem;
+    }
+
+    .admin-toggle-btn {
+      width: 100%;
+      padding: 1rem;
+      background: #f5f5f5;
+      color: #667eea;
+      border: 2px solid #f0f0f0;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+
+    .admin-toggle-btn:hover {
+      border-color: #667eea;
+      background: white;
+    }
+
+    .admin-toggle-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .admin-form {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: #f9f9f9;
+      border-radius: 10px;
+    }
+
+    .admin-form.show {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid #f0f0f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .admin-submit-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .admin-submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .admin-submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .admin-cancel-btn {
+      width: 100%;
+      padding: 0.8rem;
+      background: white;
+      color: #667eea;
+      border: 2px solid #f0f0f0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.8rem;
+      transition: all 0.3s ease;
+    }
+
+    .admin-cancel-btn:hover {
+      border-color: #667eea;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      padding: 1rem;
+      background: #ffe6e6;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+      font-size: 0.9rem;
+      animation: shake 0.3s ease;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    @media (max-width: 600px) {
+      .login-container {
+        padding: 1.5rem;
+      }
+
+      .student-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.8rem;
+      }
+
+      .login-header h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="login-header-icon">📚</div>
+      <h1>Class Hub</h1>
+      <p>Chọn người dùng để tiếp tục</p>
+    </div>
+
+    <div id="errorMessage" class="error-message"></div>
+
+    <div class="student-grid" id="studentGrid">
+      <!-- Danh sách học sinh sẽ được thêm vào đây -->
+    </div>
+
+    <div class="admin-section">
+      <button class="admin-toggle-btn" id="adminToggleBtn" onclick="toggleAdminForm()">
+        <span>👨‍💼 Đăng nhập Admin</span>
+      </button>
+
+      <div class="admin-form" id="adminForm">
+        <div class="form-group">
+          <label class="form-label">Mã Admin</label>
+          <input type="password" id="adminCodeInput" class="form-input" placeholder="Nhập mã bảo mật..." />
+        </div>
+        <button class="admin-submit-btn" onclick="submitAdminLogin()">Đăng nhập</button>
+        <button class="admin-cancel-btn" onclick="cancelAdminForm()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script/students-list.js"></script>
+  <script>
+    let adminFormOpen = false;
+
+    // Render danh sách học sinh
+    function renderStudents() {
+      const grid = document.getElementById('studentGrid');
+      grid.innerHTML = STUDENTS.map(student => `
+        <button class="student-btn" onclick="loginAsStudent(${student.id})">
+          <div class="student-icon">👤</div>
+          <div class="student-name">${student.name}</div>
+        </button>
+      `).join('');
+    }
+
+    // Đăng nhập học sinh
+    function loginAsStudent(studentId) {
+      const student = STUDENTS.find(s => s.id === studentId);
+      if (student) {
+        setCurrentUser(student);
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Toggle Admin Form
+    function toggleAdminForm() {
+      adminFormOpen = !adminFormOpen;
+      const form = document.getElementById('adminForm');
+      const btn = document.getElementById('adminToggleBtn');
+      
+      if (adminFormOpen) {
+        form.classList.add('show');
+        btn.classList.add('active');
+        document.getElementById('adminCodeInput').focus();
+      } else {
+        form.classList.remove('show');
+        btn.classList.remove('active');
+      }
+    }
+
+    // Cancel Admin Form
+    function cancelAdminForm() {
+      adminFormOpen = false;
+      const form = document.getElementById('adminForm');
+      const btn = document.getElementById('adminToggleBtn');
+      form.classList.remove('show');
+      btn.classList.remove('active');
+      document.getElementById('adminCodeInput').value = '';
+    }
+
+    // Submit Admin Login
+    function submitAdminLogin() {
+      const code = document.getElementById('adminCodeInput').value.trim();
+      const errorEl = document.getElementById('errorMessage');
+
+      if (!code) {
+        showError('Vui lòng nhập mã admin');
+        return;
+      }
+
+      // Kiểm tra mã admin (mã mặc định: "admin123")
+      if (code === ADMIN.code) {
+        setCurrentUser(ADMIN);
+        window.location.href = 'index.html';
+      } else {
+        showError('Mã admin sai');
+        document.getElementById('adminCodeInput').value = '';
+      }
+    }
+
+    // Show error message
+    function showError(msg) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+      setTimeout(() => {
+        errorEl.classList.remove('show');
+      }, 3000);
+    }
+
+    // Handle Enter key
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && adminFormOpen) {
+        submitAdminLogin();
+      }
+    });
+
+    // Kiểm tra nếu đã login
+    if (isLoggedIn()) {
+      window.location.href = 'index.html';
+    }
+
+    // Load danh sách khi trang load
+    window.addEventListener('load', renderStudents);
+  </script>
+</body>
+</html>

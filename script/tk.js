@@ -1,165 +1,163 @@
-// Lấy dữ liệu từ localStorage
-function getTasks() {
-  const stored = localStorage.getItem('c7aio_tasks_detail');
-  return stored ? JSON.parse(stored) : [];
-}
+let currentUser = null;
+let tasks = [];
+let events = [];
+let notifications = [];
 
-let tasks = getTasks();
+window.addEventListener('load', () => {
+  currentUser = getCurrentUser();
 
-function calculateStats() {
-  const total = tasks.length;
-  const completed = tasks.filter(t => t.done).length;
-  const pending = tasks.filter(t => !t.done).length;
-
-  const today = new Date();
-  const urgent = tasks.filter(t => {
-    const d = new Date(t.deadline);
-    return (d - today) / (1000*60*60*24) <= 2 && !t.done;
-  }).length;
-
-  return {
-    total,
-    completed,
-    pending,
-    urgent,
-    percent: total > 0 ? Math.round((completed / total) * 100) : 0
-  };
-}
-
-function formatTime(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = now - date;
-
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (seconds < 60) {
-    return 'vừa xong';
-  } else if (minutes < 60) {
-    return `${minutes} phút trước`;
-  } else if (hours < 24) {
-    return `${hours} giờ trước`;
-  } else if (days < 7) {
-    return `${days} ngày trước`;
-  } else {
-    return date.toLocaleDateString('vi-VN');
-  }
-}
-
-function updateProgressRing(percent) {
-  const circle = document.getElementById('progressRing');
-  const circumference = 2 * Math.PI * 90;
-  const offset = circumference - (percent / 100) * circumference;
-  circle.style.strokeDashoffset = offset;
-}
-
-function updateStats() {
-  tasks = getTasks();
-  const stats = calculateStats();
-
-  // Cập nhật thống kê
-  document.getElementById('totalTasks').textContent = stats.total;
-  document.getElementById('completedTasks').textContent = stats.completed;
-  document.getElementById('completedPercent').textContent = `${stats.percent}%`;
-  document.getElementById('pendingTasks').textContent = stats.pending;
-  document.getElementById('urgentTasks').textContent = stats.urgent;
-
-  // Cập nhật tiến trình
-  document.getElementById('progressValue').textContent = `${stats.percent}%`;
-  updateProgressRing(stats.percent);
-
-  // Cập nhật thanh trạng thái
-  if (stats.total > 0) {
-    const donePercent = (stats.completed / stats.total) * 100;
-    const pendingPercent = (stats.pending / stats.total) * 100;
-
-    document.querySelector('.status-fill.done').style.width = `${donePercent}%`;
-    document.querySelector('.status-fill.pending').style.width = `${pendingPercent}%`;
-
-    document.getElementById('statusDone').textContent = `${stats.completed} / ${stats.total}`;
-    document.getElementById('statusPending').textContent = `${stats.pending} / ${stats.total}`;
-  }
-
-  // Cập nhật hoạt động gần đây
-  renderActivity();
-}
-
-function renderActivity() {
-  const activityList = document.getElementById('activityList');
-
-  if (tasks.length === 0) {
-    activityList.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">📭</div>
-        <p>Chưa có hoạt động nào</p>
+  // Nếu không phải Admin, chuyển hướng
+  if (!isAdmin()) {
+    document.body.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #666;">
+        <p style="font-size: 48px;">🔒</p>
+        <h2>Chỉ Admin mới xem được thống kê</h2>
+        <p><a href="index.html">← Quay lại</a></p>
       </div>
     `;
     return;
   }
 
-  const recentTasks = tasks
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5);
-
-  activityList.innerHTML = recentTasks
-    .map(task => {
-      const icon = task.done ? '✅' : '📌';
-      const action = task.done ? 'Hoàn thành' : 'Tạo mới';
-
-      return `
-        <div class="activity-item">
-          <div class="activity-icon">${icon}</div>
-          <div class="activity-content">
-            <div class="activity-text">
-              <strong>${action}:</strong> ${escapeHtml(task.name)}
-            </div>
-            <div class="activity-time">
-              ${formatTime(task.createdAt)} · Hạn: ${task.deadline}
-            </div>
-          </div>
-        </div>
-      `;
-    })
-    .join('');
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Cập nhật mỗi giây (để thời gian tương đối luôn cập nhật)
-document.addEventListener('DOMContentLoaded', () => {
-  // Thêm SVG gradient
-  const svg = document.querySelector('.progress-ring');
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const defs = document.createElementNS(svgNS, 'defs');
-  const gradient = document.createElementNS(svgNS, 'linearGradient');
-  gradient.id = 'progressGradient';
-  gradient.setAttribute('x1', '0%');
-  gradient.setAttribute('y1', '0%');
-  gradient.setAttribute('x2', '100%');
-  gradient.setAttribute('y2', '100%');
-
-  const stop1 = document.createElementNS(svgNS, 'stop');
-  stop1.setAttribute('offset', '0%');
-  stop1.setAttribute('stop-color', '#667eea');
-
-  const stop2 = document.createElementNS(svgNS, 'stop');
-  stop2.setAttribute('offset', '100%');
-  stop2.setAttribute('stop-color', '#764ba2');
-
-  gradient.appendChild(stop1);
-  gradient.appendChild(stop2);
-  defs.appendChild(gradient);
-  svg.insertBefore(defs, svg.firstChild);
-
-  updateStats();
-
-  // Cập nhật mỗi 30 giây
-  setInterval(updateStats, 30000);
+  loadAllData();
+  renderDashboard();
 });
+
+function loadAllData() {
+  try {
+    tasks = JSON.parse(localStorage.getItem('c7aio_tasks_shared') || '[]');
+    events = JSON.parse(localStorage.getItem('c7aio_events_shared') || '{}');
+    notifications = JSON.parse(localStorage.getItem('c7aio_notifications_shared') || '[]');
+  } catch (error) {
+    console.error('Lỗi tải dữ liệu:', error);
+  }
+}
+
+function renderDashboard() {
+  const container = document.getElementById('statsContainer');
+  
+  let html = '<div class="dashboard-grid">';
+
+  // Task Statistics
+  html += renderTaskStats();
+  // Event Statistics
+  html += renderEventStats();
+  // Notification Statistics
+  html += renderNotificationStats();
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderTaskStats() {
+  let html = '<div class="dashboard-section"><h2>📋 Nhiệm vụ</h2>';
+  
+  if (tasks.length === 0) {
+    html += '<p style="color: #999;">Chưa có nhiệm vụ nào</p>';
+    html += '</div>';
+    return html;
+  }
+
+  html += '<table class="completion-table"><thead><tr><th>Tên nhiệm vụ</th>';
+  
+  STUDENTS.forEach(student => {
+    html += `<th>${student.name.split(' ').pop()}</th>`;
+  });
+  
+  html += '<th>Hoàn thành</th></tr></thead><tbody>';
+
+  tasks.forEach(task => {
+    const completions = task.completions || {};
+    const completedCount = Object.values(completions).filter(v => v).length;
+    
+    html += `<tr><td>${task.title}</td>`;
+    
+    STUDENTS.forEach(student => {
+      const isCompleted = completions[student.id];
+      html += `<td class="${isCompleted ? 'completed' : ''}">${isCompleted ? '✅' : '❌'}</td>`;
+    });
+    
+    html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderEventStats() {
+  let html = '<div class="dashboard-section"><h2>📅 Sự kiện</h2>';
+  
+  const allEvents = [];
+  Object.keys(events).forEach(dateKey => {
+    if (Array.isArray(events[dateKey])) {
+      events[dateKey].forEach(event => {
+        allEvents.push({ ...event, date: dateKey });
+      });
+    }
+  });
+
+  if (allEvents.length === 0) {
+    html += '<p style="color: #999;">Chưa có sự kiện nào</p>';
+    html += '</div>';
+    return html;
+  }
+
+  html += '<table class="completion-table"><thead><tr><th>Sự kiện</th>';
+  
+  STUDENTS.forEach(student => {
+    html += `<th>${student.name.split(' ').pop()}</th>`;
+  });
+  
+  html += '<th>Hoàn thành</th></tr></thead><tbody>';
+
+  allEvents.forEach(event => {
+    const completions = event.completions || {};
+    const completedCount = Object.values(completions).filter(v => v).length;
+    
+    html += `<tr><td>${event.name} (${event.date})</td>`;
+    
+    STUDENTS.forEach(student => {
+      const isCompleted = completions[student.id];
+      html += `<td class="${isCompleted ? 'completed' : ''}">${isCompleted ? '✅' : '❌'}</td>`;
+    });
+    
+    html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderNotificationStats() {
+  let html = '<div class="dashboard-section"><h2>📢 Thông báo</h2>';
+  
+  if (notifications.length === 0) {
+    html += '<p style="color: #999;">Chưa có thông báo nào</p>';
+    html += '</div>';
+    return html;
+  }
+
+  html += '<table class="completion-table"><thead><tr><th>Thông báo</th>';
+  
+  STUDENTS.forEach(student => {
+    html += `<th>${student.name.split(' ').pop()}</th>`;
+  });
+  
+  html += '<th>Đã xem</th></tr></thead><tbody>';
+
+  notifications.forEach(notif => {
+    const completions = notif.completions || {};
+    const completedCount = Object.values(completions).filter(v => v).length;
+    
+    html += `<tr><td>${notif.message}</td>`;
+    
+    STUDENTS.forEach(student => {
+      const isCompleted = completions[student.id];
+      html += `<td class="${isCompleted ? 'completed' : ''}">${isCompleted ? '✅' : '❌'}</td>`;
+    });
+    
+    html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  return html;
+}

@@ -14,11 +14,12 @@
   <header class="header">
     <div class="header-content">
       <a href="../index.html" class="back-btn">←</a>
-      <h1>📅 Lịch Học</h1>
-      <p>Quản lý lịch học và sự kiện</p>
+      <h1>📅 Thời Khoá Biểu</h1>
+      <p>Quản lý lịch học theo tuần</p>
     </div>
   </header>
 
+  <!-- Calendar Section -->
   <section class="calendar-section">
     <div class="calendar-header">
       <button class="month-btn" onclick="prevMonth()">←</button>
@@ -26,7 +27,7 @@
       <button class="month-btn" onclick="nextMonth()">→</button>
     </div>
 
-    <div class="weekdays">
+    <div class="weekdays-header">
       <div class="weekday">T2</div>
       <div class="weekday">T3</div>
       <div class="weekday">T4</div>
@@ -36,26 +37,59 @@
       <div class="weekday">CN</div>
     </div>
 
-    <div class="days" id="calendarDays">
-      <!-- Ngày sẽ được tạo bởi script -->
+    <div class="calendar-grid" id="calendarDays">
+      <!-- Calendar days will be rendered here -->
     </div>
   </section>
 
-  <section class="events-section">
-    <h2>📌 Sự kiện hôm nay</h2>
-    <div class="event-input-area">
-      <input type="text" id="eventInput" placeholder="Thêm sự kiện..." class="event-input">
-      <button class="add-event-btn" onclick="addEvent()">+</button>
+  <!-- Week Selector -->
+  <section class="week-selector-section">
+    <div class="week-selector" id="weekSelector">
+      <!-- Các nút chọn tuần sẽ được tạo bởi script -->
     </div>
-    <ul class="event-list" id="eventList">
-      <!-- Sự kiện sẽ được thêm vào đây -->
-    </ul>
+  </section>
+
+  <!-- View Mode Selector -->
+  <section class="view-mode-section">
+    <div class="view-mode-buttons">
+      <button class="view-mode-btn active" data-mode="week">📋 Tuần</button>
+      <button class="view-mode-btn" data-mode="day">📅 Ngày</button>
+      <button class="view-mode-btn" data-mode="daily">📖 Chi Tiết</button>
+    </div>
+  </section>
+
+  <!-- Schedule Display -->
+  <section class="schedule-section">
+    <!-- Class input (Admin only) -->
+    <div class="class-input-area">
+      <div class="input-group">
+        <input type="text" id="classInput" placeholder="Tên lớp (vd: Toán, Lý...)">
+        <input type="time" id="timeInput" placeholder="Thời gian">
+        <input type="text" id="roomInput" placeholder="Phòng học">
+        <select id="daySelect">
+          <option value="monday">Thứ Hai</option>
+          <option value="tuesday">Thứ Ba</option>
+          <option value="wednesday">Thứ Tư</option>
+          <option value="thursday">Thứ Năm</option>
+          <option value="friday">Thứ Sáu</option>
+          <option value="saturday">Thứ Bảy</option>
+          <option value="sunday">Chủ Nhật</option>
+        </select>
+      </div>
+      <button class="add-btn" onclick="addClass()">+ Thêm lớp</button>
+    </div>
+
+    <!-- Schedule Grid -->
+    <div class="schedule-grid" id="scheduleContainer">
+      <!-- Các ngày và lớp sẽ được render ở đây -->
+    </div>
   </section>
 
   <footer class="footer">
     <p>&copy; 2025 Lớp 10A1</p>
   </footer>
 
+  <script src="../script/students-list.js"></script>
   <script src="../script/lich.js"></script>
 </body>
 </html>

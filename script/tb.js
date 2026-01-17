@@ -1,16 +1,6 @@
-// Lấy thông báo từ localStorage
-function getNotifications() {
-  const stored = localStorage.getItem('c7aio_notifications');
-  return stored ? JSON.parse(stored) : [];
-}
-
-// Lưu thông báo vào localStorage
-function saveNotifications(notifications) {
-  localStorage.setItem('c7aio_notifications', JSON.stringify(notifications));
-}
-
-let notifications = getNotifications();
+let notifications = [];
 let currentFilter = 'all';
+let currentUser = null;
 
 const notificationIcons = {
   info: 'ℹ️',
@@ -19,7 +9,40 @@ const notificationIcons = {
   error: '❌'
 };
 
+window.addEventListener('load', () => {
+  currentUser = getCurrentUser();
+  
+  document.getElementById('notificationInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      addNotification();
+    }
+  });
+
+  // Chỉ admin mới thêm được thông báo
+  if (!isAdmin()) {
+    document.querySelector('.notification-input-area').style.display = 'none';
+  }
+
+  loadNotifications();
+  renderNotifications();
+});
+
+function loadNotifications() {
+  try {
+    const data = localStorage.getItem('c7aio_notifications_shared');
+    notifications = data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Lỗi tải notifications:', error);
+    notifications = [];
+  }
+}
+
 function addNotification() {
+  if (!isAdmin()) {
+    alert('Chỉ Admin mới có thể thêm thông báo');
+    return;
+  }
+
   const input = document.getElementById('notificationInput');
   const typeSelect = document.getElementById('notificationType');
   const message = input.value.trim();
@@ -34,19 +57,44 @@ function addNotification() {
     id: Date.now(),
     message: message,
     type: type,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    completions: {} // { userId: true/false }
   };
 
   notifications.unshift(newNotification);
-  saveNotifications(notifications);
+  saveNotifications();
   input.value = '';
   renderNotifications();
 }
 
-function deleteNotification(id) {
-  notifications = notifications.filter(n => n.id !== id);
-  saveNotifications(notifications);
+function deleteNotification(notifId) {
+  if (!isAdmin()) {
+    alert('Chỉ Admin mới có thể xóa');
+    return;
+  }
+
+  if (confirm('Xóa thông báo này?')) {
+    notifications = notifications.filter(n => n.id !== notifId);
+    saveNotifications();
+    renderNotifications();
+  }
+}
+
+function toggleNotificationCompletion(notifId) {
+  const notif = notifications.find(n => n.id === notifId);
+  if (!notif) return;
+
+  if (!notif.completions) {
+    notif.completions = {};
+  }
+
+  notif.completions[currentUser.id] = !notif.completions[currentUser.id];
+  saveNotifications();
   renderNotifications();
+}
+
+function saveNotifications() {
+  localStorage.setItem('c7aio_notifications_shared', JSON.stringify(notifications));
 }
 
 function filterNotifications(filter) {
@@ -89,11 +137,11 @@ function formatTime(dateString) {
 }
 
 function renderNotifications() {
-  const notificationList = document.getElementById('notificationList');
+  const container = document.getElementById('notificationList');
   const filtered = getFilteredNotifications();
 
   if (filtered.length === 0) {
-    notificationList.innerHTML = `
+    container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📭</div>
         <p>Không có thông báo nào</p>
@@ -102,25 +150,33 @@ function renderNotifications() {
     return;
   }
 
-  notificationList.innerHTML = filtered
-    .map(notification => `
-      <li class="notification-item ${notification.type}">
-        <div class="notification-icon">
-          ${notificationIcons[notification.type]}
-        </div>
-        <div class="notification-content">
-          <div class="notification-message">
-            ${escapeHtml(notification.message)}
+  container.innerHTML = filtered
+    .map(notif => {
+      const totalStudents = STUDENTS.length;
+      const completions = notif.completions || {};
+      const completedCount = Object.values(completions).filter(v => v).length;
+      const userCompleted = completions[currentUser.id] || false;
+
+      return `
+        <li class="notification-item ${notif.type} ${userCompleted ? 'completed' : ''}">
+          <button class="notification-checkbox-btn ${userCompleted ? 'active' : ''}" 
+                  onclick="toggleNotificationCompletion(${notif.id})">
+            ${userCompleted ? '✅' : '⭕'}
+          </button>
+          <div class="notification-content">
+            <div class="notification-icon">${notificationIcons[notif.type]}</div>
+            <div class="notification-message ${userCompleted ? 'completed' : ''}">
+              ${notif.message}
+            </div>
+            <div class="notification-meta">
+              <span class="notification-time">${formatTime(notif.createdAt)}</span>
+              <span class="notification-completion">${completedCount} / ${totalStudents} đã xem</span>
+            </div>
           </div>
-          <div class="notification-time">
-            ${formatTime(notification.createdAt)}
-          </div>
-        </div>
-        <button class="notification-delete-btn" onclick="deleteNotification(${notification.id})">
-          Xóa
-        </button>
-      </li>
-    `)
+          ${isAdmin() ? `<button class="notification-delete-btn" onclick="deleteNotification(${notif.id})">🗑️</button>` : ''}
+        </li>
+      `;
+    })
     .join('');
 }
 
@@ -129,13 +185,3 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('notificationInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      addNotification();
-    }
-  });
-
-  renderNotifications();
-});

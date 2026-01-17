@@ -20,6 +20,12 @@
     <div class="header-content">
       <h1>📚 HUB LỚP 10A1</h1>
       <p>Trung tâm quản lý học tập</p>
+      <div class="header-right">
+        <button class="admin-toggle" id="adminToggle" onclick="toggleAdminMode()" style="display:none;" title="Chế độ Admin">⚙️</button>
+        <button class="logout-btn" onclick="handleLogout()" title="Đăng xuất">
+          <span id="userNameDisplay">👤</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -61,21 +67,21 @@
   <section class="nav-section">
     <h2>Điều hướng</h2>
     <div class="nav-grid">
-      <button class="nav-btn nav-btn-primary" onclick="go('tasks.html')">
+      <button class="nav-btn nav-btn-primary" onclick="go('/nhiemvu/nv.html')">
         <span class="nav-icon">📌</span>
-        <span class="nav-text">Quản lý Task</span>
+        <span class="nav-text">Nhiệm vụ</span>
       </button>
-      <button class="nav-btn nav-btn-success" onclick="go('completion.html')">
+      <button class="nav-btn nav-btn-success" onclick="go('/thongke/tk.html')">
         <span class="nav-icon">✅</span>
-        <span class="nav-text">Bảng hoàn thành</span>
+        <span class="nav-text">Thống kê</span>
       </button>
-      <button class="nav-btn nav-btn-info" onclick="go('survey.html')">
+      <button class="nav-btn nav-btn-info" onclick="go('/thongbao/tb.html')">
         <span class="nav-icon">📊</span>
-        <span class="nav-text">Khảo sát</span>
+        <span class="nav-text">Thông báo</span>
       </button>
-      <button class="nav-btn nav-btn-disabled" disabled>
-        <span class="nav-icon">🏆</span>
-        <span class="nav-text">Hoạt động / Dự thi</span>
+      <button class="nav-btn nav-btn-info" onclick="go('/lich/lich.html')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-text">Lịch học</span>
       </button>
     </div>
   </section>
@@ -94,6 +100,15 @@
 
 <script src="script/hub.js"></script>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+<script src="script/firebase-config.js"></script>
+<script>firebase.initializeApp(firebaseConfig);</script>
+<script src="script/firebase-utils.js"></script>
+<script src="script/students-list.js"></script>
+<script src="script/hub.js"></script>
+
 <!-- Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
@@ -101,11 +116,64 @@
       navigator.serviceWorker.register('service-worker.js')
         .then(registration => {
           console.log('✅ Service Worker đã được đăng ký:', registration);
+
+          // Kiểm tra update mỗi 10 giây
+          setInterval(() => {
+            registration.update();
+          }, 10000);
+
+          // Lắng nghe cập nhật service worker
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Có service worker mới
+                console.log('🔄 Phiên bản mới có sẵn! Nhấn F5 để cập nhật.');
+                // Tự động reload trang sau 2 giây
+                setTimeout(() => {
+                  window.location.reload();
+                }, 2000);
+              }
+            });
+          });
         })
         .catch(error => {
           console.log('❌ Service Worker đăng ký thất bại:', error);
         });
     });
+  }
+
+  // Check user login
+  window.addEventListener('load', () => {
+    if (!isLoggedIn()) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const user = getCurrentUser();
+    console.log('✅ Đã đăng nhập:', user.name);
+    document.getElementById('userNameDisplay').textContent = user.name;
+
+    // Hiện nút Admin nếu là admin
+    if (isAdmin()) {
+      document.getElementById('adminToggle').style.display = 'inline-block';
+    }
+  });
+
+  // Xử lý đăng xuất
+  function handleLogout() {
+    if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+      logoutUser();
+      window.location.href = 'login.html';
+    }
+  }
+
+  // Toggle chế độ Admin (ẩn/hiện nút admin)
+  let adminMode = false;
+  function toggleAdminMode() {
+    adminMode = !adminMode;
+    console.log(adminMode ? '🔓 Chế độ Admin ON' : '🔒 Chế độ Admin OFF');
+    // Có thể thêm logic để hiện/ẩn nút quản lý dữ liệu
   }
 
   // Gợi ý người dùng cài đặt ứng dụng
