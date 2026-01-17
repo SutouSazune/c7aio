@@ -16,6 +16,11 @@
       <a href="../index.html" class="back-btn">←</a>
       <h1>📅 Thời Khoá Biểu</h1>
       <p>Quản lý lịch học theo tuần</p>
+      <p class="current-week-display">
+        Hiện đang thực hiện TKB: 
+        <span id="currentWeekDisplayText"></span>
+        <select id="currentWeekSelect" class="current-week-select" style="display: none;" onchange="changeWeekFromDropdown()"></select>
+      </p>
     </div>
   </header>
 
@@ -44,46 +49,134 @@
 
   <!-- Week Selector -->
   <section class="week-selector-section">
-    <div class="week-selector" id="weekSelector">
-      <!-- Các nút chọn tuần sẽ được tạo bởi script -->
-    </div>
-  </section>
-
-  <!-- View Mode Selector -->
-  <section class="view-mode-section">
-    <div class="view-mode-buttons">
-      <button class="view-mode-btn active" data-mode="week">📋 Tuần</button>
-      <button class="view-mode-btn" data-mode="day">📅 Ngày</button>
-      <button class="view-mode-btn" data-mode="daily">📖 Chi Tiết</button>
-    </div>
-  </section>
-
-  <!-- Schedule Display -->
-  <section class="schedule-section">
-    <!-- Class input (Admin only) -->
-    <div class="class-input-area">
-      <div class="input-group">
-        <input type="text" id="classInput" placeholder="Tên lớp (vd: Toán, Lý...)">
-        <input type="time" id="timeInput" placeholder="Thời gian">
-        <input type="text" id="roomInput" placeholder="Phòng học">
-        <select id="daySelect">
-          <option value="monday">Thứ Hai</option>
-          <option value="tuesday">Thứ Ba</option>
-          <option value="wednesday">Thứ Tư</option>
-          <option value="thursday">Thứ Năm</option>
-          <option value="friday">Thứ Sáu</option>
-          <option value="saturday">Thứ Bảy</option>
-          <option value="sunday">Chủ Nhật</option>
-        </select>
+    <div class="week-controls">
+      <div class="week-selector" id="weekSelector">
+        <!-- Các nút chọn tuần sẽ được tạo bởi script -->
       </div>
-      <button class="add-btn" onclick="addClass()">+ Thêm lớp</button>
+      <button class="add-week-btn" onclick="openAddWeekModal()">+ Thêm tuần</button>
     </div>
+  </section>
 
+  <!-- Schedule Display (Hidden, only shown in modal) -->
+  <section class="schedule-section" style="display: none;">
     <!-- Schedule Grid -->
     <div class="schedule-grid" id="scheduleContainer">
       <!-- Các ngày và lớp sẽ được render ở đây -->
     </div>
   </section>
+
+  <!-- Modals Wrapper for side-by-side display -->
+  <div id="modalsWrapper" class="modals-wrapper" onclick="if(event.target === this) closeScheduleModal()"></div>
+
+  <!-- Modal: View Schedule -->
+  <div id="scheduleModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Thời Khoá Biểu Tuần</h2>
+        <button class="modal-close" onclick="closeScheduleModal()">✕</button>
+      </div>
+
+      <!-- View Mode Selector in Modal -->
+      <div class="view-mode-buttons-modal">
+        <button class="view-mode-btn active" data-mode="week" onclick="switchModalViewMode('week')">📋 Tuần</button>
+        <button class="view-mode-btn" data-mode="day" onclick="switchModalViewMode('day')">📅 Ngày</button>
+        <button class="view-mode-btn" data-mode="daily" onclick="switchModalViewMode('daily')">📖 Chi Tiết</button>
+      </div>
+
+      <!-- Schedule Content -->
+      <div class="modal-body" id="modalScheduleContainer">
+        <!-- Nội dung lịch sẽ render ở đây -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Manage Classes (Filter + Add) -->
+  <div id="manageClassModal" class="modal">
+    <div class="modal-content manage-class-modal">
+      <div class="modal-header">
+        <h2>Quản Lý Lớp Học</h2>
+        <button class="modal-close" onclick="closeManageClassModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Filter Section (Admin only) -->
+        <div id="manageClassFilterSection" class="manage-class-section" style="display: none;">
+          <h3>🔍 Lọc Lớp</h3>
+          <div class="modal-filter">
+            <label for="manageClassFilter">Chọn lớp:</label>
+            <select id="manageClassFilter" onchange="filterByClassInModal()">
+              <option value="">-- Tất cả lớp --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Add Class Section (Admin only) -->
+        <div id="manageClassAdminSection" class="manage-class-section" style="display: none;">
+          <h3>➕ Thêm Lớp Mới</h3>
+          <div class="input-group-modal">
+            <input type="text" id="classInputManage" placeholder="Tên lớp">
+            <div class="time-range-inputs">
+              <input type="time" id="timeInputManage" placeholder="Bắt đầu">
+              <input type="time" id="endTimeInputManage" placeholder="Kết thúc (tuỳ chọn)">
+            </div>
+            <input type="text" id="roomInputManage" placeholder="Phòng">
+            <select id="daySelectManage">
+              <option value="monday">Thứ Hai</option>
+              <option value="tuesday">Thứ Ba</option>
+              <option value="wednesday">Thứ Tư</option>
+              <option value="thursday">Thứ Năm</option>
+              <option value="friday">Thứ Sáu</option>
+              <option value="saturday">Thứ Bảy</option>
+              <option value="sunday">Chủ Nhật</option>
+            </select>
+          </div>
+          <button class="add-btn" onclick="addClassFromManageModal()">+ Thêm lớp</button>
+        </div>
+      </div>
+
+      <button class="btn-close-modal" onclick="closeManageClassModal()">Đóng</button>
+    </div>
+  </div>
+
+  <!-- Modal: Add/Edit Week -->
+  <div id="addWeekModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Quản Lý Tuần Học</h2>
+        <button class="modal-close" onclick="closeAddWeekModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="week-form">
+          <label>Tên tuần:</label>
+          <input type="text" id="weekNameInput" placeholder="vd: Tuần 1, Tuần 2...">
+
+          <label>Thời lượng:</label>
+          <div class="duration-group">
+            <input type="date" id="weekStartDate" placeholder="Từ ngày">
+            <span>đến</span>
+            <div class="duration-option">
+              <label>
+                <input type="radio" name="durationType" value="date" checked> Ngày cụ thể:
+                <input type="date" id="weekEndDate">
+              </label>
+            </div>
+            <div class="duration-option">
+              <label>
+                <input type="radio" name="durationType" value="infinite"> Vô hạn
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-primary" onclick="saveWeekInfo()">Lưu</button>
+            <button class="btn-danger" onclick="deleteCurrentWeek()">Xoá Tuần</button>
+            <button class="btn-secondary" onclick="closeAddWeekModal()">Hủy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <footer class="footer">
     <p>&copy; 2025 Lớp 10A1</p>

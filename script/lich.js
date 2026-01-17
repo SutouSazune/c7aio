@@ -1,10 +1,14 @@
 // Schedule system - Multiple weeks with daily timetables
 let schedules = {}; // { "week-1": { "monday": [...], "tuesday": [...] }, ... }
+let weekMetadata = {}; // { "week-1": { name: "Tuần 1", startDate: "2026-01-13", endDate: "2026-01-19", infinite: false }, ... }
 let currentDate = new Date(); // For calendar navigation
 let selectedDate = null; // Selected date to determine week
-let currentWeek = 1;
+let currentWeek = 0; // No week selected initially
 let currentUser = null;
 let viewMode = 'week'; // 'week', 'day', 'daily'
+let modalViewMode = 'week'; // View mode in modal
+let filteredClassName = ''; // For filtering classes
+let editingWeek = null; // For week management modal
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const DAY_NAMES = {
@@ -35,23 +39,34 @@ const MONTH_NAMES = [
 window.addEventListener('load', () => {
   currentUser = getCurrentUser();
   
-  document.getElementById('classInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      addClass();
-    }
-  });
-
-  // Chỉ admin mới thêm được class
-  if (!isAdmin()) {
-    document.querySelector('.class-input-area').style.display = 'none';
+  // Show admin controls in manage modal
+  const manageClassAdminSection = document.getElementById('manageClassAdminSection');
+  const manageClassFilterSection = document.getElementById('manageClassFilterSection');
+  if (isAdmin()) {
+    manageClassAdminSection.style.display = 'block';
+    manageClassFilterSection.style.display = 'block';
+    document.getElementById('classInputManage').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addClassFromManageModal();
+    });
   }
 
   loadSchedules();
+  loadWeekMetadata();
   initializeSchedules();
-  setupViewModeButtons();
   renderCalendar();
   renderWeekSelector();
-  renderSchedule();
+  buildClassFilterOptions();
+  
+  // Close modals on outside click
+  document.getElementById('scheduleModal').addEventListener('click', (e) => {
+    if (e.target.id === 'scheduleModal') closeScheduleModal();
+  });
+  document.getElementById('addWeekModal').addEventListener('click', (e) => {
+    if (e.target.id === 'addWeekModal') closeAddWeekModal();
+  });
+  document.getElementById('manageClassModal').addEventListener('click', (e) => {
+    if (e.target.id === 'manageClassModal') closeManageClassModal();
+  });
 });
 
 function loadSchedules() {
@@ -64,6 +79,20 @@ function loadSchedules() {
   }
 }
 
+function loadWeekMetadata() {
+  try {
+    const data = localStorage.getItem('c7aio_weekMetadata');
+    weekMetadata = data ? JSON.parse(data) : {};
+  } catch (error) {
+    console.error('Lỗi tải weekMetadata:', error);
+    weekMetadata = {};
+  }
+}
+
+function saveWeekMetadata() {
+  localStorage.setItem('c7aio_weekMetadata', JSON.stringify(weekMetadata));
+}
+
 function initializeSchedules() {
   // Khởi tạo week 1 nếu chưa có
   if (!schedules['week-1']) {
@@ -74,8 +103,71 @@ function initializeSchedules() {
   // Set selectedDate = today
   if (!selectedDate) {
     selectedDate = new Date();
-    currentWeek = getWeekNumberFromDate(selectedDate);
   }
+  
+  // Keep currentWeek = 0 to not highlight any week on initial load
+  
+  // Display first week in header
+  const availableWeeks = Object.keys(schedules).sort((a, b) => {
+    const aNum = parseInt(a.split('-')[1]);
+    const bNum = parseInt(b.split('-')[1]);
+    return aNum - bNum;
+  });
+  
+  if (availableWeeks.length > 0) {
+    const firstWeekNum = parseInt(availableWeeks[0].split('-')[1]);
+    updateCurrentWeekDisplay(firstWeekNum);
+    
+    // Setup week dropdown for admin
+    if (isAdmin()) {
+      updateWeekDropdown();
+    }
+  }
+}
+
+function updateCurrentWeekDisplay(weekNum) {
+  const weekKey = `week-${weekNum}`;
+  const metadata = weekMetadata[weekKey] || {};
+  const weekName = metadata.name || `Tuần ${weekNum}`;
+  
+  const displayText = document.getElementById('currentWeekDisplayText');
+  if (displayText) {
+    displayText.textContent = weekName;
+  }
+}
+
+function updateWeekDropdown() {
+  const select = document.getElementById('currentWeekSelect');
+  
+  const availableWeeks = Object.keys(schedules).sort((a, b) => {
+    const aNum = parseInt(a.split('-')[1]);
+    const bNum = parseInt(b.split('-')[1]);
+    return aNum - bNum;
+  });
+  
+  select.innerHTML = '';
+  
+  availableWeeks.forEach(weekKey => {
+    const weekNum = parseInt(weekKey.split('-')[1]);
+    const metadata = weekMetadata[weekKey] || {};
+    const weekName = metadata.name || `Tuần ${weekNum}`;
+    
+    const option = document.createElement('option');
+    option.value = weekNum;
+    option.textContent = weekName;
+    select.appendChild(option);
+  });
+  
+  // Show dropdown for admin, hide text
+  select.style.display = 'inline-block';
+  document.getElementById('currentWeekDisplayText').style.display = 'none';
+}
+
+function changeWeekFromDropdown() {
+  const select = document.getElementById('currentWeekSelect');
+  const weekNum = parseInt(select.value);
+  updateCurrentWeekDisplay(weekNum);
+  selectWeekModal(weekNum);
 }
 
 function initEmptyWeek() {
@@ -164,8 +256,23 @@ function renderCalendar() {
     if (isToday) dayDiv.classList.add('today');
     if (isSelected) dayDiv.classList.add('selected');
     
+    // Set day number first
     dayDiv.textContent = day;
-    dayDiv.onclick = () => selectDateFromCalendar(date);
+    
+    // Check if this day has classes
+    const weekNum = getWeekNumberFromDate(date);
+    const weekKey = `week-${weekNum}`;
+    const dayName = getDayNameFromDate(date);
+    if (schedules[weekKey] && schedules[weekKey][dayName] && schedules[weekKey][dayName].length > 0) {
+      dayDiv.classList.add('has-classes');
+      // Add indicator icon
+      const indicator = document.createElement('span');
+      indicator.className = 'class-indicator';
+      indicator.textContent = '📚';
+      dayDiv.appendChild(indicator);
+    }
+    
+    dayDiv.onclick = () => openScheduleModal(new Date(year, month, day));
     daysContainer.appendChild(dayDiv);
   }
   
@@ -224,21 +331,69 @@ function renderWeekSelector() {
   // Hiển thị các tuần hiện tại
   weeks.forEach(week => {
     const weekNum = week.split('-')[1];
+    const metadata = weekMetadata[week] || {};
+    const weekName = metadata.name || `Tuần ${weekNum}`;
+    
     const btn = document.createElement('button');
     btn.className = `week-btn ${week === `week-${currentWeek}` ? 'active' : ''}`;
-    btn.textContent = `Tuần ${weekNum}`;
-    btn.onclick = () => selectWeek(parseInt(weekNum));
+    btn.textContent = weekName;
+    btn.onclick = () => selectWeekModal(parseInt(weekNum));
+    btn.title = 'Click để xem, shift+click để quản lý';
+    
+    // Shift+click to manage
+    btn.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      openWeekManager(parseInt(weekNum));
+    });
+    
     container.appendChild(btn);
   });
+}
 
-  // Nút thêm tuần (chỉ Admin)
+function selectWeekModal(weekNum) {
+  currentWeek = weekNum;
+  selectedDate = getMondayOfWeek(weekNum);
+  
+  // Use wrapper system instead of direct display
+  const wrapper = document.getElementById('modalsWrapper');
+  const modal = document.getElementById('scheduleModal');
+  const manageClassModal = document.getElementById('manageClassModal');
+  
+  const weekKey = `week-${weekNum}`;
+  const metadata = weekMetadata[weekKey] || {};
+  const weekName = metadata.name || `Tuần ${weekNum}`;
+  const dateStr = `${selectedDate.getDate()}/${selectedDate.getMonth() + 1}/${selectedDate.getFullYear()}`;
+  
+  document.getElementById('modalTitle').textContent = `${weekName} - ${dateStr}`;
+  
+  // Update header to show current week
+  updateCurrentWeekDisplay(weekNum);
+  
+  // Update dropdown selection if admin
   if (isAdmin()) {
-    const addBtn = document.createElement('button');
-    addBtn.className = 'week-btn add-week-btn';
-    addBtn.textContent = '+ Thêm tuần';
-    addBtn.onclick = addWeek;
-    container.appendChild(addBtn);
+    document.getElementById('currentWeekSelect').value = weekNum;
   }
+  
+  buildModalClassFilterOptions();
+  
+  // Append modals to wrapper
+  wrapper.innerHTML = '';
+  wrapper.appendChild(modal);
+  wrapper.appendChild(manageClassModal);
+  buildManageClassFilterOptions();
+  
+  // Show wrapper
+  wrapper.classList.add('active');
+  wrapper.style.display = 'flex';
+  
+  modalViewMode = 'week';
+  
+  document.querySelectorAll('.view-mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector('[data-mode="week"]').classList.add('active');
+  
+  updateModalSchedule();
 }
 
 function selectWeek(weekNum) {
@@ -252,7 +407,15 @@ function addWeek() {
   const newWeek = `week-${maxWeek + 1}`;
   
   schedules[newWeek] = initEmptyWeek();
+  weekMetadata[newWeek] = {
+    name: `Tuần ${maxWeek + 1}`,
+    startDate: '',
+    endDate: null,
+    infinite: false
+  };
+  
   saveSchedules();
+  saveWeekMetadata();
   selectWeek(maxWeek + 1);
 }
 
@@ -464,8 +627,486 @@ function deleteClass(day, idx) {
     const weekKey = `week-${currentWeek}`;
     schedules[weekKey][day].splice(idx, 1);
     saveSchedules();
-    renderSchedule();
+    updateModalSchedule();
+    renderCalendar();
   }
+}
+
+// ===== MODAL FUNCTIONS =====
+
+function openScheduleModal(date) {
+  selectedDate = new Date(date);
+  currentWeek = getWeekNumberFromDate(selectedDate);
+  const dayName = getDayNameFromDate(selectedDate);
+  
+  const modal = document.getElementById('scheduleModal');
+  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const dayIndex = selectedDate.getDay();
+  const dateStr = `${days[dayIndex]}, ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}/${selectedDate.getFullYear()}`;
+  
+  document.getElementById('modalTitle').textContent = `Lịch Tuần ${currentWeek} - ${dateStr}`;
+  
+  // Update header to show current week
+  updateCurrentWeekDisplay(currentWeek);
+  
+  // Update dropdown selection if admin
+  if (isAdmin()) {
+    document.getElementById('currentWeekSelect').value = currentWeek;
+  }
+  
+  // Build class filter options
+  buildModalClassFilterOptions();
+  
+  // Show both modals in wrapper
+  const wrapper = document.getElementById('modalsWrapper');
+  const manageClassModal = document.getElementById('manageClassModal');
+  
+  // Append modals to wrapper
+  wrapper.innerHTML = '';
+  wrapper.appendChild(modal);
+  wrapper.appendChild(manageClassModal);
+  buildManageClassFilterOptions();
+  
+  // Show wrapper
+  wrapper.classList.add('active');
+  wrapper.style.display = 'flex';
+  
+  modalViewMode = 'week';
+  
+  // Update view mode buttons
+  document.querySelectorAll('.view-mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector('[data-mode="week"]').classList.add('active');
+  
+  updateModalSchedule();
+}
+
+function closeScheduleModal() {
+  const wrapper = document.getElementById('modalsWrapper');
+  const modal = document.getElementById('scheduleModal');
+  const manageClassModal = document.getElementById('manageClassModal');
+  
+  // Move modals back out of wrapper
+  document.body.appendChild(modal);
+  document.body.appendChild(manageClassModal);
+  
+  // Hide wrapper
+  wrapper.classList.remove('active');
+  wrapper.style.display = 'none';
+  filteredClassName = '';
+}
+
+function closeManageClassModal() {
+  // Close both modals along with schedule
+  closeScheduleModal();
+}
+
+function filterByClassInModal() {
+  const select = document.getElementById('manageClassFilter');
+  filteredClassName = select.value;
+  updateModalSchedule();
+}
+
+function switchModalViewMode(mode) {
+  modalViewMode = mode;
+  document.querySelectorAll('.view-mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  updateModalSchedule();
+}
+
+function updateModalSchedule() {
+  const weekKey = `week-${currentWeek}`;
+  const weekSchedule = schedules[weekKey] || {};
+  const container = document.getElementById('modalScheduleContainer');
+  container.innerHTML = '';
+  
+  const selectedDayName = getDayNameFromDate(selectedDate);
+  
+  if (modalViewMode === 'day') {
+    renderDayViewFiltered(weekSchedule, selectedDayName, container);
+  } else if (modalViewMode === 'daily') {
+    renderDailyViewFiltered(weekSchedule, selectedDayName, container);
+  } else {
+    renderWeekViewFiltered(weekSchedule, container, selectedDayName);
+  }
+}
+
+function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
+  DAYS.forEach(day => {
+    let classes = weekSchedule[day] || [];
+    
+    // Apply filter
+    if (filteredClassName) {
+      classes = classes.filter(cls => cls.name === filteredClassName);
+    }
+    
+    const dayContainer = document.createElement('div');
+    dayContainer.className = 'day-column';
+    
+    let html = `
+      <div class="day-header">
+        <span class="day-emoji">${DAY_EMOJIS[day]}</span>
+        <span class="day-name">${DAY_NAMES[day]}</span>
+      </div>
+      <div class="classes-list">
+    `;
+
+    if (classes.length === 0) {
+      html += '<div class="empty-day">Không có lớp</div>';
+    } else {
+      classes.forEach((cls, idx) => {
+        html += `
+          <div class="class-item">
+            <div class="class-content">
+              <div class="class-time">${cls.time}</div>
+              <div class="class-name">${cls.name}</div>
+              <div class="class-room">${cls.room || 'Phòng ?'}</div>
+              ${cls.duration ? `<div class="class-duration">${cls.duration}</div>` : ''}
+            </div>
+            ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${day}', ${idx})">🗑️</button>` : ''}
+          </div>
+        `;
+      });
+    }
+
+    html += '</div>';
+    dayContainer.innerHTML = html;
+    container.appendChild(dayContainer);
+  });
+}
+
+function renderDayViewFiltered(weekSchedule, dayName, container) {
+  let classes = weekSchedule[dayName] || [];
+  
+  if (filteredClassName) {
+    classes = classes.filter(cls => cls.name === filteredClassName);
+  }
+  
+  const dayContainer = document.createElement('div');
+  dayContainer.className = 'day-column full-width';
+  
+  let html = `
+    <div class="day-header">
+      <span class="day-emoji">${DAY_EMOJIS[dayName]}</span>
+      <span class="day-name">${DAY_NAMES[dayName]}</span>
+    </div>
+    <div class="classes-list">
+  `;
+
+  if (classes.length === 0) {
+    html += '<div class="empty-day">Không có lớp</div>';
+  } else {
+    classes.forEach((cls, idx) => {
+      html += `
+        <div class="class-item">
+          <div class="class-content">
+            <div class="class-time">${cls.time}</div>
+            <div class="class-name">${cls.name}</div>
+            <div class="class-room">${cls.room || 'Phòng ?'}</div>
+            ${cls.duration ? `<div class="class-duration">${cls.duration}</div>` : ''}
+          </div>
+          ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
+        </div>
+      `;
+    });
+  }
+
+  html += '</div>';
+  dayContainer.innerHTML = html;
+  container.appendChild(dayContainer);
+}
+
+function renderDailyViewFiltered(weekSchedule, dayName, container) {
+  let classes = weekSchedule[dayName] || [];
+  
+  if (filteredClassName) {
+    classes = classes.filter(cls => cls.name === filteredClassName);
+  }
+  
+  const dayContainer = document.createElement('div');
+  dayContainer.className = 'daily-view';
+  
+  let html = `
+    <div class="daily-header">
+      <h3>${DAY_NAMES[dayName]} - Lịch Chi Tiết</h3>
+      <p class="daily-date">${getDayStringFromDate(selectedDate)}</p>
+    </div>
+  `;
+
+  if (classes.length === 0) {
+    html += '<div class="empty-day">Không có lớp</div>';
+  } else {
+    html += '<div class="daily-classes">';
+    classes.forEach((cls, idx) => {
+      html += `
+        <div class="daily-class-item">
+          <div class="daily-time">${cls.time}</div>
+          <div class="daily-details">
+            <div class="daily-class-name">${cls.name}</div>
+            <div class="daily-class-room">📍 ${cls.room || 'Phòng ?'}</div>
+            ${cls.duration ? `<div class="daily-class-duration">${cls.duration}</div>` : ''}
+          </div>
+          ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+
+  dayContainer.innerHTML = html;
+  container.appendChild(dayContainer);
+}
+
+function buildClassFilterOptions() {
+  const select = document.getElementById('classFilter');
+  if (!select) return; // Element may not exist
+  
+  const allClasses = new Set();
+  
+  Object.values(schedules).forEach(week => {
+    Object.values(week).forEach(dayClasses => {
+      dayClasses.forEach(cls => {
+        allClasses.add(cls.name);
+      });
+    });
+  });
+  
+  const options = Array.from(allClasses).sort();
+  options.forEach(className => {
+    const opt = document.createElement('option');
+    opt.value = className;
+    opt.textContent = className;
+    select.appendChild(opt);
+  });
+}
+
+function buildModalClassFilterOptions() {
+  const select = document.getElementById('modalClassFilter');
+  if (!select) return; // Element may not exist
+  
+  select.innerHTML = '<option value="">-- Tất cả lớp --</option>';
+  
+  const allClasses = new Set();
+  
+  Object.values(schedules).forEach(week => {
+    Object.values(week).forEach(dayClasses => {
+      dayClasses.forEach(cls => {
+        allClasses.add(cls.name);
+      });
+    });
+  });
+  
+  const options = Array.from(allClasses).sort();
+  options.forEach(className => {
+    const opt = document.createElement('option');
+    opt.value = className;
+    opt.textContent = className;
+    select.appendChild(opt);
+  });
+}
+
+function buildManageClassFilterOptions() {
+  const select = document.getElementById('manageClassFilter');
+  select.innerHTML = '<option value="">-- Tất cả lớp --</option>';
+  
+  const allClasses = new Set();
+  
+  Object.values(schedules).forEach(week => {
+    Object.values(week).forEach(dayClasses => {
+      dayClasses.forEach(cls => {
+        allClasses.add(cls.name);
+      });
+    });
+  });
+  
+  const options = Array.from(allClasses).sort();
+  options.forEach(className => {
+    const opt = document.createElement('option');
+    opt.value = className;
+    opt.textContent = className;
+    select.appendChild(opt);
+  });
+}
+
+function filterScheduleByClass() {
+  const select = document.getElementById('classFilter');
+  if (!select) return;
+  filteredClassName = select.value;
+  // Update main schedule view if needed
+}
+
+function filterModalScheduleByClass() {
+  const select = document.getElementById('modalClassFilter');
+  filteredClassName = select.value;
+  updateModalSchedule();
+}
+
+function addClassFromModal() {
+  const nameInput = document.getElementById('classInputModal');
+  const timeInput = document.getElementById('timeInputModal');
+  const endTimeInput = document.getElementById('endTimeInputModal');
+  const roomInput = document.getElementById('roomInputModal');
+  const daySelect = document.getElementById('daySelectModal');
+
+  const name = nameInput.value.trim();
+  const time = timeInput.value.trim();
+  const endTime = endTimeInput.value.trim();
+  const room = roomInput.value.trim();
+  const day = daySelect.value;
+
+  if (!name || !time) {
+    alert('Vui lòng nhập tên lớp và thời gian bắt đầu');
+    return;
+  }
+
+  const weekKey = `week-${currentWeek}`;
+  if (!schedules[weekKey]) {
+    schedules[weekKey] = initEmptyWeek();
+  }
+
+  // Format duration: "8:00 - 10:00" or "8:00 - ?"
+  const duration = endTime ? `${time} - ${endTime}` : `${time} - ?`;
+
+  const newClass = {
+    id: Date.now(),
+    name: name,
+    time: time,
+    endTime: endTime || null,
+    room: room || 'Phòng chưa xác định',
+    duration: duration,
+    completions: {}
+  };
+
+  schedules[weekKey][day].push(newClass);
+  saveSchedules();
+
+  nameInput.value = '';
+  timeInput.value = '';
+  endTimeInput.value = '';
+  roomInput.value = '';
+  
+  updateModalSchedule();
+  renderCalendar();
+}
+
+function addClassFromManageModal() {
+  const nameInput = document.getElementById('classInputManage');
+  const timeInput = document.getElementById('timeInputManage');
+  const endTimeInput = document.getElementById('endTimeInputManage');
+  const roomInput = document.getElementById('roomInputManage');
+  const daySelect = document.getElementById('daySelectManage');
+
+  const name = nameInput.value.trim();
+  const time = timeInput.value.trim();
+  const endTime = endTimeInput.value.trim();
+  const room = roomInput.value.trim();
+  const day = daySelect.value;
+
+  if (!name || !time) {
+    alert('Vui lòng nhập tên lớp và thời gian bắt đầu');
+    return;
+  }
+
+  const weekKey = `week-${currentWeek}`;
+  if (!schedules[weekKey]) {
+    schedules[weekKey] = initEmptyWeek();
+  }
+
+  // Format duration: "8:00 - 10:00" or "8:00 - ?"
+  const duration = endTime ? `${time} - ${endTime}` : `${time} - ?`;
+
+  const newClass = {
+    id: Date.now(),
+    name: name,
+    time: time,
+    endTime: endTime || null,
+    room: room || 'Phòng chưa xác định',
+    duration: duration,
+    completions: {}
+  };
+
+  schedules[weekKey][day].push(newClass);
+  saveSchedules();
+
+  nameInput.value = '';
+  timeInput.value = '';
+  endTimeInput.value = '';
+  roomInput.value = '';
+  
+  updateModalSchedule();
+  renderCalendar();
+}
+
+function openAddWeekModal() {
+  editingWeek = null;
+  document.getElementById('weekNameInput').value = '';
+  document.getElementById('weekStartDate').value = '';
+  document.getElementById('weekEndDate').value = '';
+  document.querySelector('input[name="durationType"][value="date"]').checked = true;
+  
+  document.getElementById('addWeekModal').style.display = 'flex';
+}
+
+function closeAddWeekModal() {
+  document.getElementById('addWeekModal').style.display = 'none';
+}
+
+function saveWeekInfo() {
+  const name = document.getElementById('weekNameInput').value.trim();
+  const startDate = document.getElementById('weekStartDate').value;
+  const endDate = document.getElementById('weekEndDate').value;
+  const durationType = document.querySelector('input[name="durationType"]:checked').value;
+  
+  if (!name) {
+    alert('Vui lòng nhập tên tuần');
+    return;
+  }
+  
+  const weekKey = `week-${currentWeek}`;
+  weekMetadata[weekKey] = {
+    name: name,
+    startDate: startDate,
+    endDate: durationType === 'date' ? endDate : null,
+    infinite: durationType === 'infinite'
+  };
+  
+  saveWeekMetadata();
+  renderWeekSelector();
+  closeAddWeekModal();
+}
+
+function deleteCurrentWeek() {
+  if (confirm('Xóa tuần này và tất cả các lớp học trong tuần?')) {
+    const weekKey = `week-${editingWeek}`;
+    delete schedules[weekKey];
+    delete weekMetadata[weekKey];
+    saveSchedules();
+    saveWeekMetadata();
+    renderWeekSelector();
+    closeAddWeekModal();
+  }
+}
+
+// Open week management modal
+function openWeekManager(weekNum) {
+  editingWeek = weekNum;
+  const weekKey = `week-${weekNum}`;
+  const metadata = weekMetadata[weekKey] || {};
+  
+  document.getElementById('weekNameInput').value = metadata.name || `Tuần ${weekNum}`;
+  document.getElementById('weekStartDate').value = metadata.startDate || '';
+  document.getElementById('weekEndDate').value = metadata.endDate || '';
+  
+  if (metadata.infinite) {
+    document.querySelector('input[name="durationType"][value="infinite"]').checked = true;
+  } else {
+    document.querySelector('input[name="durationType"][value="date"]').checked = true;
+  }
+  
+  document.getElementById('addWeekModal').style.display = 'flex';
 }
 
 function toggleClassCompletion(day, idx) {

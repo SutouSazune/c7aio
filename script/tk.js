@@ -33,6 +33,9 @@ function loadAllData() {
 }
 
 function renderDashboard() {
+  // Update overview cards
+  updateStatsOverview();
+  
   const container = document.getElementById('statsContainer');
   
   let html = '<div class="dashboard-grid">';
@@ -46,6 +49,41 @@ function renderDashboard() {
 
   html += '</div>';
   container.innerHTML = html;
+}
+
+function updateStatsOverview() {
+  // Calculate task stats
+  const totalTasks = tasks.length;
+  let completedTasks = 0;
+  let pendingTasks = 0;
+
+  tasks.forEach(task => {
+    const completions = task.completions || {};
+    const completedCount = Object.values(completions).filter(v => v).length;
+    if (completedCount === STUDENTS.length) {
+      completedTasks++;
+    } else if (completedCount > 0) {
+      pendingTasks++;
+    }
+  });
+
+  const completedPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const urgentTasks = pendingTasks; // Simple calculation
+
+  // Update cards
+  document.getElementById('totalTasks').textContent = totalTasks;
+  document.getElementById('completedTasks').textContent = completedTasks;
+  document.getElementById('completedPercent').textContent = completedPercent + '%';
+  document.getElementById('pendingTasks').textContent = pendingTasks;
+  document.getElementById('urgentTasks').textContent = urgentTasks;
+
+  // Update progress ring
+  const circumference = 2 * Math.PI * 90;
+  const strokeDashoffset = circumference - (completedPercent / 100) * circumference;
+  const progressRing = document.getElementById('progressRing');
+  if (progressRing) {
+    progressRing.style.strokeDashoffset = strokeDashoffset;
+  }
 }
 
 function renderTaskStats() {
