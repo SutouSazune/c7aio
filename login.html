@@ -324,6 +324,14 @@
     </div>
   </div>
 
+  <!-- Firebase SDKs (Cần thiết để đồng bộ dữ liệu Realtime) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- Project Scripts -->
+  <script src="script/firebase-config.js"></script>
+  <script src="script/firebase-utils.js"></script>
   <script src="script/students-list.js"></script>
   <script>
     let adminFormOpen = false;
@@ -417,7 +425,19 @@
     }
 
     // Load danh sách khi trang load
-    window.addEventListener('load', renderStudents);
+    window.addEventListener('load', () => {
+      renderStudents(); // Render từ cache trước (nếu có)
+      
+      // Lắng nghe dữ liệu mới nhất từ Firebase để cập nhật danh sách
+      if (typeof onSharedStudentsChanged === 'function') {
+        onSharedStudentsChanged((data) => {
+          if (data && Array.isArray(data)) {
+            STUDENTS = data;
+            renderStudents();
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>
