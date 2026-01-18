@@ -12,10 +12,8 @@ window.addEventListener('load', () => {
 
   // Kết nối Firebase để lấy dữ liệu realtime
   onSharedStudentsChanged((data) => {
-    if (data) {
-      STUDENTS = data; // Cập nhật biến toàn cục
-      renderStudentsTable(STUDENTS);
-    }
+    STUDENTS = data || []; // Cập nhật biến toàn cục
+    renderStudentsTable(STUDENTS);
   });
 });
 

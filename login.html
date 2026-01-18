@@ -431,10 +431,8 @@
       // Lắng nghe dữ liệu mới nhất từ Firebase để cập nhật danh sách
       if (typeof onSharedStudentsChanged === 'function') {
         onSharedStudentsChanged((data) => {
-          if (data && Array.isArray(data)) {
-            STUDENTS = data;
-            renderStudents();
-          }
+          STUDENTS = data || [];
+          renderStudents();
         });
       }
     });

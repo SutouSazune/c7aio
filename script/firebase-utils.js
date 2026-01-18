@@ -315,19 +315,31 @@ function onNotificationsChanged(callback) {
 // Lắng nghe danh sách học sinh thay đổi
 function onSharedStudentsChanged(callback) {
   const ref = db.ref('shared/students');
-  ref.on('value', snapshot => {
+  ref.on('value', (snapshot) => {
     const val = snapshot.val();
-    if (val) {
-      localStorage.setItem('c7aio_students_cache', JSON.stringify(val));
+    
+    // CHUẨN HÓA DỮ LIỆU: Luôn chuyển về dạng Array
+    let data = [];
+    if (Array.isArray(val)) {
+      data = val;
+    } else if (val && typeof val === 'object') {
+      data = Object.values(val); // Chuyển Object {1:.., 2:..} thành Array [.., ..]
     }
-    callback(val);
+
+    localStorage.setItem('c7aio_students_cache', JSON.stringify(data));
+    console.log('📥 Sync học sinh:', data.length);
+    callback(data);
+  }, (error) => {
+    console.error('❌ Lỗi sync học sinh:', error);
   });
 }
 
 // Lưu toàn bộ danh sách học sinh (Admin dùng)
 async function saveSharedStudents(studentsList) {
   try {
-    await db.ref('shared/students').set(studentsList);
+    // Đảm bảo lưu array sạch
+    const cleanList = Array.isArray(studentsList) ? studentsList : [];
+    await db.ref('shared/students').set(cleanList);
     console.log('✅ Đã đồng bộ danh sách học sinh lên Firebase');
   } catch (error) {
     console.error('❌ Lỗi lưu học sinh:', error);
