@@ -6,18 +6,36 @@
 // 4. Sao chép config dưới đây từ Firebase Console
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB_YOUR_API_KEY_HERE",
-  authDomain: "your-project.firebaseapp.com",
-  databaseURL: "https://your-project-id-default-rtdb.firebaseio.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyBXkiJDkHeTSjztzXd3SlbCr64mVl8Ulv8",
+  authDomain: "c7aio-26d04.firebaseapp.com",
+  projectId: "c7aio-26d04",
+  databaseURL: "https://c7aio-26d04-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  storageBucket: "c7aio-26d04.firebasestorage.app",
+  messagingSenderId: "195002194470",
+  appId: "1:195002194470:web:b2091db3b69e6ce116a4e7",
+  measurementId: "G-KWSG5GJMTH"
 };
+// --- KIỂM TRA CẤU HÌNH (Tự động báo lỗi nếu chưa thay đổi) ---
+const isConfigured = firebaseConfig.apiKey && firebaseConfig.databaseURL && !firebaseConfig.apiKey.includes("AIzaSyBXkiJDkHeTSjztzXd3SlbCr64mVl8Ulv8");
+
+if (!isConfigured) {
+  console.error("❌ CHƯA CẤU HÌNH FIREBASE: Vui lòng cập nhật file script/firebase-config.js");
+  alert("⚠️ LỖI CẤU HÌNH: Bạn chưa điền thông tin Firebase!\n\nVui lòng mở file 'script/firebase-config.js' và điền thông tin từ Firebase Console thì người khác mới thấy dữ liệu được.");
+}
 
 // Khởi tạo Firebase (QUAN TRỌNG: Nếu thiếu dòng này, app sẽ không kết nối được)
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
+  
+  // Test kết nối để chắc chắn mọi thứ hoạt động
+  const testDb = firebase.database();
+  testDb.ref(".info/connected").on("value", (snap) => {
+    if (snap.val() === true) {
+      console.log("🟢 Đã kết nối tới Firebase Realtime Database thành công!");
+    } else if (isConfigured) {
+      console.log("⚪ Đang thử kết nối tới Firebase...");
+    }
+  });
 }
 
 // Import Firebase từ CDN (tự động loaded trong HTML)
