@@ -1,7 +1,7 @@
 {
   "name": "10C7 All In One - Quản lý học tập",
-  "short_name": "Class Hub",
-  "description": "Ứng dụng quản lý học tập cho lớp 10A1",
+  "short_name": "10C7 AIO",
+  "description": "Ứng dụng quản lý học tập cho lớp 10C7",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

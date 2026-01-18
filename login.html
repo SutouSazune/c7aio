@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#667eea">
   <title>Chọn Người Dùng - Class Hub</title>
+  <base href="/c7aio/">
+  <script>
+    // Detect base path for GitHub Pages
+    function getBasePath() {
+      const pathname = window.location.pathname;
+      if (pathname.includes('/c7aio/')) {
+        return '/c7aio/';
+      }
+      return '/';
+    }
+    const BASE_PATH = getBasePath();
+  </script>
   <style>
     * {
       margin: 0;
@@ -322,7 +334,7 @@
       const student = STUDENTS.find(s => s.id === studentId);
       if (student) {
         setCurrentUser(student);
-        window.location.href = 'index.html';
+        window.location.href = BASE_PATH + 'index.html';
       }
     }
 
@@ -365,7 +377,7 @@
       // Kiểm tra mã admin (mã mặc định: "admin123")
       if (code === ADMIN.code) {
         setCurrentUser(ADMIN);
-        window.location.href = 'index.html';
+        window.location.href = BASE_PATH + 'index.html';
       } else {
         showError('Mã admin sai');
         document.getElementById('adminCodeInput').value = '';
@@ -391,7 +403,7 @@
 
     // Kiểm tra nếu đã login
     if (isLoggedIn()) {
-      window.location.href = 'index.html';
+      window.location.href = BASE_PATH + 'index.html';
     }
 
     // Load danh sách khi trang load

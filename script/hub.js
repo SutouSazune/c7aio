@@ -1,3 +1,14 @@
+// Detect base path for GitHub Pages
+function getBasePath() {
+  const pathname = window.location.pathname;
+  if (pathname.includes('/c7aio/')) {
+    return '/c7aio/';
+  }
+  return '/';
+}
+
+const BASE_PATH = getBasePath();
+
 // Dữ liệu mặc định
 const defaultTasks = [
   { name: "Khảo sát học kỳ", deadline: "2025-01-05", done: false },
@@ -92,7 +103,9 @@ function updateRecentTasks(nearDeadlineTasks) {
 }
 
 function go(page) {
-  window.location.href = page;
+  // Remove leading slash if present and add BASE_PATH
+  const cleanPage = page.startsWith('/') ? page.substring(1) : page;
+  window.location.href = BASE_PATH + cleanPage;
 }
 
 // Update welcome message

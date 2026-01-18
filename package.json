@@ -1,7 +1,7 @@
 {
   "name": "c7aio",
   "version": "1.0.0",
-  "description": "Ứng dụng quản lý học tập cho lớp 10A1 - Class Hub AIO",
+  "description": "10C7 All In One - Quản lý học tập cho lớp 10C7",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

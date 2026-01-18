@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#667eea">
   <meta name="description" content="Ứng dụng quản lý học tập cho lớp 10A1 - Sử dụng được offline">
   <title>10C7 AIO</title>
+  <base href="/c7aio/">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='60' font-size='80' text-anchor='middle'>📚</text></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23667eea' width='180' height='180'/><text x='90' y='100' font-size='90' font-weight='bold' fill='white' text-anchor='middle'>📚</text></svg>">
@@ -43,7 +44,7 @@
   <section class="stats-section">
     <h2 class="section-title">📊 Tổng Quan Học Tập</h2>
     <div class="stats-grid">
-      <div class="stat-card" onclick="go('/nhiemvu/nv.html')">
+      <div class="stat-card" onclick="go('nhiemvu/nv.html')">
         <div class="stat-icon-wrapper">
           <span class="stat-icon">📋</span>
         </div>
@@ -53,7 +54,7 @@
         </div>
         <div class="stat-indicator"></div>
       </div>
-      <div class="stat-card" onclick="go('/nhiemvu/nv.html')">
+      <div class="stat-card" onclick="go('nhiemvu/nv.html')">
         <div class="stat-icon-wrapper">
           <span class="stat-icon">🔄</span>
         </div>
@@ -63,7 +64,7 @@
         </div>
         <div class="stat-indicator"></div>
       </div>
-      <div class="stat-card" onclick="go('/thongke/tk.html')">
+      <div class="stat-card" onclick="go('thongke/tk.html')">
         <div class="stat-icon-wrapper">
           <span class="stat-icon">✅</span>
         </div>
@@ -73,7 +74,7 @@
         </div>
         <div class="stat-indicator success"></div>
       </div>
-      <div class="stat-card" onclick="go('/nhiemvu/nv.html')">
+      <div class="stat-card" onclick="go('nhiemvu/nv.html')">
         <div class="stat-icon-wrapper">
           <span class="stat-icon">⏰</span>
         </div>
@@ -90,22 +91,22 @@
   <section class="nav-section">
     <h2 class="section-title">🚀 Điều Hướng Nhanh</h2>
     <div class="nav-grid">
-      <button class="nav-btn nav-btn-primary" onclick="go('/nhiemvu/nv.html')">
+      <button class="nav-btn nav-btn-primary" onclick="go('nhiemvu/nv.html')">
         <span class="nav-icon">📌</span>
         <span class="nav-text">Nhiệm vụ</span>
         <span class="nav-desc">Quản lý công việc</span>
       </button>
-      <button class="nav-btn nav-btn-success" onclick="go('/thongke/tk.html')">
+      <button class="nav-btn nav-btn-success" onclick="go('thongke/tk.html')">
         <span class="nav-icon">📊</span>
         <span class="nav-text">Thống kê</span>
         <span class="nav-desc">Xem tiến độ</span>
       </button>
-      <button class="nav-btn nav-btn-info" onclick="go('/thongbao/tb.html')">
+      <button class="nav-btn nav-btn-info" onclick="go('thongbao/tb.html')">
         <span class="nav-icon">🔔</span>
         <span class="nav-text">Thông báo</span>
         <span class="nav-desc">Cập nhật tin tức</span>
       </button>
-      <button class="nav-btn nav-btn-calendar" onclick="go('/lich/lich.html')">
+      <button class="nav-btn nav-btn-calendar" onclick="go('lich/lich.html')">
         <span class="nav-icon">📅</span>
         <span class="nav-text">Lịch học</span>
         <span class="nav-desc">Xem thời khoá biểu</span>
@@ -117,7 +118,7 @@
   <section class="recent-section">
     <div class="section-header">
       <h2>⏰ Task Gần Hạn</h2>
-      <a href="/nhiemvu/nv.html" class="view-all">Xem tất cả →</a>
+      <a href="nhiemvu/nv.html" class="view-all">Xem tất cả →</a>
     </div>
     <div class="recent-container">
       <ul class="recent-list" id="recentTasks">
@@ -181,7 +182,7 @@
   // Check user login
   window.addEventListener('load', () => {
     if (!isLoggedIn()) {
-      window.location.href = 'login.html';
+      window.location.href = BASE_PATH + 'login.html';
       return;
     }
 
@@ -213,7 +214,7 @@
   function handleLogout() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
       logoutUser();
-      window.location.href = 'login.html';
+      window.location.href = BASE_PATH + 'login.html';
     }
   }
 
