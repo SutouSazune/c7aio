@@ -1,0 +1,48 @@
+# Jekyll configuration for GitHub Pages
+# Prevents Jekyll from processing HTML files
+
+# Build settings
+markdown: kramdown
+theme: null
+
+# Site settings
+title: 10C7 AIO - Class Hub
+description: Ứng dụng quản lý học tập cho lớp 10A1
+
+# Include .htaccess file
+include:
+  - .htaccess
+
+# Exclude files from build
+exclude:
+  - .git
+  - .gitignore
+  - node_modules
+  - package.json
+  - package-lock.json
+  - README.md
+  - LICENSE
+  - server.js
+  - SERVER_CONFIG.md
+  - URL_ROUTING_GUIDE.md
+
+# Collections
+collections:
+  - nhiemvu
+  - lich
+  - thongbao
+  - thongke
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: null
+
+# Output settings
+output: html
+
+# URLs
+permalink: /:path/

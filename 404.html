@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea">
+  <title>Trang không tìm thấy - 404 | Class Hub</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='60' font-size='80' text-anchor='middle'>❌</text></svg>">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .error-container {
+      background: white;
+      border-radius: 16px;
+      padding: 3rem 2rem;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .error-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .error-code {
+      font-size: 4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .error-title {
+      font-size: 1.8rem;
+      color: #333;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .error-message {
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .error-details {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+
+    .error-details p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    .error-details strong {
+      color: #333;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.8rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 2px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+      background: #efefef;
+      border-color: #ccc;
+    }
+
+    .footer-text {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      .error-container {
+        padding: 2rem 1.5rem;
+      }
+
+      .error-code {
+        font-size: 3rem;
+      }
+
+      .error-title {
+        font-size: 1.5rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <div class="error-icon">❌</div>
+    <div class="error-code">404</div>
+    <h1 class="error-title">Trang Không Tìm Thấy</h1>
+    <p class="error-message">Rất tiếc, trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.</p>
+    
+    <div class="error-details">
+      <p><strong>Lỗi:</strong> HTTP 404 Not Found</p>
+      <p><strong>Nguyên nhân:</strong> URL không hợp lệ hoặc tài nguyên không tồn tại</p>
+      <p><strong>Thời gian:</strong> <span id="currentTime"></span></p>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-primary" onclick="window.location.href='/'">🏠 Về Trang Chủ</button>
+      <button class="btn btn-secondary" onclick="window.history.back()">↩️ Quay Lại</button>
+    </div>
+
+    <p class="footer-text">Nếu bạn cho rằng đây là một lỗi, vui lòng liên hệ với quản trị viên.</p>
+  </div>
+
+  <script>
+    // Hiển thị thời gian hiện tại
+    const now = new Date();
+    document.getElementById('currentTime').textContent = now.toLocaleString('vi-VN');
+
+    // Tự động redirect sau 10 giây nếu người dùng không hành động
+    let redirectTimeout = setTimeout(() => {
+      console.log('Tự động redirect đến trang chủ...');
+      window.location.href = '/';
+    }, 10000);
+
+    // Hủy redirect nếu người dùng click nút
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', () => clearTimeout(redirectTimeout));
+    });
+  </script>
+</body>
+</html>

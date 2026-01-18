@@ -60,12 +60,56 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Chiến lược Network-first cho HTML, JS, CSS (luôn thử mạng trước)
-  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+  // Handle directory requests - redirect to index.html
+  if (request.destination === 'document') {
+    // Nếu là request cho document (HTML page)
     event.respondWith(
       fetch(request)
         .then(networkResponse => {
-          // Lưu bản copy vào cache nếu response OK
+          if (!networkResponse || networkResponse.status !== 200) {
+            // Nếu 404, thử fetch index.html của folder đó
+            if (networkResponse.status === 404) {
+              const pathWithIndex = url.pathname.endsWith('/') 
+                ? url.pathname + 'index.html'
+                : url.pathname + '/index.html';
+              
+              return fetch(pathWithIndex)
+                .catch(() => caches.match('/index.html'));
+            }
+            return networkResponse;
+          }
+
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(request, responseToCache);
+          });
+
+          return networkResponse;
+        })
+        .catch(() => {
+          // Network error - use cache
+          return caches.match(request).then(cachedResponse => {
+            if (cachedResponse) {
+              console.log('📦 Phục vụ từ cache:', request.url);
+              return cachedResponse;
+            }
+
+            // Try to serve index.html from the directory
+            const pathWithIndex = url.pathname.endsWith('/') 
+              ? url.pathname + 'index.html'
+              : url.pathname + '/index.html';
+            
+            return caches.match(pathWithIndex)
+              .catch(() => caches.match('/index.html'));
+          });
+        })
+    );
+  } 
+  // Chiến lược Network-first cho HTML, JS, CSS
+  else if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(
+      fetch(request)
+        .then(networkResponse => {
           if (!networkResponse || networkResponse.status !== 200) {
             return networkResponse;
           }
@@ -78,16 +122,10 @@ self.addEventListener('fetch', event => {
           return networkResponse;
         })
         .catch(() => {
-          // Nếu mạng lỗi, dùng cache
           return caches.match(request).then(cachedResponse => {
             if (cachedResponse) {
               console.log('📦 Phục vụ từ cache:', request.url);
               return cachedResponse;
-            }
-
-            // Fallback cho trang
-            if (request.destination === 'document') {
-              return caches.match('/index.html');
             }
 
             return new Response('Offline - Không thể tải tài nguyên này', {

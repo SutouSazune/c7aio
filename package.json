@@ -1,0 +1,26 @@
+{
+  "name": "c7aio",
+  "version": "1.0.0",
+  "description": "Ứng dụng quản lý học tập cho lớp 10A1 - Class Hub AIO",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "serve": "node server.js"
+  },
+  "keywords": [
+    "education",
+    "classroom",
+    "management",
+    "vietnamese"
+  ],
+  "author": "Class 10A1",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "compression": "^1.7.4"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
