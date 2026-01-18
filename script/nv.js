@@ -122,6 +122,53 @@ function closeContentModal() {
   document.getElementById('contentModal').style.display = 'none';
 }
 
+// Progress Modal (Xem danh sách người làm)
+function viewTaskProgress(taskId) {
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  document.getElementById('progressTaskTitle').textContent = `Tiến độ: ${task.name}`;
+  const modal = document.getElementById('progressModal');
+  const colDone = document.getElementById('colDone');
+  const colPending = document.getElementById('colPending');
+
+  const completions = task.completions || {};
+  
+  // Phân loại học sinh
+  const doneList = [];
+  const pendingList = [];
+
+  STUDENTS.forEach(student => {
+    if (completions[student.id]) {
+      doneList.push(student);
+    } else {
+      pendingList.push(student);
+    }
+  });
+
+  // Render cột Đã xong
+  colDone.innerHTML = `
+    <h3 style="color: #27ae60;">✅ Đã xong (${doneList.length})</h3>
+    <ul class="progress-list">
+      ${doneList.map(s => `<li class="progress-item done">👤 ${s.name}</li>`).join('')}
+    </ul>
+  `;
+
+  // Render cột Chưa xong
+  colPending.innerHTML = `
+    <h3 style="color: #e74c3c;">⏳ Chưa xong (${pendingList.length})</h3>
+    <ul class="progress-list">
+      ${pendingList.map(s => `<li class="progress-item pending">⭕ ${s.name}</li>`).join('')}
+    </ul>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeProgressModal() {
+  document.getElementById('progressModal').style.display = 'none';
+}
+
 async function deleteTask(taskId) {
   if (!isAdmin()) {
     alert('Chỉ Admin mới có thể xóa');
@@ -235,6 +282,10 @@ function renderTasks() {
               <div class="task-completion">
                 👥 ${completionCount} đã xong
               </div>
+
+              ${isAdmin() ? `
+                <button class="view-progress-btn" onclick="viewTaskProgress(${task.id})">📋 Xem DS</button>
+              ` : ''}
 
               <button class="view-content-btn" onclick="viewTaskContent(${task.id})">
                 📄 Xem chi tiết

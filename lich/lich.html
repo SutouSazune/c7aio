@@ -10,6 +10,95 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Toggle Switch CSS */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      margin-right: 10px;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #667eea; }
+    input:focus + .slider { box-shadow: 0 0 1px #667eea; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .mode-toggle-wrapper { display: flex; align-items: center; margin-bottom: 12px; }
+    .toggle-label { font-weight: 600; font-size: 0.9rem; color: #333; cursor: pointer; }
+    
+    /* Class Name Input */
+    .class-name-input {
+      border: none;
+      border-bottom: 2px dashed #667eea;
+      background: transparent;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #4a5568;
+      width: 140px;
+      text-align: center;
+      padding: 0 5px;
+      transition: all 0.3s ease;
+    }
+    .class-name-input:focus {
+      outline: none;
+      border-bottom: 2px solid #667eea;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Header Class Filter Dropdown */
+    .header-class-filter {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #667eea;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #4a5568;
+      padding: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Modal Class Filter */
+    .modal-class-filter {
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-right: 10px;
+      font-size: 0.9rem;
+      color: #4a5568;
+      outline: none;
+      background-color: white;
+    }
+    .modal-class-filter:focus {
+      border-color: #667eea;
+    }
+  </style>
 </head>
 <body>
   <header class="header">
@@ -18,7 +107,10 @@
       <h1>📅 Thời Khoá Biểu</h1>
       <p>Quản lý lịch học theo tuần</p>
       <p class="current-week-display">
-        Hiện đang thực hiện TKB: 
+        Hiện đang thực hiện TKB 
+        <select id="headerClassFilter" class="header-class-filter" onchange="filterScheduleByHeader()">
+          <option value="">-- Tất cả --</option>
+        </select>: 
         <span id="currentWeekDisplayText"></span>
         <select id="currentWeekSelect" class="current-week-select" style="display: none;" onchange="changeWeekFromDropdown()"></select>
       </p>
@@ -34,13 +126,13 @@
     </div>
 
     <div class="weekdays-header">
+      <div class="weekday">CN</div>
       <div class="weekday">T2</div>
       <div class="weekday">T3</div>
       <div class="weekday">T4</div>
       <div class="weekday">T5</div>
       <div class="weekday">T6</div>
       <div class="weekday">T7</div>
-      <div class="weekday">CN</div>
     </div>
 
     <div class="calendar-grid" id="calendarDays">
@@ -79,6 +171,9 @@
 
       <!-- View Mode Selector in Modal -->
       <div class="view-mode-buttons-modal">
+        <select id="modalClassFilter" class="modal-class-filter" onchange="filterModalScheduleByClass()">
+          <option value="">-- Tất cả lớp --</option>
+        </select>
         <button class="view-mode-btn active" data-mode="week" onclick="switchModalViewMode('week')">📋 Tuần</button>
         <button class="view-mode-btn" data-mode="day" onclick="switchModalViewMode('day')">📅 Ngày</button>
         <button class="view-mode-btn" data-mode="daily" onclick="switchModalViewMode('daily')">📖 Chi Tiết</button>
@@ -115,12 +210,34 @@
         <div id="manageClassAdminSection" class="manage-class-section" style="display: none;">
           <h3>➕ Thêm Lớp Mới</h3>
           <div class="input-group-modal">
-            <input type="text" id="classInputManage" placeholder="Tên lớp">
-            <div class="time-range-inputs">
+            <div class="mode-toggle-wrapper">
+              <label class="switch">
+                <input type="checkbox" id="usePeriodMode" onchange="togglePeriodMode()">
+                <span class="slider round"></span>
+              </label>
+              <span class="toggle-label" onclick="document.getElementById('usePeriodMode').click()">Chọn theo tiết (1-10)</span>
+            </div>
+            
+            <input type="text" id="classInputManage" list="manageClassNamesList" placeholder="Tên lớp (vd: Toán, Lý...)">
+            <datalist id="manageClassNamesList"></datalist>
+            <input type="text" id="subjectInputManage" list="manageSubjectsList" placeholder="Môn học (vd: Đại số, Hình học...)">
+            <datalist id="manageSubjectsList"></datalist>
+            
+            <!-- Input theo Tiết -->
+            <div class="period-inputs" id="periodInputGroup" style="display: none;">
+              <label style="align-self: center; font-weight: 500; margin-right: 8px;">Chọn tiết:</label>
+              <select id="startPeriodSelect" class="period-select" style="flex: 1;">
+                <!-- Options generated by JS -->
+              </select>
+            </div>
+
+            <!-- Input theo Giờ -->
+            <div class="time-range-inputs" id="timeInputGroup">
               <input type="time" id="timeInputManage" placeholder="Bắt đầu">
               <input type="time" id="endTimeInputManage" placeholder="Kết thúc (tuỳ chọn)">
             </div>
-            <input type="text" id="roomInputManage" placeholder="Phòng">
+            <input type="text" id="roomInputManage" list="manageRoomsList" placeholder="Phòng">
+            <datalist id="manageRoomsList"></datalist>
             <select id="daySelectManage">
               <option value="monday">Thứ Hai</option>
               <option value="tuesday">Thứ Ba</option>
@@ -149,6 +266,10 @@
 
       <div class="modal-body">
         <div class="week-form">
+          <label>Tên lớp:</label>
+          <input type="text" id="weekClassNameInput" list="weekClassNamesList" placeholder="vd: 10C7">
+          <datalist id="weekClassNamesList"></datalist>
+
           <label>Tên tuần:</label>
           <input type="text" id="weekNameInput" placeholder="vd: Tuần 1, Tuần 2...">
 
@@ -183,6 +304,14 @@
     <p>&copy; 2026 Lớp 10C7</p>
   </footer>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  
+  <!-- Scripts -->
+  <script src="../script/firebase-config.js"></script>
+  <script src="../script/firebase-utils.js"></script>
   <script src="../script/students-list.js"></script>
   <script src="../script/console.js"></script>
   <script src="../script/lich.js"></script>

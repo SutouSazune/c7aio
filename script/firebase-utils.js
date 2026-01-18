@@ -423,6 +423,67 @@ async function updateSharedNotificationCompletion(notifId, completions) {
   await db.ref(`shared/notifications/${notifId}/completions`).set(completions);
 }
 
+// --- SHARED SCHEDULES (LỊCH HỌC) ---
+// Lắng nghe lịch học
+function onSharedSchedulesChanged(callback) {
+  const ref = db.ref('shared/schedules');
+  ref.on('value', snapshot => {
+    const data = snapshot.val() || {};
+    localStorage.setItem('c7aio_schedules_cache', JSON.stringify(data));
+    callback(data);
+  });
+}
+
+// Lưu lịch học
+async function saveSharedSchedules(schedules) {
+  try {
+    await db.ref('shared/schedules').set(schedules);
+    console.log('✅ Đã lưu lịch học lên Firebase');
+  } catch (error) {
+    console.error('❌ Lỗi lưu lịch học:', error);
+  }
+}
+
+// Lắng nghe metadata tuần (Thông tin ngày bắt đầu/kết thúc của tuần)
+function onSharedWeekMetadataChanged(callback) {
+  const ref = db.ref('shared/weekMetadata');
+  ref.on('value', snapshot => {
+    const data = snapshot.val() || {};
+    localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(data));
+    callback(data);
+  });
+}
+
+// Lưu metadata tuần
+async function saveSharedWeekMetadata(metadata) {
+  try {
+    await db.ref('shared/weekMetadata').set(metadata);
+    console.log('✅ Đã lưu thông tin tuần lên Firebase');
+  } catch (error) {
+    console.error('❌ Lỗi lưu thông tin tuần:', error);
+  }
+}
+
+// --- SHARED INPUT HISTORY (Gợi ý nhập liệu: Tên lớp, Môn, Phòng) ---
+// Lắng nghe thay đổi history
+function onSharedInputHistoryChanged(callback) {
+  const ref = db.ref('shared/inputHistory');
+  ref.on('value', snapshot => {
+    const data = snapshot.val() || {};
+    localStorage.setItem('c7aio_inputHistory_cache', JSON.stringify(data));
+    callback(data);
+  });
+}
+
+// Lưu history
+async function saveSharedInputHistory(type, list) {
+  try {
+    await db.ref(`shared/inputHistory/${type}`).set(list);
+  } catch (error) {
+    console.error(`❌ Lỗi lưu history ${type}:`, error);
+  }
+}
+
 // ============= FALLBACK - Offline Support =============
 
 // Nếu offline, sử dụng localStorage tạm thời
