@@ -16,7 +16,7 @@ const firebaseConfig = {
   measurementId: "G-KWSG5GJMTH"
 };
 // --- KIỂM TRA CẤU HÌNH (Tự động báo lỗi nếu chưa thay đổi) ---
-const isConfigured = firebaseConfig.apiKey && firebaseConfig.databaseURL && !firebaseConfig.apiKey.includes("AIzaSyBXkiJDkHeTSjztzXd3SlbCr64mVl8Ulv8");
+const isConfigured = firebaseConfig.apiKey && firebaseConfig.databaseURL;
 
 if (!isConfigured) {
   console.error("❌ CHƯA CẤU HÌNH FIREBASE: Vui lòng cập nhật file script/firebase-config.js");
