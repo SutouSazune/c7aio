@@ -1,13 +1,26 @@
-// Detect base path for GitHub Pages
+// Detect base path for GitHub Pages vs Live Server
 function getBasePath() {
   const pathname = window.location.pathname;
+  const hostname = window.location.hostname;
+  
+  // GitHub Pages - path includes /c7aio/
   if (pathname.includes('/c7aio/')) {
     return '/c7aio/';
   }
+  
+  // Local development (Live Server or localhost)
+  // Always use root path
   return '/';
 }
 
 const BASE_PATH = getBasePath();
+
+// Helper function to build correct URL
+function buildUrl(relativePath) {
+  // Remove leading slash if present
+  const path = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+  return BASE_PATH === '/' ? path : BASE_PATH + path;
+}
 
 // Dữ liệu mặc định
 const defaultTasks = [
@@ -103,9 +116,9 @@ function updateRecentTasks(nearDeadlineTasks) {
 }
 
 function go(page) {
-  // Remove leading slash if present and add BASE_PATH
-  const cleanPage = page.startsWith('/') ? page.substring(1) : page;
-  window.location.href = BASE_PATH + cleanPage;
+  // Build correct URL based on environment
+  const url = buildUrl(page);
+  window.location.href = url;
 }
 
 // Update welcome message

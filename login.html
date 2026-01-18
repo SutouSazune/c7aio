@@ -4,18 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#667eea">
-  <title>Chọn Người Dùng - Class Hub</title>
-  <base href="/c7aio/">
+  <title>C7 AIO - Chọn Người Dùng</title>
   <script>
     // Detect base path for GitHub Pages
     function getBasePath() {
       const pathname = window.location.pathname;
+      // If on GitHub Pages (path includes /c7aio/)
       if (pathname.includes('/c7aio/')) {
         return '/c7aio/';
       }
+      // Otherwise (Live Server or local)
       return '/';
     }
     const BASE_PATH = getBasePath();
+    
+    // Helper function to build correct URL
+    function buildUrl(relativePath) {
+      // Remove leading slash if present
+      const path = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+      return BASE_PATH === '/' ? path : BASE_PATH + path;
+    }
   </script>
   <style>
     * {
@@ -334,7 +342,7 @@
       const student = STUDENTS.find(s => s.id === studentId);
       if (student) {
         setCurrentUser(student);
-        window.location.href = BASE_PATH + 'index.html';
+        window.location.href = buildUrl('index.html');
       }
     }
 
@@ -377,7 +385,7 @@
       // Kiểm tra mã admin (mã mặc định: "admin123")
       if (code === ADMIN.code) {
         setCurrentUser(ADMIN);
-        window.location.href = BASE_PATH + 'index.html';
+        window.location.href = buildUrl('index.html');
       } else {
         showError('Mã admin sai');
         document.getElementById('adminCodeInput').value = '';
@@ -403,7 +411,7 @@
 
     // Kiểm tra nếu đã login
     if (isLoggedIn()) {
-      window.location.href = BASE_PATH + 'index.html';
+      window.location.href = buildUrl('index.html');
     }
 
     // Load danh sách khi trang load
