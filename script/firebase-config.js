@@ -8,6 +8,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyB_YOUR_API_KEY_HERE",
   authDomain: "your-project.firebaseapp.com",
+  databaseURL: "https://your-project-id-default-rtdb.firebaseio.com",
   projectId: "your-project-id",
   storageBucket: "your-project.appspot.com",
   messagingSenderId: "123456789",

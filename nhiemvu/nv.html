@@ -5,24 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#667eea">
   <title>10C7 AIO - Nhiệm vụ</title>
-  <script>
-    // Detect and inject base path
-    function getBasePath() {
-      const pathname = window.location.pathname;
-      if (pathname.includes('/c7aio/')) {
-        return '/c7aio/';
-      }
-      return '/';
-    }
-    const BASE_PATH = getBasePath();
-    
-    // Inject base tag dynamically
-    document.write('<base href="' + BASE_PATH + '">');
-  </script>
   <link rel="stylesheet" href="../style/nv.css">
+  <link rel="stylesheet" href="../style/console.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Quill Editor CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 </head>
 <body>
   <header class="header">
@@ -34,10 +23,11 @@
   </header>
 
   <section class="tasks-section">
-    <div class="task-input-area">
-      <input type="text" id="taskInput" placeholder="Thêm nhiệm vụ mới..." class="task-input">
-      <input type="date" id="deadlineInput" class="deadline-input">
-      <button class="add-btn" onclick="addTask()">+</button>
+    <!-- Admin Controls -->
+    <div class="admin-controls" id="adminControls" style="display: none;">
+      <button class="add-task-btn" onclick="openTaskModal()">
+        <span>+</span> Thêm Nhiệm Vụ Mới
+      </button>
     </div>
 
     <div class="filter-buttons">
@@ -51,11 +41,74 @@
     </ul>
   </section>
 
+  <!-- Modal Thêm/Sửa Nhiệm Vụ -->
+  <div id="taskModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📝 Thông Tin Nhiệm Vụ</h2>
+        <button class="modal-close" onclick="closeTaskModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tên nhiệm vụ (*)</label>
+          <input type="text" id="modalTaskName" placeholder="Nhập tên nhiệm vụ...">
+        </div>
+        <div class="form-group">
+          <label>Nội dung chi tiết (Blog/Ghi chú)</label>
+          <!-- Container cho Quill Editor -->
+          <div id="editor-container" style="height: 200px;"></div>
+        </div>
+        <div class="form-group">
+          <label>Ảnh bìa / Thumbnail (URL - Tuỳ chọn)</label>
+          <input type="text" id="modalTaskImage" placeholder="https://example.com/image.jpg">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bắt đầu (*)</label>
+            <input type="datetime-local" id="modalStartTime">
+          </div>
+          <div class="form-group">
+            <label>Kết thúc / Hạn chót (*)</label>
+            <input type="datetime-local" id="modalEndTime">
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveTask()">Lưu Nhiệm Vụ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Xem Ảnh -->
+  <div id="imageModal" class="modal image-modal" onclick="closeImageModal()">
+    <img id="previewImage" src="" alt="Hướng dẫn">
+  </div>
+
+  <!-- Modal Xem Chi Tiết Nội Dung (Blog View) -->
+  <div id="contentModal" class="modal">
+    <div class="modal-content content-view-modal">
+      <div class="modal-header">
+        <h2 id="viewTaskTitle">Chi tiết nhiệm vụ</h2>
+        <button class="modal-close" onclick="closeContentModal()">✕</button>
+      </div>
+      <div class="modal-body ql-editor" id="viewTaskBody">
+        <!-- Nội dung HTML sẽ được render vào đây -->
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
     <p>&copy; 2026 Lớp 10C7</p>
   </footer>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../script/firebase-config.js"></script>
+  <script>firebase.initializeApp(firebaseConfig);</script>
+  <script src="../script/firebase-utils.js"></script>
   <script src="../script/students-list.js"></script>
+  <!-- Quill Editor JS -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="../script/console.js"></script>
   <script src="../script/nv.js"></script>
 </body>
 </html>

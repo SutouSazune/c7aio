@@ -5,21 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#667eea">
   <title>10C7 AIO - Thống Kê</title>
-  <script>
-    // Detect and inject base path
-    function getBasePath() {
-      const pathname = window.location.pathname;
-      if (pathname.includes('/c7aio/')) {
-        return '/c7aio/';
-      }
-      return '/';
-    }
-    const BASE_PATH = getBasePath();
-    
-    // Inject base tag dynamically
-    document.write('<base href="' + BASE_PATH + '">');
-  </script>
   <link rel="stylesheet" href="../style/tk.css">
+  <link rel="stylesheet" href="../style/console.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -36,22 +23,25 @@
   <section class="stats-overview">
     <div class="stat-card">
       <div class="stat-label">📋 Tổng Nhiệm vụ</div>
-      <div class="stat-value" id="totalTasks">0</div>
+      <div class="stat-value" id="totalTask">0</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">✅ Hoàn thành</div>
-      <div class="stat-value" id="completedTasks">0</div>
+      <div class="stat-value" id="doneTask">0</div>
       <div class="stat-percent" id="completedPercent">0%</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">🔄 Đang làm</div>
-      <div class="stat-value" id="pendingTasks">0</div>
+      <div class="stat-value" id="openTask">0</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">⏰ Sắp hết hạn</div>
-      <div class="stat-value" id="urgentTasks">0</div>
+      <div class="stat-value" id="nearDeadline">0</div>
     </div>
   </section>
+
+  <!-- Container cho bảng thống kê chi tiết (Admin) -->
+  <div id="statsContainer"></div>
 
   <section class="charts-section">
     <div class="chart-container">
@@ -100,7 +90,14 @@
     <p>&copy; 2026 Lớp 10C7</p>
   </footer>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../script/firebase-config.js"></script>
+  <script>firebase.initializeApp(firebaseConfig);</script>
+  <script src="../script/firebase-utils.js"></script>
   <script src="../script/students-list.js"></script>
+  <script src="../script/console.js"></script>
   <script src="../script/tk.js"></script>
 </body>
 </html>

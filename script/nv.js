@@ -1,65 +1,125 @@
-let tasks = [];
+// Load từ cache ngay lập tức
+let tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
 let currentFilter = 'all';
 let currentUser = null;
+let quill = null; // Biến global cho editor
 
 // Khởi tạo
 window.addEventListener('load', () => {
   currentUser = getCurrentUser();
   
-  document.getElementById('taskInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      addTask();
+  // Chỉ admin mới thêm được task
+  if (isAdmin()) {
+    document.getElementById('adminControls').style.display = 'block';
+  }
+
+  // Khởi tạo Quill Editor
+  quill = new Quill('#editor-container', {
+    theme: 'snow',
+    placeholder: 'Viết nội dung chi tiết, chèn ảnh, định dạng văn bản tại đây...',
+    modules: {
+      toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'color': [] }, { 'background': [] }],
+        ['link', 'image', 'video'], // Cho phép chèn ảnh trực tiếp
+        ['clean']
+      ]
     }
   });
 
-  // Chỉ admin mới thêm được task
-  if (!isAdmin()) {
-    document.querySelector('.task-input-area').style.display = 'none';
-  }
+  // Render ngay dữ liệu từ cache (nếu có)
+  renderTasks();
 
-  loadTasks();
+  // Lắng nghe dữ liệu từ Firebase thay vì loadTasks từ localStorage
+  onSharedTasksChanged((updatedTasks) => {
+    tasks = updatedTasks;
+    renderTasks();
+  });
 });
 
-async function loadTasks() {
-  try {
-    const data = localStorage.getItem('c7aio_tasks_shared');
-    tasks = data ? JSON.parse(data) : [];
-  } catch (error) {
-    console.error('Lỗi tải tasks:', error);
-    tasks = [];
-  }
-  renderTasks();
+// --- MODAL FUNCTIONS ---
+function openTaskModal() {
+  document.getElementById('taskModal').style.display = 'flex';
+  // Set default start time to now
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('modalStartTime').value = now.toISOString().slice(0, 16);
 }
 
-async function addTask() {
+function closeTaskModal() {
+  document.getElementById('taskModal').style.display = 'none';
+  // Clear inputs
+  document.getElementById('modalTaskName').value = '';
+  quill.setContents([]); // Xóa nội dung editor
+  document.getElementById('modalTaskImage').value = '';
+  document.getElementById('modalEndTime').value = '';
+}
+
+function saveTask() {
   if (!isAdmin()) {
     alert('Chỉ Admin mới có thể thêm task');
     return;
   }
 
-  const input = document.getElementById('taskInput');
-  const deadlineInput = document.getElementById('deadlineInput');
-  const taskName = input.value.trim();
-  const deadline = deadlineInput.value;
+  const name = document.getElementById('modalTaskName').value.trim();
+  const content = quill.root.innerHTML; // Lấy nội dung HTML từ Quill
+  const image = document.getElementById('modalTaskImage').value.trim();
+  const start = document.getElementById('modalStartTime').value;
+  const end = document.getElementById('modalEndTime').value;
 
-  if (!taskName) {
-    alert('Vui lòng nhập tên nhiệm vụ');
+  if (!name || !start || !end) {
+    alert('Vui lòng nhập tên, thời gian bắt đầu và kết thúc!');
+    return;
+  }
+
+  if (new Date(start) >= new Date(end)) {
+    alert('Thời gian kết thúc phải sau thời gian bắt đầu!');
     return;
   }
 
   const newTask = {
     id: Date.now(),
-    name: taskName,
-    deadline: deadline || new Date().toISOString().split('T')[0],
+    name: name,
+    content: content, // Lưu HTML
+    imageUrl: image,
+    startTime: start,
+    endTime: end,
+    deadline: end.split('T')[0], // Giữ field cũ để tương thích ngược nếu cần
     createdAt: new Date().toISOString(),
-    completions: {} // { userId: true/false }
+    completions: {}
   };
 
-  tasks.push(newTask);
-  saveTasks();
-  input.value = '';
-  deadlineInput.value = '';
-  renderTasks();
+  // Lưu lên Firebase
+  saveSharedTask(newTask);
+  closeTaskModal();
+}
+
+// Image Modal
+function viewImage(url) {
+  const modal = document.getElementById('imageModal');
+  const img = document.getElementById('previewImage');
+  img.src = url;
+  modal.style.display = 'flex';
+}
+
+function closeImageModal() {
+  document.getElementById('imageModal').style.display = 'none';
+}
+
+// Content Modal (Xem chi tiết bài viết)
+function viewTaskContent(taskId) {
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  document.getElementById('viewTaskTitle').textContent = task.name;
+  document.getElementById('viewTaskBody').innerHTML = task.content || '<p>Không có nội dung chi tiết.</p>';
+  document.getElementById('contentModal').style.display = 'flex';
+}
+
+function closeContentModal() {
+  document.getElementById('contentModal').style.display = 'none';
 }
 
 async function deleteTask(taskId) {
@@ -69,9 +129,7 @@ async function deleteTask(taskId) {
   }
 
   if (confirm('Xóa nhiệm vụ này?')) {
-    tasks = tasks.filter(t => t.id !== taskId);
-    saveTasks();
-    renderTasks();
+    deleteSharedTask(taskId);
   }
 }
 
@@ -86,12 +144,8 @@ async function toggleCompletion(taskId) {
   // Toggle trạng thái của user hiện tại
   task.completions[currentUser.id] = !task.completions[currentUser.id];
   
-  saveTasks();
-  renderTasks();
-}
-
-function saveTasks() {
-  localStorage.setItem('c7aio_tasks_shared', JSON.stringify(tasks));
+  // Chỉ cập nhật phần completions lên Firebase để tiết kiệm băng thông
+  updateSharedTaskCompletion(taskId, task.completions);
 }
 
 function filterTasks(filter) {
@@ -142,8 +196,26 @@ function renderTasks() {
     .map(task => {
       const isCompleted = task.completions && task.completions[currentUser.id];
       const completionCount = Object.values(task.completions || {}).filter(v => v).length;
-      const today = new Date().toISOString().split('T')[0];
-      const isUrgent = task.deadline <= today && !isCompleted;
+      
+      // Xử lý thời gian
+      const now = new Date();
+      const start = new Date(task.startTime || task.createdAt);
+      const end = new Date(task.endTime || task.deadline);
+      
+      let timeStatus = '';
+      let isUrgent = false;
+
+      if (now > end && !isCompleted) {
+        isUrgent = true;
+        timeStatus = '⚠️ Đã quá hạn';
+      } else if (now < start) {
+        timeStatus = '⏳ Sắp diễn ra';
+      } else {
+        timeStatus = '🔥 Đang diễn ra';
+      }
+
+      // Format time range string
+      const timeRange = `${formatDateTime(start)} - ${formatDateTime(end)}`;
 
       return `
         <li class="task-item ${isCompleted ? 'completed' : ''}">
@@ -154,11 +226,25 @@ function renderTasks() {
             <div class="task-name ${isCompleted ? 'completed' : ''}">
               ${escapeHtml(task.name)}
             </div>
-            <div class="task-deadline ${isUrgent ? 'urgent' : ''}">
-              📅 ${formatDate(task.deadline)} ${isUrgent ? '⚠️ Sắp hết hạn' : ''}
-            </div>
-            <div class="task-completion">
-              ${completionCount} / ${Object.keys(task.completions || {}).length || '?'} đã hoàn thành
+            
+            <div class="task-meta">
+              <div class="task-time ${isUrgent ? 'urgent' : ''}">
+                📅 ${timeRange} <span style="margin-left:5px; font-weight:bold">(${timeStatus})</span>
+              </div>
+              
+              <div class="task-completion">
+                👥 ${completionCount} đã xong
+              </div>
+
+              <button class="view-content-btn" onclick="viewTaskContent(${task.id})">
+                📄 Xem chi tiết
+              </button>
+
+              ${task.imageUrl ? `
+                <button class="view-img-btn" onclick="viewImage('${escapeHtml(task.imageUrl)}')">
+                  📷 Xem hướng dẫn
+                </button>
+              ` : ''}
             </div>
           </div>
           ${isAdmin() ? `<button class="task-btn" onclick="deleteTask(${task.id})">Xóa</button>` : ''}
@@ -168,25 +254,12 @@ function renderTasks() {
     .join('');
 }
 
-function formatDate(dateString) {
-  const date = new Date(dateString + 'T00:00:00');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (date.toDateString() === today.toDateString()) {
-    return 'Hôm nay';
-  }
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (date.toDateString() === tomorrow.toDateString()) {
-    return 'Ngày mai';
-  }
-
+function formatDateTime(date) {
   return date.toLocaleDateString('vi-VN', {
-    weekday: 'short',
     month: 'numeric',
-    day: 'numeric'
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   });
 }
 

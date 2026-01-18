@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea">
+  <title>10C7 AIO - Quản Lý Hồ Sơ</title>
+  <link rel="stylesheet" href="../style/hs.css">
+  <link rel="stylesheet" href="../style/console.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="../" class="back-btn">←</a>
+      <h1>📂 Hồ Sơ Học Sinh</h1>
+      <p>Quản lý thông tin chi tiết thành viên lớp</p>
+    </div>
+  </header>
+
+  <section class="management-section">
+    <div class="controls-area">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên, SĐT..." onkeyup="searchStudents()">
+      </div>
+      <button class="add-btn" onclick="openStudentModal()">+ Thêm Học Sinh</button>
+    </div>
+
+    <div class="students-table-container">
+      <table class="students-table">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Họ và Tên</th>
+            <th>Ngày sinh</th>
+            <th>Giới tính</th>
+            <th>Liên lạc</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="studentsTableBody">
+          <!-- Dữ liệu sẽ được render ở đây -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Modal Thêm/Sửa Học Sinh -->
+  <div id="studentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Thông Tin Học Sinh</h2>
+        <button class="modal-close" onclick="closeStudentModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h3>👤 Thông tin cá nhân</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Họ và Tên (*)</label><input type="text" id="stdName"></div>
+            <div class="form-group"><label>Ngày sinh</label><input type="date" id="stdDob"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Giới tính</label>
+              <select id="stdGender">
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Dân tộc</label><input type="text" id="stdEthnicity"></div>
+          </div>
+          <div class="form-group"><label>CCCD / Mã định danh</label><input type="text" id="stdCccd"></div>
+        </div>
+
+        <div class="form-section">
+          <h3>📍 Liên hệ & Địa chỉ</h3>
+          <div class="form-row">
+            <div class="form-group"><label>SĐT Liên lạc</label><input type="tel" id="stdPhone"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="stdEmail"></div>
+          </div>
+          <div class="form-group"><label>Địa chỉ thường trú</label><input type="text" id="stdAddress"></div>
+          <div class="form-group"><label>Quê quán</label><input type="text" id="stdHometown"></div>
+        </div>
+
+        <div class="form-section">
+          <h3>👪 Thông tin gia đình</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Họ tên Cha</label><input type="text" id="stdFatherName"></div>
+            <div class="form-group"><label>SĐT Cha</label><input type="tel" id="stdFatherPhone"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Họ tên Mẹ</label><input type="text" id="stdMotherName"></div>
+            <div class="form-group"><label>SĐT Mẹ</label><input type="tel" id="stdMotherPhone"></div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="save-btn" onclick="saveStudent()">Lưu Hồ Sơ</button>
+          <button class="delete-btn" id="btnDeleteStudent" onclick="deleteStudent()" style="display:none;">Xóa Học Sinh</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2026 Lớp 10C7</p>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../script/firebase-config.js"></script>
+  <script>firebase.initializeApp(firebaseConfig);</script>
+  <script src="../script/firebase-utils.js"></script>
+  <script src="../script/students-list.js"></script>
+  <script src="../script/console.js"></script>
+  <script src="../script/hs.js"></script>
+</body>
+</html>

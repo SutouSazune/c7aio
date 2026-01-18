@@ -8,12 +8,14 @@
   <script>
     // Detect base path for GitHub Pages
     function getBasePath() {
+      const hostname = window.location.hostname;
       const pathname = window.location.pathname;
-      // If on GitHub Pages (path includes /c7aio/)
-      if (pathname.includes('/c7aio/')) {
-        return '/c7aio/';
+      
+      if (hostname.includes('github.io')) {
+        const parts = pathname.split('/');
+        if (parts.length >= 2 && parts[1]) return '/' + parts[1] + '/';
       }
-      // Otherwise (Live Server or local)
+      if (pathname.startsWith('/c7aio/')) return '/c7aio/';
       return '/';
     }
     const BASE_PATH = getBasePath();

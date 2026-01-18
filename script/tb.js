@@ -1,4 +1,4 @@
-let notifications = [];
+let notifications = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
 let currentFilter = 'all';
 let currentUser = null;
 
@@ -23,19 +23,23 @@ window.addEventListener('load', () => {
     document.querySelector('.notification-input-area').style.display = 'none';
   }
 
-  loadNotifications();
+  // Render ngay từ cache
   renderNotifications();
-});
 
-function loadNotifications() {
-  try {
-    const data = localStorage.getItem('c7aio_notifications_shared');
-    notifications = data ? JSON.parse(data) : [];
-  } catch (error) {
-    console.error('Lỗi tải notifications:', error);
-    notifications = [];
-  }
-}
+  // Lắng nghe dữ liệu từ Firebase
+  onSharedNotificationsChanged((data) => {
+    notifications = data;
+    renderNotifications();
+  });
+  
+  // Lắng nghe danh sách học sinh để tính toán số lượng người đã xem chính xác
+  onSharedStudentsChanged((data) => {
+    if (data) {
+      STUDENTS = data;
+      renderNotifications();
+    }
+  });
+});
 
 function addNotification() {
   if (!isAdmin()) {
@@ -61,10 +65,8 @@ function addNotification() {
     completions: {} // { userId: true/false }
   };
 
-  notifications.unshift(newNotification);
-  saveNotifications();
+  saveSharedNotification(newNotification);
   input.value = '';
-  renderNotifications();
 }
 
 function deleteNotification(notifId) {
@@ -74,9 +76,7 @@ function deleteNotification(notifId) {
   }
 
   if (confirm('Xóa thông báo này?')) {
-    notifications = notifications.filter(n => n.id !== notifId);
-    saveNotifications();
-    renderNotifications();
+    deleteSharedNotification(notifId);
   }
 }
 
@@ -89,12 +89,7 @@ function toggleNotificationCompletion(notifId) {
   }
 
   notif.completions[currentUser.id] = !notif.completions[currentUser.id];
-  saveNotifications();
-  renderNotifications();
-}
-
-function saveNotifications() {
-  localStorage.setItem('c7aio_notifications_shared', JSON.stringify(notifications));
+  updateSharedNotificationCompletion(notifId, notif.completions);
 }
 
 function filterNotifications(filter) {

@@ -10,6 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='60' font-size='80' text-anchor='middle'>📚</text></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23667eea' width='180' height='180'/><text x='90' y='100' font-size='90' font-weight='bold' fill='white' text-anchor='middle'>📚</text></svg>">
   <link rel="stylesheet" href="style/hub.css">
+  <link rel="stylesheet" href="style/console.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -110,6 +111,11 @@
         <span class="nav-text">Lịch học</span>
         <span class="nav-desc">Xem thời khoá biểu</span>
       </button>
+      <button class="nav-btn nav-btn-admin" onclick="go('hoso/hs.html')" id="adminManageBtn" style="display:none; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white;">
+        <span class="nav-icon">📂</span>
+        <span class="nav-text">Hồ sơ</span>
+        <span class="nav-desc">Quản lý lớp học</span>
+      </button>
     </div>
   </section>
 
@@ -135,22 +141,22 @@
     <p class="online-status" id="onlineStatus">🟢 Online</p>
   </footer>
 
-<script src="script/hub.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="script/firebase-config.js"></script>
 <script>firebase.initializeApp(firebaseConfig);</script>
 <script src="script/firebase-utils.js"></script>
 <script src="script/students-list.js"></script>
+<script src="script/console.js"></script>
 <script src="script/hub.js"></script>
 
 <!-- Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js')
+        // Đăng ký với scope tương đối để hỗ trợ GitHub Pages
+        navigator.serviceWorker.register('./service-worker.js')
         .then(registration => {
           console.log('✅ Service Worker đã được đăng ký:', registration);
 
@@ -192,6 +198,7 @@
     // Hiện nút Admin nếu là admin
     if (isAdmin()) {
       document.getElementById('adminToggle').style.display = 'inline-block';
+      document.getElementById('adminManageBtn').style.display = 'flex';
     }
 
     // Cập nhật welcome message

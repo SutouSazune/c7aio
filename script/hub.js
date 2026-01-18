@@ -3,13 +3,21 @@ function getBasePath() {
   const pathname = window.location.pathname;
   const hostname = window.location.hostname;
   
-  // GitHub Pages - path includes /c7aio/
-  if (pathname.includes('/c7aio/')) {
-    return '/c7aio/';
+  // GitHub Pages: hostname chứa 'github.io'
+  // Cấu trúc thường là /repo-name/
+  if (hostname.includes('github.io')) {
+    const parts = pathname.split('/');
+    // parts[0] là rỗng, parts[1] là tên repo
+    if (parts.length >= 2 && parts[1]) {
+      return '/' + parts[1] + '/';
+    }
   }
   
-  // Local development (Live Server or localhost)
-  // Always use root path
+  // Local development: Nếu chạy trong thư mục con (vd: /c7aio/)
+  if (pathname.startsWith('/c7aio/')) {
+    return '/c7aio/';
+  }
+
   return '/';
 }
 
@@ -30,30 +38,32 @@ const defaultTasks = [
 ];
 
 let tasks = [];
+let unsubscribe = null;
 
 // Load stats từ Firebase
 async function loadStats() {
-  try {
-    // Lấy tasks từ Firebase
-    tasks = await getTasks();
-    
-    if (tasks.length === 0) {
-      tasks = defaultTasks;
-    }
-  } catch (error) {
-    console.error('Lỗi tải tasks:', error);
-    // Fallback to localStorage
-    const stored = localStorage.getItem('c7aio_tasks');
-    tasks = stored ? JSON.parse(stored) : defaultTasks;
+  // Sử dụng hàm lắng nghe Shared Tasks mới
+  if (typeof onSharedTasksChanged === 'function') {
+    onSharedTasksChanged((updatedTasks) => {
+      tasks = updatedTasks;
+      updateUIStats();
+    });
   }
-
-  updateUIStats();
 }
 
 function updateUIStats() {
+  const user = getCurrentUser();
+  if (!user) return;
+
   // Cập nhật số liệu
   const totalTasks = tasks.length;
-  const doneTasks = tasks.filter(t => t.done).length;
+  
+  // Tính số task đã hoàn thành dựa trên user hiện tại
+  const doneTasks = tasks.filter(t => {
+    if (t.completions) return t.completions[user.id];
+    return t.done; // Fallback cho dữ liệu cũ
+  }).length;
+  
   const openTasks = totalTasks - doneTasks;
   
   document.getElementById("totalTask").innerText = totalTasks;
@@ -62,9 +72,17 @@ function updateUIStats() {
 
   const today = new Date();
   const nearDeadlineTasks = tasks.filter(t => {
-    const d = new Date(t.deadline);
-    const daysUntil = (d - today) / (1000*60*60*24);
-    return daysUntil <= 2 && daysUntil >= 0 && !t.done;
+    // Kiểm tra đã hoàn thành chưa
+    const isCompleted = t.completions ? t.completions[user.id] : t.done;
+    if (isCompleted) return false;
+
+    // Kiểm tra hạn chót (ưu tiên endTime nếu có)
+    const deadlineDate = t.endTime ? new Date(t.endTime) : new Date(t.deadline);
+    const diffTime = deadlineDate - today;
+    const daysUntil = diffTime / (1000 * 60 * 60 * 24);
+    
+    // Hiển thị task quá hạn hoặc sắp đến hạn trong vòng 3 ngày tới
+    return daysUntil <= 3; 
   });
 
   document.getElementById("nearDeadline").innerText = nearDeadlineTasks.length;
@@ -77,6 +95,8 @@ function updateRecentTasks(nearDeadlineTasks) {
   const ul = document.getElementById("recentTasks");
   const emptyState = document.getElementById("emptyState");
   
+  if (!ul || !emptyState) return;
+  
   ul.innerHTML = "";
   
   if (nearDeadlineTasks.length === 0) {
@@ -87,7 +107,12 @@ function updateRecentTasks(nearDeadlineTasks) {
   emptyState.style.display = 'none';
   
   nearDeadlineTasks.slice(0, 5).forEach(t => {
-    const deadline = new Date(t.deadline);
+    // Ưu tiên endTime, fallback deadline
+    const deadline = t.endTime ? new Date(t.endTime) : new Date(t.deadline);
+    
+    // Bỏ qua nếu ngày không hợp lệ
+    if (isNaN(deadline.getTime())) return;
+
     const today = new Date();
     const daysLeft = Math.ceil((deadline - today) / (1000*60*60*24));
     
@@ -110,7 +135,13 @@ function updateRecentTasks(nearDeadlineTasks) {
     
     const li = document.createElement('li');
     li.className = `recent-item ${urgencyClass}`;
-    li.innerHTML = `<span>${t.name}</span><span>${urgencyText}</span>`;
+    
+    // Xử lý click vào item để mở chi tiết (nếu cần sau này)
+    li.innerHTML = `
+      <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.name}</span>
+      <span>${urgencyText}</span>
+    `;
+    
     ul.appendChild(li);
   });
 }
@@ -161,13 +192,6 @@ function updateOnlineStatus() {
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
-function setupRealtimeListener() {
-  unsubscribe = onTasksChanged((updatedTasks) => {
-    tasks = updatedTasks;
-    loadStats(); // Cập nhật UI khi dữ liệu thay đổi
-  });
-}
-
 // Ngưng lắng nghe khi rời khỏi trang
 window.addEventListener('beforeunload', () => {
   if (unsubscribe) {
@@ -178,6 +202,4 @@ window.addEventListener('beforeunload', () => {
 // Load dữ liệu lần đầu và setup real-time listener
 window.addEventListener('load', () => {
   loadStats();
-  setupRealtimeListener();
-  optimizeFonts();
 });

@@ -18,18 +18,29 @@ window.addEventListener('load', () => {
     return;
   }
 
-  loadAllData();
-  renderDashboard();
+  setupRealtimeListeners();
 });
 
-function loadAllData() {
-  try {
-    tasks = JSON.parse(localStorage.getItem('c7aio_tasks_shared') || '[]');
-    events = JSON.parse(localStorage.getItem('c7aio_events_shared') || '{}');
-    notifications = JSON.parse(localStorage.getItem('c7aio_notifications_shared') || '[]');
-  } catch (error) {
-    console.error('Lỗi tải dữ liệu:', error);
-  }
+function setupRealtimeListeners() {
+  // 1. Lắng nghe danh sách học sinh (để render cột bảng đúng)
+  onSharedStudentsChanged((data) => {
+    if (data) STUDENTS = data;
+    renderDashboard();
+  });
+
+  // 2. Lắng nghe Nhiệm vụ
+  onSharedTasksChanged((data) => {
+    tasks = data;
+    renderDashboard();
+  });
+
+  // 3. Lắng nghe Thông báo
+  onSharedNotificationsChanged((data) => {
+    notifications = data;
+    renderDashboard();
+  });
+  
+  // Events tạm thời chưa có sync shared, giữ nguyên hoặc bỏ qua
 }
 
 function renderDashboard() {
@@ -71,11 +82,24 @@ function updateStatsOverview() {
   const urgentTasks = pendingTasks; // Simple calculation
 
   // Update cards
-  document.getElementById('totalTasks').textContent = totalTasks;
-  document.getElementById('completedTasks').textContent = completedTasks;
+  document.getElementById('totalTask').textContent = totalTasks;
+  document.getElementById('doneTask').textContent = completedTasks;
   document.getElementById('completedPercent').textContent = completedPercent + '%';
-  document.getElementById('pendingTasks').textContent = pendingTasks;
-  document.getElementById('urgentTasks').textContent = urgentTasks;
+  document.getElementById('openTask').textContent = pendingTasks;
+  document.getElementById('nearDeadline').textContent = urgentTasks;
+
+  // Update status bars (Chart section)
+  document.getElementById('statusDone').textContent = completedTasks;
+  document.getElementById('statusPending').textContent = pendingTasks;
+  
+  const donePercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const pendingPercent = totalTasks > 0 ? (pendingTasks / totalTasks) * 100 : 0;
+  
+  const doneBar = document.querySelector('.status-fill.done');
+  const pendingBar = document.querySelector('.status-fill.pending');
+  
+  if (doneBar) doneBar.style.width = `${donePercent}%`;
+  if (pendingBar) pendingBar.style.width = `${pendingPercent}%`;
 
   // Update progress ring
   const circumference = 2 * Math.PI * 90;
@@ -83,6 +107,12 @@ function updateStatsOverview() {
   const progressRing = document.getElementById('progressRing');
   if (progressRing) {
     progressRing.style.strokeDashoffset = strokeDashoffset;
+  }
+  
+  // Update progress text
+  const progressValue = document.getElementById('progressValue');
+  if (progressValue) {
+    progressValue.textContent = `${completedPercent}%`;
   }
 }
 

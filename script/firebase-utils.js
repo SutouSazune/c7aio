@@ -309,6 +309,108 @@ function onNotificationsChanged(callback) {
   return () => ref.off('value');
 }
 
+// ============= SHARED DATA (SYNC ADMIN -> STUDENTS) =============
+
+// --- SHARED STUDENTS ---
+// Lắng nghe danh sách học sinh thay đổi
+function onSharedStudentsChanged(callback) {
+  const ref = db.ref('shared/students');
+  ref.on('value', snapshot => {
+    const val = snapshot.val();
+    if (val) {
+      localStorage.setItem('c7aio_students_cache', JSON.stringify(val));
+    }
+    callback(val);
+  });
+}
+
+// Lưu toàn bộ danh sách học sinh (Admin dùng)
+async function saveSharedStudents(studentsList) {
+  try {
+    await db.ref('shared/students').set(studentsList);
+    console.log('✅ Đã đồng bộ danh sách học sinh lên Firebase');
+  } catch (error) {
+    console.error('❌ Lỗi lưu học sinh:', error);
+    alert('Lỗi khi lưu dữ liệu lên server!');
+  }
+}
+
+// --- SHARED TASKS ---
+// Lắng nghe nhiệm vụ chung thay đổi
+function onSharedTasksChanged(callback) {
+  const ref = db.ref('shared/tasks');
+  ref.on('value', snapshot => {
+    const tasks = [];
+    snapshot.forEach(child => {
+      tasks.push(child.val());
+    });
+    localStorage.setItem('c7aio_tasks_cache', JSON.stringify(tasks));
+    callback(tasks);
+  });
+}
+
+// Lưu/Cập nhật một nhiệm vụ chung
+async function saveSharedTask(task) {
+  try {
+    // Dùng task.id làm key để dễ update
+    await db.ref(`shared/tasks/${task.id}`).set(task);
+    console.log('✅ Đã lưu task lên Firebase:', task.name);
+  } catch (error) {
+    console.error('❌ Lỗi lưu task:', error);
+  }
+}
+
+// Xóa nhiệm vụ chung
+async function deleteSharedTask(taskId) {
+  try {
+    await db.ref(`shared/tasks/${taskId}`).remove();
+    console.log('✅ Đã xóa task trên Firebase:', taskId);
+  } catch (error) {
+    console.error('❌ Lỗi xóa task:', error);
+  }
+}
+
+// Cập nhật trạng thái hoàn thành (Check-in)
+async function updateSharedTaskCompletion(taskId, completions) {
+  await db.ref(`shared/tasks/${taskId}/completions`).set(completions);
+}
+
+// --- SHARED NOTIFICATIONS ---
+// Lắng nghe thông báo chung
+function onSharedNotificationsChanged(callback) {
+  const ref = db.ref('shared/notifications');
+  ref.on('value', snapshot => {
+    const notifications = [];
+    snapshot.forEach(child => {
+      notifications.push(child.val());
+    });
+    // Sắp xếp mới nhất lên đầu
+    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    localStorage.setItem('c7aio_notifications_cache', JSON.stringify(notifications));
+    callback(notifications);
+  });
+}
+
+// Lưu thông báo chung
+async function saveSharedNotification(notification) {
+  try {
+    await db.ref(`shared/notifications/${notification.id}`).set(notification);
+    console.log('✅ Đã lưu thông báo lên Firebase');
+  } catch (error) {
+    console.error('❌ Lỗi lưu thông báo:', error);
+  }
+}
+
+// Xóa thông báo chung
+async function deleteSharedNotification(notifId) {
+  await db.ref(`shared/notifications/${notifId}`).remove();
+}
+
+// Cập nhật trạng thái đã xem
+async function updateSharedNotificationCompletion(notifId, completions) {
+  await db.ref(`shared/notifications/${notifId}/completions`).set(completions);
+}
+
 // ============= FALLBACK - Offline Support =============
 
 // Nếu offline, sử dụng localStorage tạm thời

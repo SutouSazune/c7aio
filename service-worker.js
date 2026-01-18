@@ -1,22 +1,27 @@
-const CACHE_NAME = 'c7aio-v1.0.0'; // Thay đổi version này để force update cache
+const CACHE_NAME = 'c7aio-v1.0.4'; // Tăng version để cập nhật cache mới
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/lich/lich.html',
-  '/nhiemvu/nv.html',
-  '/thongbao/tb.html',
-  '/thongke/tk.html',
-  '/style/hub.css',
-  '/style/lich.css',
-  '/style/nv.css',
-  '/style/tb.css',
-  '/style/tk.css',
-  '/script/hub.js',
-  '/script/lich.js',
-  '/script/nv.js',
-  '/script/tb.js',
-  '/script/tk.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './lich/lich.html',
+  './nhiemvu/nv.html',
+  './thongbao/tb.html',
+  './thongke/tk.html',
+  './hoso/hs.html',
+  './style/hub.css',
+  './style/lich.css',
+  './style/nv.css',
+  './style/tb.css',
+  './style/tk.css',
+  './style/hs.css',
+  './style/console.css',
+  './script/hub.js',
+  './script/lich.js',
+  './script/nv.js',
+  './script/tb.js',
+  './script/tk.js',
+  './script/hs.js',
+  './script/console.js',
+  './manifest.json'
 ];
 
 // Install event - cache assets
@@ -74,7 +79,7 @@ self.addEventListener('fetch', event => {
                 : url.pathname + '/index.html';
               
               return fetch(pathWithIndex)
-                .catch(() => caches.match('/index.html'));
+                .catch(() => caches.match('./index.html'));
             }
             return networkResponse;
           }
@@ -100,7 +105,7 @@ self.addEventListener('fetch', event => {
               : url.pathname + '/index.html';
             
             return caches.match(pathWithIndex)
-              .catch(() => caches.match('/index.html'));
+              .catch(() => caches.match('./index.html'));
           });
         })
     );

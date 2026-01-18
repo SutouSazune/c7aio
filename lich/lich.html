@@ -5,21 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#667eea">
   <title>10C7 AIO - Lịch Học</title>
-  <script>
-    // Detect and inject base path
-    function getBasePath() {
-      const pathname = window.location.pathname;
-      if (pathname.includes('/c7aio/')) {
-        return '/c7aio/';
-      }
-      return '/';
-    }
-    const BASE_PATH = getBasePath();
-    
-    // Inject base tag dynamically
-    document.write('<base href="' + BASE_PATH + '">');
-  </script>
   <link rel="stylesheet" href="../style/lich.css">
+  <link rel="stylesheet" href="../style/console.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -197,6 +184,7 @@
   </footer>
 
   <script src="../script/students-list.js"></script>
+  <script src="../script/console.js"></script>
   <script src="../script/lich.js"></script>
 </body>
 </html>
