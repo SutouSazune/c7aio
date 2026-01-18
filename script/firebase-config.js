@@ -15,6 +15,11 @@ const firebaseConfig = {
   appId: "1:123456789:web:abcdef123456"
 };
 
+// Khởi tạo Firebase (QUAN TRỌNG: Nếu thiếu dòng này, app sẽ không kết nối được)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 // Import Firebase từ CDN (tự động loaded trong HTML)
 // Bạn chỉ cần thay đổi config ở trên bằng dữ liệu thực từ Firebase Console
 
