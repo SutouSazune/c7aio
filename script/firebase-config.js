@@ -20,7 +20,6 @@ const isConfigured = firebaseConfig.apiKey && firebaseConfig.databaseURL;
 
 if (!isConfigured) {
   console.error("❌ CHƯA CẤU HÌNH FIREBASE: Vui lòng cập nhật file script/firebase-config.js");
-  alert("⚠️ LỖI CẤU HÌNH: Bạn chưa điền thông tin Firebase!\n\nVui lòng mở file 'script/firebase-config.js' và điền thông tin từ Firebase Console thì người khác mới thấy dữ liệu được.");
 }
 
 // Khởi tạo Firebase (QUAN TRỌNG: Nếu thiếu dòng này, app sẽ không kết nối được)
