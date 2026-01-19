@@ -509,7 +509,7 @@ function selectWeekModal(weekNum) {
   // --- ROBUST SCROLL FIX ---
   // Ghi đè lại bất kỳ style nào chặn scroll trên body, vì nó có thể gây lỗi
   // không scroll được modal trên một số trình duyệt mobile.
-  document.body.style.overflow = '';
+  document.body.style.overflow = 'auto';
 
   // MOBILE FIX: Tự động chuyển sang xem theo Ngày nếu màn hình nhỏ
   if (window.innerWidth < 768) {
@@ -566,6 +566,7 @@ function renderSchedule() {
 
   // Mobile Fix: Wrap container để scroll ngang nếu cần
   container.style.overflowX = 'auto';
+  container.style.width = '100%'; // Đảm bảo container không vượt quá chiều rộng cha
 
   // Xác định ngày được chọn
   const selectedDayName = selectedDate ? getDayNameFromDate(selectedDate) : 'monday';
@@ -833,7 +834,7 @@ function openScheduleModal(date) {
   
   // --- ROBUST SCROLL FIX ---
   // Ghi đè lại bất kỳ style nào chặn scroll trên body.
-  document.body.style.overflow = '';
+  document.body.style.overflow = 'auto';
 
   // MOBILE FIX: Tự động chuyển sang xem theo Ngày
   if (window.innerWidth < 768) {
@@ -871,7 +872,7 @@ function closeScheduleModal() {
   wrapper.style.display = 'none';
 
   // Khôi phục lại trạng thái scroll của body khi đóng modal
-  document.body.style.overflow = '';
+  document.body.style.overflow = 'auto';
 }
 
 function closeManageClassModal() {
@@ -925,6 +926,8 @@ function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
   // Mobile Fix: Cho phép scroll ngang trong modal nếu xem Week view
   container.style.display = 'flex';
   container.style.overflowX = 'auto';
+  container.style.width = '100%';
+  container.style.paddingBottom = '10px'; // Thêm chút khoảng cách cho thanh scroll
 
   DAYS.forEach(day => {
     let classes = weekSchedule[day] || [];
@@ -1337,13 +1340,13 @@ function openAddWeekModal() {
   // Mặc định chọn ngày cụ thể để người dùng nhập
   document.querySelector('input[name="durationType"][value="date"]').checked = true;
   
-  document.body.style.overflow = ''; // Fix scroll lock
+  document.body.style.overflow = 'auto'; // Fix scroll lock
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 
 function closeAddWeekModal() {
   document.getElementById('addWeekModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
+  document.body.style.overflow = 'auto'; // Restore scroll
 }
 
 function saveWeekInfo() {
@@ -1426,7 +1429,7 @@ function openWeekManager(weekNum) {
     document.querySelector('input[name="durationType"][value="date"]').checked = true;
   }
   
-  document.body.style.overflow = ''; // Fix scroll lock
+  document.body.style.overflow = 'auto'; // Fix scroll lock
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 

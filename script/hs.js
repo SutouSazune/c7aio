@@ -78,13 +78,13 @@ function openStudentModal(id = null) {
     clearForm();
   }
 
-  document.body.style.overflow = ''; // Fix scroll lock issue on mobile
+  document.body.style.overflow = 'auto'; // Fix scroll lock issue on mobile
   modal.style.display = 'flex';
 }
 
 function closeStudentModal() {
   document.getElementById('studentModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
+  document.body.style.overflow = 'auto'; // Restore scroll
 }
 
 function fillForm(s) {

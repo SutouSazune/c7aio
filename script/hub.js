@@ -214,16 +214,26 @@ function setupMobileOptimizations() {
   const style = document.createElement('style');
   style.innerHTML = `
     @media (max-width: 768px) {
+      /* FORCE SCROLL: Ghi đè mọi thiết lập chặn scroll của body/html từ CSS cũ */
+      html, body {
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        height: auto !important;
+      }
+
       /* Fix lỗi Modal không scroll được */
       .modal {
         align-items: flex-start !important; /* Cho phép scroll từ đầu trang */
-        padding-top: 20px;
+        padding-top: 10px;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
+        z-index: 99999; /* Đảm bảo luôn nổi lên trên */
       }
       .modal-content {
-        width: 95% !important;
-        margin-bottom: 50px;
+        width: 92% !important; /* Thu gọn lại một chút để không sát lề */
+        max-width: 95vw !important;
+        margin: 10px auto 50px auto !important;
+        padding: 15px !important; /* Giảm padding để nội dung khít hơn */
         height: auto !important;
         max-height: none !important;
       }

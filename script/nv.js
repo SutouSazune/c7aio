@@ -41,7 +41,7 @@ window.addEventListener('load', () => {
 
 // --- MODAL FUNCTIONS ---
 function openTaskModal() {
-  document.body.style.overflow = ''; // Fix scroll lock issue on mobile
+  document.body.style.overflow = 'auto'; // Fix scroll lock issue on mobile
   document.getElementById('taskModal').style.display = 'flex';
   // Set default start time to now
   const now = new Date();
@@ -50,7 +50,7 @@ function openTaskModal() {
 }
 
 function closeTaskModal() {
-  document.body.style.overflow = ''; // Restore scroll
+  document.body.style.overflow = 'auto'; // Restore scroll
   document.getElementById('taskModal').style.display = 'none';
   // Clear inputs
   document.getElementById('modalTaskName').value = '';
@@ -103,13 +103,13 @@ function viewImage(url) {
   const modal = document.getElementById('imageModal');
   const img = document.getElementById('previewImage');
   img.src = url;
-  document.body.style.overflow = ''; // Fix scroll lock issue on mobile
+  document.body.style.overflow = 'auto'; // Fix scroll lock issue on mobile
   modal.style.display = 'flex';
 }
 
 function closeImageModal() {
   document.getElementById('imageModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
+  document.body.style.overflow = 'auto'; // Restore scroll
 }
 
 // Content Modal (Xem chi tiết bài viết)
@@ -119,13 +119,13 @@ function viewTaskContent(taskId) {
 
   document.getElementById('viewTaskTitle').textContent = task.name;
   document.getElementById('viewTaskBody').innerHTML = task.content || '<p>Không có nội dung chi tiết.</p>';
-  document.body.style.overflow = ''; // Fix scroll lock issue on mobile
+  document.body.style.overflow = 'auto'; // Fix scroll lock issue on mobile
   document.getElementById('contentModal').style.display = 'flex';
 }
 
 function closeContentModal() {
   document.getElementById('contentModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
+  document.body.style.overflow = 'auto'; // Restore scroll
 }
 
 // Progress Modal (Xem danh sách người làm)
@@ -168,13 +168,13 @@ function viewTaskProgress(taskId) {
     </ul>
   `;
 
-  document.body.style.overflow = ''; // Fix scroll lock issue on mobile
+  document.body.style.overflow = 'auto'; // Fix scroll lock issue on mobile
   modal.style.display = 'flex';
 }
 
 function closeProgressModal() {
   document.getElementById('progressModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
+  document.body.style.overflow = 'auto'; // Restore scroll
 }
 
 async function deleteTask(taskId) {
