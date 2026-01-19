@@ -506,7 +506,18 @@ function selectWeekModal(weekNum) {
   wrapper.classList.add('active');
   wrapper.style.display = 'flex';
   
-  modalViewMode = 'week';
+  // --- ROBUST SCROLL FIX ---
+  // Ghi đè lại bất kỳ style nào chặn scroll trên body, vì nó có thể gây lỗi
+  // không scroll được modal trên một số trình duyệt mobile.
+  document.body.style.overflow = '';
+
+  // MOBILE FIX: Tự động chuyển sang xem theo Ngày nếu màn hình nhỏ
+  if (window.innerWidth < 768) {
+    modalViewMode = 'day';
+    console.log('📱 Mobile detected: Switching to Day view');
+  } else {
+    modalViewMode = 'week';
+  }
   
   document.querySelectorAll('.view-mode-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -514,6 +525,13 @@ function selectWeekModal(weekNum) {
   document.querySelector('[data-mode="week"]').classList.add('active');
   
   updateModalSchedule();
+  
+  // Cập nhật lại trạng thái nút active visual
+  if (modalViewMode === 'day') {
+    document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+    const dayBtn = document.querySelector('[data-mode="day"]');
+    if (dayBtn) dayBtn.classList.add('active');
+  }
 }
 
 function selectWeek(weekNum) {
@@ -545,6 +563,9 @@ function renderSchedule() {
 
   const container = document.getElementById('scheduleContainer');
   container.innerHTML = '';
+
+  // Mobile Fix: Wrap container để scroll ngang nếu cần
+  container.style.overflowX = 'auto';
 
   // Xác định ngày được chọn
   const selectedDayName = selectedDate ? getDayNameFromDate(selectedDate) : 'monday';
@@ -810,7 +831,16 @@ function openScheduleModal(date) {
   wrapper.classList.add('active');
   wrapper.style.display = 'flex';
   
-  modalViewMode = 'week';
+  // --- ROBUST SCROLL FIX ---
+  // Ghi đè lại bất kỳ style nào chặn scroll trên body.
+  document.body.style.overflow = '';
+
+  // MOBILE FIX: Tự động chuyển sang xem theo Ngày
+  if (window.innerWidth < 768) {
+    modalViewMode = 'day';
+  } else {
+    modalViewMode = 'week';
+  }
   
   // Update view mode buttons
   document.querySelectorAll('.view-mode-btn').forEach(btn => {
@@ -818,6 +848,12 @@ function openScheduleModal(date) {
   });
   document.querySelector('[data-mode="week"]').classList.add('active');
   
+  if (modalViewMode === 'day') {
+    document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+    const dayBtn = document.querySelector('[data-mode="day"]');
+    if (dayBtn) dayBtn.classList.add('active');
+  }
+
   updateModalSchedule();
 }
 
@@ -833,6 +869,9 @@ function closeScheduleModal() {
   // Hide wrapper
   wrapper.classList.remove('active');
   wrapper.style.display = 'none';
+
+  // Khôi phục lại trạng thái scroll của body khi đóng modal
+  document.body.style.overflow = '';
 }
 
 function closeManageClassModal() {
@@ -883,6 +922,10 @@ function updateModalSchedule() {
 }
 
 function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
+  // Mobile Fix: Cho phép scroll ngang trong modal nếu xem Week view
+  container.style.display = 'flex';
+  container.style.overflowX = 'auto';
+
   DAYS.forEach(day => {
     let classes = weekSchedule[day] || [];
     
@@ -893,6 +936,7 @@ function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
     
     const dayContainer = document.createElement('div');
     dayContainer.className = 'day-column';
+    dayContainer.style.minWidth = '140px'; // Đảm bảo cột không bị co quá nhỏ trên mobile
     
     let html = `
       <div class="day-header">
@@ -1293,11 +1337,13 @@ function openAddWeekModal() {
   // Mặc định chọn ngày cụ thể để người dùng nhập
   document.querySelector('input[name="durationType"][value="date"]').checked = true;
   
+  document.body.style.overflow = ''; // Fix scroll lock
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 
 function closeAddWeekModal() {
   document.getElementById('addWeekModal').style.display = 'none';
+  document.body.style.overflow = ''; // Restore scroll
 }
 
 function saveWeekInfo() {
@@ -1380,6 +1426,7 @@ function openWeekManager(weekNum) {
     document.querySelector('input[name="durationType"][value="date"]').checked = true;
   }
   
+  document.body.style.overflow = ''; // Fix scroll lock
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 

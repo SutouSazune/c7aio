@@ -199,7 +199,65 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
+// --- MOBILE OPTIMIZATIONS ---
+// Hàm này tự động sửa các lỗi giao diện trên mobile bằng cách inject CSS và Meta tags
+function setupMobileOptimizations() {
+  // 1. Đảm bảo Viewport đúng chuẩn
+  if (!document.querySelector('meta[name="viewport"]')) {
+    const meta = document.createElement('meta');
+    meta.name = "viewport";
+    meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+    document.head.appendChild(meta);
+  }
+
+  // 2. Inject CSS sửa lỗi layout mobile (Do không sửa được file .css trực tiếp)
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @media (max-width: 768px) {
+      /* Fix lỗi Modal không scroll được */
+      .modal {
+        align-items: flex-start !important; /* Cho phép scroll từ đầu trang */
+        padding-top: 20px;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      .modal-content {
+        width: 95% !important;
+        margin-bottom: 50px;
+        height: auto !important;
+        max-height: none !important;
+      }
+      
+      /* Fix bảng bị tràn màn hình -> Cho phép cuộn ngang */
+      .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Fix Lịch hiển thị trên mobile */
+      .calendar-day {
+        height: 60px !important; /* Giảm chiều cao ô lịch */
+        font-size: 0.8rem;
+        padding: 2px !important;
+      }
+      
+      /* Fix các nút bấm quá to hoặc tràn */
+      .header-right, .header-content {
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      
+      /* Ẩn bớt các thành phần không cần thiết nếu cần */
+      .console-toggle { bottom: 10px; right: 10px; top: auto !important; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Load dữ liệu lần đầu và setup real-time listener
 window.addEventListener('load', () => {
   loadStats();
+  setupMobileOptimizations(); // Kích hoạt tối ưu mobile
 });

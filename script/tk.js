@@ -125,7 +125,7 @@ function renderTaskStats() {
     return html;
   }
 
-  html += '<table class="completion-table"><thead><tr><th>Tên nhiệm vụ</th>';
+  html += '<div class="table-responsive"><table class="completion-table"><thead><tr><th>Tên nhiệm vụ</th>';
   
   STUDENTS.forEach(student => {
     html += `<th>${student.name.split(' ').pop()}</th>`;
@@ -147,7 +147,7 @@ function renderTaskStats() {
     html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
   });
 
-  html += '</tbody></table></div>';
+  html += '</tbody></table></div></div>';
   return html;
 }
 
@@ -169,7 +169,7 @@ function renderEventStats() {
     return html;
   }
 
-  html += '<table class="completion-table"><thead><tr><th>Sự kiện</th>';
+  html += '<div class="table-responsive"><table class="completion-table"><thead><tr><th>Sự kiện</th>';
   
   STUDENTS.forEach(student => {
     html += `<th>${student.name.split(' ').pop()}</th>`;
@@ -191,7 +191,7 @@ function renderEventStats() {
     html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
   });
 
-  html += '</tbody></table></div>';
+  html += '</tbody></table></div></div>';
   return html;
 }
 
@@ -204,7 +204,7 @@ function renderNotificationStats() {
     return html;
   }
 
-  html += '<table class="completion-table"><thead><tr><th>Thông báo</th>';
+  html += '<div class="table-responsive"><table class="completion-table"><thead><tr><th>Thông báo</th>';
   
   STUDENTS.forEach(student => {
     html += `<th>${student.name.split(' ').pop()}</th>`;
@@ -226,6 +226,6 @@ function renderNotificationStats() {
     html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
   });
 
-  html += '</tbody></table></div>';
+  html += '</tbody></table></div></div>';
   return html;
 }
