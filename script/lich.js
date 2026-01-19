@@ -9,6 +9,7 @@ let viewMode = 'week'; // 'week', 'day', 'daily'
 let modalViewMode = 'week'; // View mode in modal
 let filteredClassName = ''; // For filtering classes
 let editingWeek = null; // For week management modal
+let editingClassIndex = null; // { day: string, index: number } - Để theo dõi tiết học đang sửa
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const DAY_NAMES = {
@@ -580,7 +581,7 @@ function renderWeekView(weekSchedule, container, selectedDayName) {
       classes.forEach((cls, idx) => {
         const isCompleted = cls.completions && cls.completions[currentUser.id];
         html += `
-          <div class="class-item ${isCompleted ? 'completed' : ''}">
+          <div class="class-item ${isCompleted ? 'completed' : ''}" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
             <div class="class-content">
               <div class="class-time">${cls.time}</div>
               <div class="class-name">${cls.name}</div>
@@ -623,7 +624,7 @@ function renderDayView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="class-item ${isCompleted ? 'completed' : ''}">
+        <div class="class-item ${isCompleted ? 'completed' : ''}" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="class-content">
             <div class="class-time">${cls.time}</div>
             <div class="class-name">${cls.name}</div>
@@ -665,7 +666,7 @@ function renderDailyView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="daily-class-item ${isCompleted ? 'completed' : ''}">
+        <div class="daily-class-item ${isCompleted ? 'completed' : ''}" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="daily-time">${cls.time}</div>
           <div class="daily-details">
             <div class="daily-class-name">${cls.name}</div>
@@ -821,6 +822,13 @@ function closeScheduleModal() {
   wrapper.style.display = 'none';
 
   document.body.style.overflow = ''; // Mở khóa scroll nền
+
+  // Reset trạng thái sửa
+  editingClassIndex = null;
+  const addBtn = document.querySelector('#manageClassAdminSection .add-btn');
+  if (addBtn) addBtn.textContent = '+ Thêm lớp';
+  // Clear form inputs
+  document.getElementById('classInputManage').value = '';
 }
 
 function closeManageClassModal() {
@@ -872,12 +880,7 @@ function updateModalSchedule() {
 
 function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
   DAYS.forEach(day => {
-    let classes = weekSchedule[day] || [];
-    
-    // Apply filter
-    if (filteredClassName) {
-      classes = classes.filter(cls => cls.name === filteredClassName);
-    }
+    const originalClasses = weekSchedule[day] || [];
     
     const dayContainer = document.createElement('div');
     dayContainer.className = 'day-column';
@@ -890,12 +893,17 @@ function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
       <div class="classes-list">
     `;
 
-    if (classes.length === 0) {
+    // Kiểm tra xem có lớp nào phù hợp không để hiển thị empty state
+    const hasMatch = filteredClassName ? originalClasses.some(c => c.name === filteredClassName) : originalClasses.length > 0;
+
+    if (!hasMatch) {
       html += '<div class="empty-day">Không có lớp</div>';
     } else {
-      classes.forEach((cls, idx) => {
+      originalClasses.forEach((cls, idx) => {
+        if (filteredClassName && cls.name !== filteredClassName) return;
+
         html += `
-          <div class="class-item">
+          <div class="class-item" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
             <div class="class-content">
               <div class="class-time">${cls.time}</div>
               <div class="class-name">${cls.name}</div>
@@ -916,11 +924,7 @@ function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
 }
 
 function renderDayViewFiltered(weekSchedule, dayName, container) {
-  let classes = weekSchedule[dayName] || [];
-  
-  if (filteredClassName) {
-    classes = classes.filter(cls => cls.name === filteredClassName);
-  }
+  const originalClasses = weekSchedule[dayName] || [];
   
   const dayContainer = document.createElement('div');
   dayContainer.className = 'day-column full-width';
@@ -933,12 +937,16 @@ function renderDayViewFiltered(weekSchedule, dayName, container) {
     <div class="classes-list">
   `;
 
-  if (classes.length === 0) {
+  const hasMatch = filteredClassName ? originalClasses.some(c => c.name === filteredClassName) : originalClasses.length > 0;
+
+  if (!hasMatch) {
     html += '<div class="empty-day">Không có lớp</div>';
   } else {
-    classes.forEach((cls, idx) => {
+    originalClasses.forEach((cls, idx) => {
+      if (filteredClassName && cls.name !== filteredClassName) return;
+
       html += `
-        <div class="class-item">
+        <div class="class-item" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="class-content">
             <div class="class-time">${cls.time}</div>
             <div class="class-name">${cls.name}</div>
@@ -958,11 +966,7 @@ function renderDayViewFiltered(weekSchedule, dayName, container) {
 }
 
 function renderDailyViewFiltered(weekSchedule, dayName, container) {
-  let classes = weekSchedule[dayName] || [];
-  
-  if (filteredClassName) {
-    classes = classes.filter(cls => cls.name === filteredClassName);
-  }
+  const originalClasses = weekSchedule[dayName] || [];
   
   const dayContainer = document.createElement('div');
   dayContainer.className = 'daily-view';
@@ -974,13 +978,17 @@ function renderDailyViewFiltered(weekSchedule, dayName, container) {
     </div>
   `;
 
-  if (classes.length === 0) {
+  const hasMatch = filteredClassName ? originalClasses.some(c => c.name === filteredClassName) : originalClasses.length > 0;
+
+  if (!hasMatch) {
     html += '<div class="empty-day">Không có lớp</div>';
   } else {
     html += '<div class="daily-classes">';
-    classes.forEach((cls, idx) => {
+    originalClasses.forEach((cls, idx) => {
+      if (filteredClassName && cls.name !== filteredClassName) return;
+
       html += `
-        <div class="daily-class-item">
+        <div class="daily-class-item" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="daily-time">${cls.time}</div>
           <div class="daily-details">
             <div class="daily-class-name">${cls.name}</div>
@@ -1187,6 +1195,58 @@ function addClassFromModal() {
   renderCalendar();
 }
 
+function editClass(day, idx) {
+  if (!isAdmin()) return;
+  
+  const weekKey = `week-${currentWeek}`;
+  const cls = schedules[weekKey][day][idx];
+  if (!cls) return;
+
+  editingClassIndex = { day, idx };
+  
+  // Open modal (Manage Class)
+  // Ensure wrapper is active
+  const wrapper = document.getElementById('modalsWrapper');
+  wrapper.classList.add('active');
+  wrapper.style.display = 'flex';
+  
+  // Fill data
+  document.getElementById('classInputManage').value = cls.name || '';
+  const subjectInput = document.getElementById('subjectInputManage');
+  if (subjectInput) subjectInput.value = cls.subject || '';
+  document.getElementById('roomInputManage').value = cls.room || '';
+  document.getElementById('daySelectManage').value = day;
+  
+  // Check duration format for Period Mode
+  let isPeriod = false;
+  if (cls.duration && cls.duration.startsWith('Tiết')) {
+    const match = cls.duration.match(/^Tiết (\d+)/);
+    if (match) {
+      isPeriod = true;
+      document.getElementById('usePeriodMode').checked = true;
+      togglePeriodMode();
+      document.getElementById('startPeriodSelect').value = match[1];
+    }
+  }
+  
+  if (!isPeriod) {
+    document.getElementById('usePeriodMode').checked = false;
+    togglePeriodMode();
+    document.getElementById('timeInputManage').value = cls.time || '';
+    document.getElementById('endTimeInputManage').value = cls.endTime || '';
+  }
+  
+  // Change button text
+  const addBtn = document.querySelector('#manageClassAdminSection .add-btn');
+  if (addBtn) addBtn.textContent = '💾 Lưu thay đổi';
+  
+  // Scroll to manage modal if on mobile
+  const manageModal = document.getElementById('manageClassModal');
+  if (window.innerWidth < 768 && manageModal) {
+     manageModal.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
 function addClassFromManageModal() {
   const nameInput = document.getElementById('classInputManage');
   const subjectInput = document.getElementById('subjectInputManage');
@@ -1243,7 +1303,27 @@ function addClassFromManageModal() {
     completions: {}
   };
 
-  schedules[weekKey][day].push(newClass);
+  if (editingClassIndex) {
+    // Update existing
+    const oldClass = schedules[weekKey][editingClassIndex.day][editingClassIndex.index];
+    newClass.id = oldClass.id;
+    newClass.completions = oldClass.completions;
+    
+    if (editingClassIndex.day !== day) {
+       schedules[weekKey][editingClassIndex.day].splice(editingClassIndex.index, 1);
+       schedules[weekKey][day].push(newClass);
+    } else {
+       schedules[weekKey][day][editingClassIndex.index] = newClass;
+    }
+    
+    // Reset editing state
+    editingClassIndex = null;
+    const addBtn = document.querySelector('#manageClassAdminSection .add-btn');
+    if (addBtn) addBtn.textContent = '+ Thêm lớp';
+  } else {
+    schedules[weekKey][day].push(newClass);
+  }
+
   saveSchedules();
   buildHeaderClassFilterOptions(); // Cập nhật droplist
   buildModalClassFilterOptions();
