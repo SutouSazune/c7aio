@@ -19,8 +19,6 @@ window.addEventListener('load', () => {
 
 function renderStudentsTable(data = STUDENTS) {
   const tbody = document.getElementById('studentsTableBody');
-  // Mobile Fix: Đảm bảo bảng có thể scroll ngang bằng cách tác động vào parent (nếu có)
-  // Hoặc CSS global đã xử lý .table-responsive
   
   const rows = data.map((s, index) => `
     <tr>
@@ -39,15 +37,6 @@ function renderStudentsTable(data = STUDENTS) {
   `).join('');
 
   tbody.innerHTML = rows;
-
-  // Tự động wrap table nếu chưa được wrap (Mobile fix)
-  const table = tbody.parentElement;
-  if (table && table.tagName === 'TABLE' && !table.parentElement.classList.contains('table-responsive')) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'table-responsive';
-    table.parentNode.insertBefore(wrapper, table);
-    wrapper.appendChild(table);
-  }
 }
 
 function searchStudents() {
@@ -78,13 +67,19 @@ function openStudentModal(id = null) {
     clearForm();
   }
 
-  document.body.style.overflow = 'auto'; // Fix scroll lock issue on mobile
+  // ROOT FIX: Xử lý scroll modal
+  if (window.innerWidth < 768) {
+    modal.style.alignItems = 'flex-start';
+    modal.style.overflowY = 'auto';
+    modal.style.paddingTop = '10px';
+  }
+  document.body.style.overflow = 'hidden';
   modal.style.display = 'flex';
 }
 
 function closeStudentModal() {
   document.getElementById('studentModal').style.display = 'none';
-  document.body.style.overflow = 'auto'; // Restore scroll
+  document.body.style.overflow = ''; // Restore scroll
 }
 
 function fillForm(s) {

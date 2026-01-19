@@ -125,7 +125,7 @@ function renderTaskStats() {
     return html;
   }
 
-  html += '<div class="table-responsive"><table class="completion-table"><thead><tr><th>Tên nhiệm vụ</th>';
+  html += '<table class="completion-table" style="width:100%; table-layout:fixed;"><thead><tr><th>Tên nhiệm vụ</th>';
   
   STUDENTS.forEach(student => {
     html += `<th>${student.name.split(' ').pop()}</th>`;
@@ -137,7 +137,7 @@ function renderTaskStats() {
     const completions = task.completions || {};
     const completedCount = Object.values(completions).filter(v => v).length;
     
-    html += `<tr><td>${task.title}</td>`;
+    html += `<tr><td>${task.name}</td>`;
     
     STUDENTS.forEach(student => {
       const isCompleted = completions[student.id];
@@ -146,8 +146,7 @@ function renderTaskStats() {
     
     html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
   });
-
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div>';
   return html;
 }
 
@@ -155,13 +154,15 @@ function renderEventStats() {
   let html = '<div class="dashboard-section"><h2>📅 Sự kiện</h2>';
   
   const allEvents = [];
-  Object.keys(events).forEach(dateKey => {
-    if (Array.isArray(events[dateKey])) {
-      events[dateKey].forEach(event => {
-        allEvents.push({ ...event, date: dateKey });
-      });
-    }
-  });
+  if (events && typeof events === 'object') {
+    Object.keys(events).forEach(dateKey => {
+      if (Array.isArray(events[dateKey])) {
+        events[dateKey].forEach(event => {
+          allEvents.push({ ...event, date: dateKey });
+        });
+      }
+    });
+  }
 
   if (allEvents.length === 0) {
     html += '<p style="color: #999;">Chưa có sự kiện nào</p>';
@@ -169,12 +170,12 @@ function renderEventStats() {
     return html;
   }
 
-  html += '<div class="table-responsive"><table class="completion-table"><thead><tr><th>Sự kiện</th>';
-  
+  html += '<table class="completion-table" style="width:100%; table-layout:fixed;"><thead><tr><th>Sự kiện</th>';
+
   STUDENTS.forEach(student => {
     html += `<th>${student.name.split(' ').pop()}</th>`;
   });
-  
+
   html += '<th>Hoàn thành</th></tr></thead><tbody>';
 
   allEvents.forEach(event => {
@@ -191,12 +192,12 @@ function renderEventStats() {
     html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
   });
 
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div>';
   return html;
 }
 
 function renderNotificationStats() {
-  let html = '<div class="dashboard-section"><h2>📢 Thông báo</h2>';
+  let html = '<div class="dashboard-section"><h2>🔔 Thông báo</h2>';
   
   if (notifications.length === 0) {
     html += '<p style="color: #999;">Chưa có thông báo nào</p>';
@@ -204,7 +205,7 @@ function renderNotificationStats() {
     return html;
   }
 
-  html += '<div class="table-responsive"><table class="completion-table"><thead><tr><th>Thông báo</th>';
+  html += '<table class="completion-table" style="width:100%; table-layout:fixed;"><thead><tr><th>Thông báo</th>';
   
   STUDENTS.forEach(student => {
     html += `<th>${student.name.split(' ').pop()}</th>`;
@@ -226,6 +227,6 @@ function renderNotificationStats() {
     html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
   });
 
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div>';
   return html;
 }

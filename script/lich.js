@@ -39,15 +39,15 @@ const MONTH_NAMES = [
 // Định nghĩa giờ học chuẩn cho các tiết (Có thể điều chỉnh)
 const PERIODS = {
   1: { start: '07:00', end: '07:45' },
-  2: { start: '07:50', end: '08:35' },
-  3: { start: '08:40', end: '09:25' },
+  2: { start: '07:45', end: '08:30' },
+  3: { start: '08:50', end: '09:35' },
   4: { start: '09:35', end: '10:20' },
-  5: { start: '10:25', end: '11:10' },
-  6: { start: '12:45', end: '13:30' },
-  7: { start: '13:35', end: '14:20' },
-  8: { start: '14:25', end: '15:10' },
-  9: { start: '15:20', end: '16:05' },
-  10: { start: '16:10', end: '16:55' }
+  5: { start: '10:30', end: '11:15' },
+  6: { start: '13:00', end: '13:45' },
+  7: { start: '13:45', end: '14:30' },
+  8: { start: '14:45', end: '15:30' },
+  9: { start: '15:35', end: '16:20' },
+  10: { start: '16:20', end: '17:00' }
 };
 
 window.addEventListener('load', () => {
@@ -92,6 +92,7 @@ window.addEventListener('load', () => {
   document.getElementById('manageClassModal').addEventListener('click', (e) => {
     if (e.target.id === 'manageClassModal') closeManageClassModal();
   });
+  injectResponsiveStyles(); // Kích hoạt giao diện phản hồi (Mobile/Desktop)
 });
 
 function setupRealtimeSync() {
@@ -463,8 +464,6 @@ function selectWeekModal(weekNum) {
   
   // Use wrapper system instead of direct display
   const wrapper = document.getElementById('modalsWrapper');
-  const modal = document.getElementById('scheduleModal');
-  const manageClassModal = document.getElementById('manageClassModal');
   
   const weekName = metadata.name || `Tuần ${weekNum}`;
   let dateStr = `${selectedDate.getDate()}/${selectedDate.getMonth() + 1}/${selectedDate.getFullYear()}`;
@@ -496,34 +495,12 @@ function selectWeekModal(weekNum) {
   
   buildModalClassFilterOptions();
   
-  // Append modals to wrapper
-  wrapper.innerHTML = '';
-  wrapper.appendChild(modal);
-  wrapper.appendChild(manageClassModal);
-  buildManageClassFilterOptions();
-  
   // Show wrapper
   wrapper.classList.add('active');
   wrapper.style.display = 'flex';
   
-  // --- ROBUST SCROLL FIX ---
-  // Ghi đè lại bất kỳ style nào chặn scroll trên body, vì nó có thể gây lỗi
-  // không scroll được modal trên một số trình duyệt mobile.
-  document.body.style.overflow = 'auto';
+  document.body.style.overflow = 'hidden'; // Khóa scroll nền
 
-  // MOBILE FIX: Tự động chuyển sang xem theo Ngày nếu màn hình nhỏ
-  if (window.innerWidth < 768) {
-    modalViewMode = 'day';
-    console.log('📱 Mobile detected: Switching to Day view');
-  } else {
-    modalViewMode = 'week';
-  }
-  
-  document.querySelectorAll('.view-mode-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  document.querySelector('[data-mode="week"]').classList.add('active');
-  
   updateModalSchedule();
   
   // Cập nhật lại trạng thái nút active visual
@@ -563,10 +540,6 @@ function renderSchedule() {
 
   const container = document.getElementById('scheduleContainer');
   container.innerHTML = '';
-
-  // Mobile Fix: Wrap container để scroll ngang nếu cần
-  container.style.overflowX = 'auto';
-  container.style.width = '100%'; // Đảm bảo container không vượt quá chiều rộng cha
 
   // Xác định ngày được chọn
   const selectedDayName = selectedDate ? getDayNameFromDate(selectedDate) : 'monday';
@@ -820,29 +793,13 @@ function openScheduleModal(date) {
   
   // Show both modals in wrapper
   const wrapper = document.getElementById('modalsWrapper');
-  const manageClassModal = document.getElementById('manageClassModal');
-  
-  // Append modals to wrapper
-  wrapper.innerHTML = '';
-  wrapper.appendChild(modal);
-  wrapper.appendChild(manageClassModal);
-  buildManageClassFilterOptions();
   
   // Show wrapper
   wrapper.classList.add('active');
   wrapper.style.display = 'flex';
   
-  // --- ROBUST SCROLL FIX ---
-  // Ghi đè lại bất kỳ style nào chặn scroll trên body.
-  document.body.style.overflow = 'auto';
+  document.body.style.overflow = 'hidden'; // Khóa scroll nền
 
-  // MOBILE FIX: Tự động chuyển sang xem theo Ngày
-  if (window.innerWidth < 768) {
-    modalViewMode = 'day';
-  } else {
-    modalViewMode = 'week';
-  }
-  
   // Update view mode buttons
   document.querySelectorAll('.view-mode-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -860,19 +817,10 @@ function openScheduleModal(date) {
 
 function closeScheduleModal() {
   const wrapper = document.getElementById('modalsWrapper');
-  const modal = document.getElementById('scheduleModal');
-  const manageClassModal = document.getElementById('manageClassModal');
-  
-  // Move modals back out of wrapper
-  document.body.appendChild(modal);
-  document.body.appendChild(manageClassModal);
-  
-  // Hide wrapper
   wrapper.classList.remove('active');
   wrapper.style.display = 'none';
 
-  // Khôi phục lại trạng thái scroll của body khi đóng modal
-  document.body.style.overflow = 'auto';
+  document.body.style.overflow = ''; // Mở khóa scroll nền
 }
 
 function closeManageClassModal() {
@@ -923,12 +871,6 @@ function updateModalSchedule() {
 }
 
 function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
-  // Mobile Fix: Cho phép scroll ngang trong modal nếu xem Week view
-  container.style.display = 'flex';
-  container.style.overflowX = 'auto';
-  container.style.width = '100%';
-  container.style.paddingBottom = '10px'; // Thêm chút khoảng cách cho thanh scroll
-
   DAYS.forEach(day => {
     let classes = weekSchedule[day] || [];
     
@@ -939,7 +881,6 @@ function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
     
     const dayContainer = document.createElement('div');
     dayContainer.className = 'day-column';
-    dayContainer.style.minWidth = '140px'; // Đảm bảo cột không bị co quá nhỏ trên mobile
     
     let html = `
       <div class="day-header">
@@ -1340,13 +1281,13 @@ function openAddWeekModal() {
   // Mặc định chọn ngày cụ thể để người dùng nhập
   document.querySelector('input[name="durationType"][value="date"]').checked = true;
   
-  document.body.style.overflow = 'auto'; // Fix scroll lock
+  document.body.style.overflow = 'hidden'; // Lock body
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 
 function closeAddWeekModal() {
   document.getElementById('addWeekModal').style.display = 'none';
-  document.body.style.overflow = 'auto'; // Restore scroll
+  document.body.style.overflow = ''; // Restore scroll
 }
 
 function saveWeekInfo() {
@@ -1429,7 +1370,7 @@ function openWeekManager(weekNum) {
     document.querySelector('input[name="durationType"][value="date"]').checked = true;
   }
   
-  document.body.style.overflow = 'auto'; // Fix scroll lock
+  document.body.style.overflow = 'hidden'; // Lock body
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 
@@ -1586,4 +1527,179 @@ function initPeriodSelectors() {
   
   // Mặc định tiết 1
   startSelect.value = 1;
+}
+
+// --- RESPONSIVE STYLES INJECTION ---
+function injectResponsiveStyles() {
+  const style = document.createElement('style');
+  style.innerHTML = `
+    /* --- COMMON STYLES --- */
+    #modalsWrapper {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      box-sizing: border-box;
+    }
+    #modalsWrapper.active { display: flex; }
+
+    /* --- DESKTOP STYLES (PC > 768px) --- */
+    @media (min-width: 769px) {
+      /* Layout 2 modal song song, căn chỉnh thoáng hơn */
+      #modalsWrapper {
+        flex-direction: row;
+        align-items: flex-start; /* Căn trên cùng để tránh bị giãn dọc */
+        justify-content: center;
+        padding: 30px;
+        gap: 20px;
+        overflow-y: auto;
+      }
+
+      /* 1. Modal Lịch (Bên trái) */
+      #scheduleModal {
+        flex: 1;
+        min-width: 600px; /* Đảm bảo không bị bóp nhỏ */
+        height: auto;
+        min-height: 500px;
+        height: 90vh !important;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        position: relative !important; /* Reset position cũ */
+        top: auto !important; left: auto !important;
+        transform: none !important;
+      }
+
+      #scheduleModal .modal-content {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+      }
+      
+      #scheduleModal .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; }
+      #scheduleModal .view-mode-buttons-modal { padding: 10px 20px; border-bottom: 1px solid #eee; }
+
+      #modalScheduleContainer {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: row; /* 7 cột ngang */
+        gap: 15px; /* Khoảng cách giữa các cột */
+      }
+
+      .day-column {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background: #fff;
+      }
+      
+      .day-header {
+        padding: 10px;
+        background: #f5f5f5;
+        border-bottom: 1px solid #e0e0e0;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 6px 6px 0 0;
+      }
+      
+      .classes-list { padding: 10px; }
+      
+      .class-item {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      .class-item:last-child { border-bottom: none; }
+
+      /* 2. Modal Quản lý (Bên phải) - Cố định kích thước chuẩn */
+      #manageClassModal {
+        width: 350px !important;
+        flex: 0 0 350px;
+        height: auto;
+        max-height: 90vh !important;
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        position: relative !important;
+        top: auto !important; left: auto !important;
+        transform: none !important;
+      }
+      
+      .manage-class-modal {
+        width: 100% !important;
+        padding: 0;
+      }
+      .manage-class-modal .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; }
+      .manage-class-modal .modal-body { padding: 20px; }
+    }
+
+    /* --- MOBILE STYLES (Điện thoại < 768px) --- */
+    @media (max-width: 768px) {
+      #modalsWrapper {
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start; /* Bắt đầu từ trên cùng */
+        overflow-y: auto; /* Cho phép cuộn cả wrapper */
+        padding: 10px;
+      }
+
+      #scheduleModal, #manageClassModal {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 20px;
+        height: auto !important;
+        max-height: none !important;
+        position: relative !important;
+        top: auto !important; left: auto !important;
+        transform: none !important;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      
+      #modalScheduleContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+
+      .day-column {
+        display: block;
+        width: 100%;
+        flex: none !important;
+        height: auto !important;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .day-header {
+        padding: 12px;
+        background: #f5f5f5;
+        border-bottom: 1px solid #e0e0e0;
+        font-weight: 600;
+      }
+
+      .classes-list { padding: 10px; }
+      
+      .class-item {
+        padding: 10px;
+        margin-bottom: 8px;
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 6px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 }
