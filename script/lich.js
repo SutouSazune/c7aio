@@ -1336,6 +1336,10 @@ function addClassFromManageModal() {
     const addBtn = document.querySelector('#manageClassAdminSection .add-btn');
     if (addBtn) addBtn.textContent = '+ Thêm lớp';
   } else {
+    // Đảm bảo mảng tồn tại trước khi push (Fix lỗi Firebase undefined)
+    if (!schedules[weekKey][day]) {
+      schedules[weekKey][day] = [];
+    }
     schedules[weekKey][day].push(newClass);
   }
 
