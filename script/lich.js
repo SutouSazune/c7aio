@@ -94,6 +94,7 @@ window.addEventListener('load', () => {
     if (e.target.id === 'manageClassModal') closeManageClassModal();
   });
   injectResponsiveStyles(); // Kích hoạt giao diện phản hồi (Mobile/Desktop)
+  injectEditModal(); // Khởi tạo modal sửa riêng biệt
 });
 
 function setupRealtimeSync() {
@@ -1214,47 +1215,30 @@ function editClass(day, idx) {
 
   editingClassIndex = { day, idx };
   
-  // Open modal (Manage Class)
-  // Ensure wrapper is active
-  const wrapper = document.getElementById('modalsWrapper');
-  wrapper.classList.add('active');
-  wrapper.style.display = 'flex';
+  // Populate Edit Modal (Modal riêng)
+  document.getElementById('classInputEdit').value = cls.name || '';
+  document.getElementById('subjectInputEdit').value = cls.subject || '';
+  document.getElementById('roomInputEdit').value = cls.room || '';
+  document.getElementById('daySelectEdit').value = day;
   
-  // Fill data
-  document.getElementById('classInputManage').value = cls.name || '';
-  const subjectInput = document.getElementById('subjectInputManage');
-  if (subjectInput) subjectInput.value = cls.subject || '';
-  document.getElementById('roomInputManage').value = cls.room || '';
-  document.getElementById('daySelectManage').value = day;
-  
-  // Check duration format for Period Mode
   let isPeriod = false;
   if (cls.duration && cls.duration.startsWith('Tiết')) {
     const match = cls.duration.match(/^Tiết (\d+)/);
     if (match) {
       isPeriod = true;
-      document.getElementById('usePeriodMode').checked = true;
-      togglePeriodMode();
-      document.getElementById('startPeriodSelect').value = match[1];
+      document.getElementById('usePeriodModeEdit').checked = true;
+      document.getElementById('startPeriodSelectEdit').value = match[1];
     }
   }
   
   if (!isPeriod) {
-    document.getElementById('usePeriodMode').checked = false;
-    togglePeriodMode();
-    document.getElementById('timeInputManage').value = cls.time || '';
-    document.getElementById('endTimeInputManage').value = cls.endTime || '';
+    document.getElementById('usePeriodModeEdit').checked = false;
+    document.getElementById('timeInputEdit').value = cls.time || '';
+    document.getElementById('endTimeInputEdit').value = cls.endTime || '';
   }
   
-  // Change button text
-  const addBtn = document.querySelector('#manageClassAdminSection .add-btn');
-  if (addBtn) addBtn.textContent = '💾 Lưu thay đổi';
-  
-  // Scroll to manage modal if on mobile
-  const manageModal = document.getElementById('manageClassModal');
-  if (window.innerWidth < 768 && manageModal) {
-     manageModal.scrollIntoView({ behavior: 'smooth' });
-  }
+  togglePeriodModeEdit();
+  document.getElementById('editClassModal').style.display = 'flex';
 }
 
 function addClassFromManageModal() {
@@ -1318,44 +1302,11 @@ function addClassFromManageModal() {
     completions: {}
   };
 
-  if (editingClassIndex) {
-    // Update existing
-    // Kiểm tra an toàn: Đảm bảo dữ liệu cũ còn tồn tại (Fix lỗi oldClass undefined)
-    let oldClass = null;
-    if (schedules[weekKey][editingClassIndex.day]) {
-      oldClass = schedules[weekKey][editingClassIndex.day][editingClassIndex.index];
-    }
-
-    if (oldClass) {
-      newClass.id = oldClass.id;
-      newClass.completions = oldClass.completions;
-      
-      if (editingClassIndex.day !== day) {
-         schedules[weekKey][editingClassIndex.day].splice(editingClassIndex.index, 1);
-         
-         // Đảm bảo ngày mới tồn tại
-         if (!schedules[weekKey][day]) schedules[weekKey][day] = [];
-         schedules[weekKey][day].push(newClass);
-      } else {
-         schedules[weekKey][day][editingClassIndex.index] = newClass;
-      }
-    } else {
-      // Nếu không tìm thấy lớp cũ (do lỗi sync hoặc dữ liệu trống), thêm mới vào ngày đích
-      if (!schedules[weekKey][day]) schedules[weekKey][day] = [];
-      schedules[weekKey][day].push(newClass);
-    }
-    
-    // Reset editing state
-    editingClassIndex = null;
-    const addBtn = document.querySelector('#manageClassAdminSection .add-btn');
-    if (addBtn) addBtn.textContent = '+ Thêm lớp';
-  } else {
-    // Đảm bảo mảng tồn tại trước khi push (Fix lỗi Firebase undefined)
-    if (!schedules[weekKey][day]) {
-      schedules[weekKey][day] = [];
-    }
-    schedules[weekKey][day].push(newClass);
+  // CHỈ THÊM MỚI (Logic sửa đã chuyển sang saveEditClass)
+  if (!schedules[weekKey][day]) {
+    schedules[weekKey][day] = [];
   }
+  schedules[weekKey][day].push(newClass);
 
   saveSchedules();
   buildHeaderClassFilterOptions(); // Cập nhật droplist
@@ -1815,4 +1766,155 @@ function injectResponsiveStyles() {
     }
   `;
   document.head.appendChild(style);
+}
+
+// ===== NEW EDIT MODAL LOGIC =====
+
+function injectEditModal() {
+  if (document.getElementById('editClassModal')) return;
+  
+  const modalHtml = `
+  <div id="editClassModal" class="modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="max-width: 400px; width: 90%; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div class="modal-header" style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #eee; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 1.2rem;">✏️ Chỉnh Sửa Lớp Học</h2>
+        <button onclick="closeEditClassModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tên lớp/Môn học (*)</label>
+          <input type="text" id="classInputEdit" list="manageClassNamesList" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Môn học chi tiết</label>
+          <input type="text" id="subjectInputEdit" list="manageSubjectsList" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Thứ (*)</label>
+          <select id="daySelectEdit" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="monday">Thứ Hai</option>
+            <option value="tuesday">Thứ Ba</option>
+            <option value="wednesday">Thứ Tư</option>
+            <option value="thursday">Thứ Năm</option>
+            <option value="friday">Thứ Sáu</option>
+            <option value="saturday">Thứ Bảy</option>
+            <option value="sunday">Chủ Nhật</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <input type="checkbox" id="usePeriodModeEdit" onchange="togglePeriodModeEdit()">
+            Chọn theo tiết học
+          </label>
+        </div>
+
+        <div id="periodInputGroupEdit" class="form-group" style="display:none; margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chọn tiết</label>
+          <select id="startPeriodSelectEdit" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;">
+            <!-- Options generated by JS -->
+          </select>
+        </div>
+
+        <div id="timeInputGroupEdit" class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <div class="form-group" style="flex: 1;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Bắt đầu (*)</label>
+            <input type="time" id="timeInputEdit" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Kết thúc</label>
+            <input type="time" id="endTimeInputEdit" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Phòng học</label>
+          <input type="text" id="roomInputEdit" list="manageRoomsList" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+
+        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button onclick="closeEditClassModal()" style="padding: 8px 16px; background: #eee; border: none; border-radius: 4px; cursor: pointer;">Hủy</button>
+          <button onclick="saveEditClass()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">💾 Lưu Thay Đổi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  
+  const select = document.getElementById('startPeriodSelectEdit');
+  if (select) {
+    for (let i = 1; i <= 10; i++) {
+      select.innerHTML += `<option value="${i}">Tiết ${i}</option>`;
+    }
+  }
+}
+
+function togglePeriodModeEdit() {
+  const isPeriod = document.getElementById('usePeriodModeEdit').checked;
+  document.getElementById('periodInputGroupEdit').style.display = isPeriod ? 'block' : 'none';
+  document.getElementById('timeInputGroupEdit').style.display = isPeriod ? 'none' : 'flex';
+}
+
+function closeEditClassModal() {
+  document.getElementById('editClassModal').style.display = 'none';
+  editingClassIndex = null;
+}
+
+function saveEditClass() {
+  if (!editingClassIndex) return;
+  
+  const name = document.getElementById('classInputEdit').value.trim();
+  const subject = document.getElementById('subjectInputEdit').value.trim();
+  const room = document.getElementById('roomInputEdit').value.trim();
+  const day = document.getElementById('daySelectEdit').value;
+  const isPeriod = document.getElementById('usePeriodModeEdit').checked;
+  
+  let time = '', endTime = '', duration = '';
+  
+  if (isPeriod) {
+    const p = parseInt(document.getElementById('startPeriodSelectEdit').value);
+    time = PERIODS[p] ? PERIODS[p].start : '';
+    endTime = PERIODS[p] ? PERIODS[p].end : '';
+    duration = `Tiết ${p} (${time} - ${endTime})`;
+  } else {
+    time = document.getElementById('timeInputEdit').value;
+    endTime = document.getElementById('endTimeInputEdit').value;
+    duration = endTime ? `${time} - ${endTime}` : `${time} - ?`;
+  }
+  
+  if (!name || !time) {
+    alert('Thiếu tên hoặc thời gian!');
+    return;
+  }
+  
+  const weekKey = `week-${currentWeek}`;
+  const oldDay = editingClassIndex.day;
+  const oldIdx = editingClassIndex.index;
+  
+  if (!schedules[weekKey][oldDay] || !schedules[weekKey][oldDay][oldIdx]) {
+    alert('Lỗi: Không tìm thấy lớp học gốc để sửa.');
+    closeEditClassModal();
+    return;
+  }
+  
+  const oldClass = schedules[weekKey][oldDay][oldIdx];
+  const updatedClass = { ...oldClass, name, subject, time, endTime, room, duration };
+  
+  if (oldDay !== day) {
+    schedules[weekKey][oldDay].splice(oldIdx, 1);
+    if (!schedules[weekKey][day]) schedules[weekKey][day] = [];
+    schedules[weekKey][day].push(updatedClass);
+  } else {
+    schedules[weekKey][day][oldIdx] = updatedClass;
+  }
+  
+  saveSchedules();
+  buildHeaderClassFilterOptions();
+  updateModalSchedule();
+  renderCalendar();
+  closeEditClassModal();
 }
