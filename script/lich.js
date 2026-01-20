@@ -719,6 +719,11 @@ function addClass() {
     schedules[weekKey] = initEmptyWeek();
   }
 
+  // Đảm bảo mảng của ngày tồn tại (Firebase không lưu mảng rỗng)
+  if (!schedules[weekKey][day]) {
+    schedules[weekKey][day] = [];
+  }
+
   const newClass = {
     id: Date.now(),
     name: name,
@@ -1171,6 +1176,11 @@ function addClassFromModal() {
     schedules[weekKey] = initEmptyWeek();
   }
 
+  // Đảm bảo mảng của ngày tồn tại (Firebase không lưu mảng rỗng)
+  if (!schedules[weekKey][day]) {
+    schedules[weekKey][day] = [];
+  }
+
   const newClass = {
     id: Date.now(),
     name: name,
@@ -1290,6 +1300,11 @@ function addClassFromManageModal() {
   const weekKey = `week-${currentWeek}`;
   if (!schedules[weekKey]) {
     schedules[weekKey] = initEmptyWeek();
+  }
+
+  // Đảm bảo mảng của ngày tồn tại (Firebase không lưu mảng rỗng)
+  if (!schedules[weekKey][day]) {
+    schedules[weekKey][day] = [];
   }
 
   const newClass = {
