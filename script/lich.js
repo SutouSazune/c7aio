@@ -1320,15 +1320,29 @@ function addClassFromManageModal() {
 
   if (editingClassIndex) {
     // Update existing
-    const oldClass = schedules[weekKey][editingClassIndex.day][editingClassIndex.index];
-    newClass.id = oldClass.id;
-    newClass.completions = oldClass.completions;
-    
-    if (editingClassIndex.day !== day) {
-       schedules[weekKey][editingClassIndex.day].splice(editingClassIndex.index, 1);
-       schedules[weekKey][day].push(newClass);
+    // Kiểm tra an toàn: Đảm bảo dữ liệu cũ còn tồn tại (Fix lỗi oldClass undefined)
+    let oldClass = null;
+    if (schedules[weekKey][editingClassIndex.day]) {
+      oldClass = schedules[weekKey][editingClassIndex.day][editingClassIndex.index];
+    }
+
+    if (oldClass) {
+      newClass.id = oldClass.id;
+      newClass.completions = oldClass.completions;
+      
+      if (editingClassIndex.day !== day) {
+         schedules[weekKey][editingClassIndex.day].splice(editingClassIndex.index, 1);
+         
+         // Đảm bảo ngày mới tồn tại
+         if (!schedules[weekKey][day]) schedules[weekKey][day] = [];
+         schedules[weekKey][day].push(newClass);
+      } else {
+         schedules[weekKey][day][editingClassIndex.index] = newClass;
+      }
     } else {
-       schedules[weekKey][day][editingClassIndex.index] = newClass;
+      // Nếu không tìm thấy lớp cũ (do lỗi sync hoặc dữ liệu trống), thêm mới vào ngày đích
+      if (!schedules[weekKey][day]) schedules[weekKey][day] = [];
+      schedules[weekKey][day].push(newClass);
     }
     
     // Reset editing state
