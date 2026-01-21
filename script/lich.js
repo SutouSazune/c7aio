@@ -57,7 +57,7 @@ window.addEventListener('load', () => {
   // Show admin controls in manage modal
   const manageClassAdminSection = document.getElementById('manageClassAdminSection');
   const manageClassFilterSection = document.getElementById('manageClassFilterSection');
-  if (isAdmin()) {
+  if (checkPermission('manage_schedule')) {
     manageClassAdminSection.style.display = 'block';
     manageClassFilterSection.style.display = 'block';
     document.getElementById('classInputManage').addEventListener('keypress', (e) => {
@@ -160,7 +160,7 @@ function initializeSchedules() {
     updateCurrentWeekDisplay(firstWeekNum);
     
     // Setup week dropdown for admin
-    if (isAdmin()) {
+    if (checkPermission('manage_schedule')) {
       updateWeekDropdown();
     }
   }
@@ -443,7 +443,7 @@ function renderWeekSelector() {
     btn.title = 'Click để xem, shift+click để quản lý';
     
     // Shift+click to manage
-    btn.addEventListener('contextmenu', (e) => {
+    if (checkPermission('manage_schedule')) btn.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       openWeekManager(parseInt(weekNum));
     });
@@ -491,7 +491,7 @@ function selectWeekModal(weekNum) {
   updateCurrentWeekDisplay(weekNum);
   
   // Update dropdown selection if admin
-  if (isAdmin()) {
+  if (checkPermission('manage_schedule')) {
     document.getElementById('currentWeekSelect').value = weekNum;
   }
   
@@ -582,7 +582,7 @@ function renderWeekView(weekSchedule, container, selectedDayName) {
       classes.forEach((cls, idx) => {
         const isCompleted = cls.completions && cls.completions[currentUser.id];
         html += `
-          <div class="class-item ${isCompleted ? 'completed' : ''}" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
+          <div class="class-item ${isCompleted ? 'completed' : ''}" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
             <div class="class-content">
               <div class="class-time">${cls.time}</div>
               <div class="class-name">${cls.name}</div>
@@ -593,7 +593,7 @@ function renderWeekView(weekSchedule, container, selectedDayName) {
                     onclick="toggleClassCompletion('${day}', ${idx})">
               ${isCompleted ? '✅' : '⭕'}
             </button>
-            ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${day}', ${idx})">🗑️</button>` : ''}
+            ${checkPermission('manage_schedule') ? `<button class="delete-btn" onclick="deleteClass('${day}', ${idx})">🗑️</button>` : ''}
           </div>
         `;
       });
@@ -625,7 +625,7 @@ function renderDayView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="class-item ${isCompleted ? 'completed' : ''}" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="class-item ${isCompleted ? 'completed' : ''}" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="class-content">
             <div class="class-time">${cls.time}</div>
             <div class="class-name">${cls.name}</div>
@@ -636,7 +636,7 @@ function renderDayView(weekSchedule, dayName, container) {
                   onclick="toggleClassCompletion('${dayName}', ${idx})">
             ${isCompleted ? '✅' : '⭕'}
           </button>
-          ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
+          ${checkPermission('manage_schedule') ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
         </div>
       `;
     });
@@ -667,7 +667,7 @@ function renderDailyView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="daily-class-item ${isCompleted ? 'completed' : ''}" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="daily-class-item ${isCompleted ? 'completed' : ''}" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="daily-time">${cls.time}</div>
           <div class="daily-details">
             <div class="daily-class-name">${cls.name}</div>
@@ -678,7 +678,7 @@ function renderDailyView(weekSchedule, dayName, container) {
                   onclick="toggleClassCompletion('${dayName}', ${idx})">
             ${isCompleted ? '✅' : '⭕'}
           </button>
-          ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
+          ${checkPermission('manage_schedule') ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
         </div>
       `;
     });
@@ -695,8 +695,8 @@ function getDayStringFromDate(date) {
 }
 
 function addClass() {
-  if (!isAdmin()) {
-    alert('Chỉ Admin mới có thể thêm lớp');
+  if (!checkPermission('manage_schedule')) {
+    alert('Bạn không có quyền thêm lớp');
     return;
   }
 
@@ -735,6 +735,7 @@ function addClass() {
 
   schedules[weekKey][day].push(newClass);
   saveSchedules();
+  logAction('Thêm lớp học', `Lớp: ${name} - Thứ: ${day}`);
 
   nameInput.value = '';
   timeInput.value = '';
@@ -743,15 +744,17 @@ function addClass() {
 }
 
 function deleteClass(day, idx) {
-  if (!isAdmin()) {
-    alert('Chỉ Admin mới có thể xóa');
+  if (!checkPermission('manage_schedule')) {
+    alert('Bạn không có quyền xóa lớp');
     return;
   }
 
   if (confirm('Xóa lớp học này?')) {
     const weekKey = `week-${currentWeek}`;
+    const cls = schedules[weekKey][day][idx];
     schedules[weekKey][day].splice(idx, 1);
     saveSchedules();
+    logAction('Xóa lớp học', `Lớp: ${cls.name} - Thứ: ${day}`);
     buildHeaderClassFilterOptions();
     buildModalClassFilterOptions();
     buildManageClassFilterOptions();
@@ -791,7 +794,7 @@ function openScheduleModal(date) {
   updateCurrentWeekDisplay(currentWeek);
   
   // Update dropdown selection if admin
-  if (isAdmin()) {
+  if (checkPermission('manage_schedule')) {
     document.getElementById('currentWeekSelect').value = currentWeek;
   }
   
@@ -834,7 +837,7 @@ function closeScheduleModal() {
   const addBtn = document.querySelector('#manageClassAdminSection .add-btn');
   if (addBtn) addBtn.textContent = '+ Thêm lớp';
   // Clear form inputs
-  document.getElementById('classInputManage').value = '';
+  // document.getElementById('classInputManage').value = ''; // Không xóa để giữ trạng thái nhập liệu
 }
 
 function closeManageClassModal() {
@@ -909,7 +912,7 @@ function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
         if (filteredClassName && cls.name !== filteredClassName) return;
 
         html += `
-          <div class="class-item" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
+          <div class="class-item" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
             <div class="class-content">
               <div class="class-time">${cls.time}</div>
               <div class="class-name">${cls.name}</div>
@@ -917,7 +920,7 @@ function renderWeekViewFiltered(weekSchedule, container, selectedDayName) {
               <div class="class-room">${cls.room || 'Phòng ?'}</div>
               ${cls.duration ? `<div class="class-duration">${cls.duration}</div>` : ''}
             </div>
-            ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${day}', ${idx})">🗑️</button>` : ''}
+            ${checkPermission('manage_schedule') ? `<button class="delete-btn" onclick="deleteClass('${day}', ${idx})">🗑️</button>` : ''}
           </div>
         `;
       });
@@ -952,7 +955,7 @@ function renderDayViewFiltered(weekSchedule, dayName, container) {
       if (filteredClassName && cls.name !== filteredClassName) return;
 
       html += `
-        <div class="class-item" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="class-item" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="class-content">
             <div class="class-time">${cls.time}</div>
             <div class="class-name">${cls.name}</div>
@@ -960,7 +963,7 @@ function renderDayViewFiltered(weekSchedule, dayName, container) {
             <div class="class-room">${cls.room || 'Phòng ?'}</div>
             ${cls.duration ? `<div class="class-duration">${cls.duration}</div>` : ''}
           </div>
-          ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
+          ${checkPermission('manage_schedule') ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
         </div>
       `;
     });
@@ -994,7 +997,7 @@ function renderDailyViewFiltered(weekSchedule, dayName, container) {
       if (filteredClassName && cls.name !== filteredClassName) return;
 
       html += `
-        <div class="daily-class-item" ${isAdmin() ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="daily-class-item" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="daily-time">${cls.time}</div>
           <div class="daily-details">
             <div class="daily-class-name">${cls.name}</div>
@@ -1002,7 +1005,7 @@ function renderDailyViewFiltered(weekSchedule, dayName, container) {
             <div class="daily-class-room">📍 ${cls.room || 'Phòng ?'}</div>
             ${cls.duration ? `<div class="daily-class-duration">${cls.duration}</div>` : ''}
           </div>
-          ${isAdmin() ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
+          ${checkPermission('manage_schedule') ? `<button class="delete-btn" onclick="deleteClass('${dayName}', ${idx})">🗑️</button>` : ''}
         </div>
       `;
     });
@@ -1194,6 +1197,7 @@ function addClassFromModal() {
 
   schedules[weekKey][day].push(newClass);
   saveSchedules();
+  logAction('Thêm lớp học', `Lớp: ${name} - Thứ: ${day}`);
   buildHeaderClassFilterOptions(); // Cập nhật droplist
 
   // Reset form
@@ -1207,7 +1211,7 @@ function addClassFromModal() {
 }
 
 function editClass(day, idx) {
-  if (!isAdmin()) return;
+  if (!checkPermission('manage_schedule')) return;
   
   const weekKey = `week-${currentWeek}`;
   const cls = schedules[weekKey][day][idx];
@@ -1309,16 +1313,27 @@ function addClassFromManageModal() {
   schedules[weekKey][day].push(newClass);
 
   saveSchedules();
+  logAction('Thêm lớp học', `Lớp: ${name} - Thứ: ${day}`);
   buildHeaderClassFilterOptions(); // Cập nhật droplist
   buildModalClassFilterOptions();
   buildManageClassFilterOptions();
 
-  nameInput.value = '';
-  if (subjectInput) subjectInput.value = '';
+  // Giữ lại tên lớp, môn và phòng để nhập tiếp nhanh hơn
+  // nameInput.value = ''; 
+  // if (subjectInput) subjectInput.value = '';
+  // roomInput.value = '';
+  
   if (timeInput) timeInput.value = '';
   if (endTimeInput) endTimeInput.value = '';
-  roomInput.value = '';
   
+  // Tự động tăng tiết nếu đang ở chế độ chọn tiết
+  if (isPeriodMode) {
+    const currentPeriod = parseInt(document.getElementById('startPeriodSelect').value);
+    if (currentPeriod < 10) {
+      document.getElementById('startPeriodSelect').value = currentPeriod + 1;
+    }
+  }
+
   updateModalSchedule();
   renderCalendar();
 }
@@ -1385,6 +1400,7 @@ function saveWeekInfo() {
   };
   
   saveWeekMetadata();
+  logAction('Cập nhật tuần', `Tuần: ${name}`);
   renderWeekSelector();
   renderCalendar(); // Cập nhật lịch để hiển thị đúng khoảng thời gian
 
@@ -1400,6 +1416,7 @@ function deleteCurrentWeek() {
     delete schedules[weekKey];
     delete weekMetadata[weekKey];
     saveSchedules();
+    logAction('Xóa tuần', `Tuần: ${editingWeek}`);
     saveWeekMetadata();
     renderWeekSelector();
     renderCalendar();
@@ -1913,6 +1930,7 @@ function saveEditClass() {
   }
   
   saveSchedules();
+  logAction('Sửa lớp học', `Lớp: ${name} - Thứ: ${day}`);
   buildHeaderClassFilterOptions();
   updateModalSchedule();
   renderCalendar();

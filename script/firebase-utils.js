@@ -484,6 +484,65 @@ async function saveSharedInputHistory(type, list) {
   }
 }
 
+// --- SHARED LOGS (NHẬT KÝ HOẠT ĐỘNG) ---
+async function logAction(action, detail) {
+  const user = getCurrentUser();
+  const logEntry = {
+    id: Date.now(),
+    user: user ? user.name : 'Unknown',
+    role: user ? (ROLES[user.role] || user.role) : 'Unknown',
+    action: action,
+    detail: detail,
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    // Lưu vào node shared/logs
+    // Để tránh quá tải, có thể giới hạn số lượng log sau này
+    await db.ref('shared/logs').push(logEntry);
+    console.log('📝 Logged:', action);
+  } catch (error) {
+    console.error('❌ Lỗi ghi log:', error);
+  }
+}
+
+function onSharedLogsChanged(callback) {
+  const ref = db.ref('shared/logs').limitToLast(200); // Chỉ lấy 200 log gần nhất
+  ref.on('value', snapshot => {
+    const logs = [];
+    snapshot.forEach(child => {
+      logs.push(child.val());
+    });
+    // Sắp xếp mới nhất lên đầu
+    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    callback(logs);
+  });
+}
+
+// --- SHARED PERMISSIONS (PHÂN QUYỀN) ---
+function onSharedPermissionsChanged(callback) {
+  const ref = db.ref('shared/permissions');
+  ref.on('value', snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      localStorage.setItem('c7aio_permissions_cache', JSON.stringify(data));
+      callback(data);
+    }
+  });
+}
+
+async function saveSharedPermissions(perms) {
+  try {
+    await db.ref('shared/permissions').set(perms);
+    // Ghi log hành động này
+    logAction('Cập nhật quyền hạn', 'Thay đổi bảng phân quyền hệ thống');
+    console.log('✅ Đã lưu phân quyền lên Firebase');
+  } catch (error) {
+    console.error('❌ Lỗi lưu phân quyền:', error);
+    alert('Lỗi khi lưu phân quyền!');
+  }
+}
+
 // ============= FALLBACK - Offline Support =============
 
 // Nếu offline, sử dụng localStorage tạm thời

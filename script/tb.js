@@ -19,7 +19,7 @@ window.addEventListener('load', () => {
   });
 
   // Chỉ admin mới thêm được thông báo
-  if (!isAdmin()) {
+  if (!checkPermission('manage_notifications')) {
     document.querySelector('.notification-input-area').style.display = 'none';
   }
 
@@ -42,8 +42,8 @@ window.addEventListener('load', () => {
 });
 
 function addNotification() {
-  if (!isAdmin()) {
-    alert('Chỉ Admin mới có thể thêm thông báo');
+  if (!checkPermission('manage_notifications')) {
+    alert('Bạn không có quyền thêm thông báo');
     return;
   }
 
@@ -66,17 +66,19 @@ function addNotification() {
   };
 
   saveSharedNotification(newNotification);
+  logAction('Thêm thông báo', `Nội dung: ${message}`);
   input.value = '';
 }
 
 function deleteNotification(notifId) {
-  if (!isAdmin()) {
-    alert('Chỉ Admin mới có thể xóa');
+  if (!checkPermission('manage_notifications')) {
+    alert('Bạn không có quyền xóa thông báo');
     return;
   }
 
   if (confirm('Xóa thông báo này?')) {
     deleteSharedNotification(notifId);
+    logAction('Xóa thông báo', `ID: ${notifId}`);
   }
 }
 
@@ -168,7 +170,7 @@ function renderNotifications() {
               <span class="notification-completion">${completedCount} / ${totalStudents} đã xem</span>
             </div>
           </div>
-          ${isAdmin() ? `<button class="notification-delete-btn" onclick="deleteNotification(${notif.id})">🗑️</button>` : ''}
+          ${checkPermission('manage_notifications') ? `<button class="notification-delete-btn" onclick="deleteNotification(${notif.id})">🗑️</button>` : ''}
         </li>
       `;
     })

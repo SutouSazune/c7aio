@@ -9,7 +9,7 @@ window.addEventListener('load', () => {
   currentUser = getCurrentUser();
   
   // Chỉ admin mới thêm được task
-  if (isAdmin()) {
+  if (checkPermission('manage_tasks')) {
     document.getElementById('adminControls').style.display = 'block';
   }
 
@@ -29,6 +29,11 @@ window.addEventListener('load', () => {
     }
   });
 
+  // Custom Handler cho nút Image để hỗ trợ upload file local (Ảnh hoặc File khác)
+  quill.getModule('toolbar').addHandler('image', () => {
+    selectLocalFile();
+  });
+
   // Render ngay dữ liệu từ cache (nếu có)
   renderTasks();
 
@@ -38,6 +43,31 @@ window.addEventListener('load', () => {
     renderTasks();
   });
 });
+
+// Hàm chọn file từ máy tính và chèn vào editor
+function selectLocalFile() {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  // Không giới hạn accept để cho phép chọn cả file tài liệu
+  input.click();
+
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const range = quill.getSelection(true);
+      if (file.type.startsWith('image/')) {
+        quill.insertEmbed(range.index, 'image', e.target.result);
+      } else {
+        const text = file.name;
+        quill.insertText(range.index, text, 'link', e.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+}
 
 // --- MODAL FUNCTIONS ---
 function openTaskModal() {
@@ -66,8 +96,8 @@ function closeTaskModal() {
 }
 
 function saveTask() {
-  if (!isAdmin()) {
-    alert('Chỉ Admin mới có thể thêm task');
+  if (!checkPermission('manage_tasks')) {
+    alert('Bạn không có quyền thêm nhiệm vụ');
     return;
   }
 
@@ -101,6 +131,7 @@ function saveTask() {
 
   // Lưu lên Firebase
   saveSharedTask(newTask);
+  logAction('Thêm nhiệm vụ', `Tên: ${name}`);
   closeTaskModal();
 }
 
@@ -200,13 +231,14 @@ function closeProgressModal() {
 }
 
 async function deleteTask(taskId) {
-  if (!isAdmin()) {
-    alert('Chỉ Admin mới có thể xóa');
+  if (!checkPermission('manage_tasks')) {
+    alert('Bạn không có quyền xóa nhiệm vụ');
     return;
   }
 
   if (confirm('Xóa nhiệm vụ này?')) {
     deleteSharedTask(taskId);
+    logAction('Xóa nhiệm vụ', `ID: ${taskId}`);
   }
 }
 
@@ -313,7 +345,7 @@ function renderTasks() {
                 👥 ${completionCount} đã xong
               </div>
 
-              ${isAdmin() ? `
+              ${checkPermission('manage_tasks') ? `
                 <button class="view-progress-btn" onclick="viewTaskProgress(${task.id})">📋 Xem DS</button>
               ` : ''}
 
@@ -328,7 +360,7 @@ function renderTasks() {
               ` : ''}
             </div>
           </div>
-          ${isAdmin() ? `<button class="task-btn" onclick="deleteTask(${task.id})">Xóa</button>` : ''}
+          ${checkPermission('manage_tasks') ? `<button class="task-btn" onclick="deleteTask(${task.id})">Xóa</button>` : ''}
         </li>
       `;
     })

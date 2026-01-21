@@ -54,6 +54,11 @@ function openStudentModal(id = null) {
   const title = document.getElementById('modalTitle');
   const btnDelete = document.getElementById('btnDeleteStudent');
   
+  // Inject Role Select if missing
+  if (!document.getElementById('stdRole')) {
+    injectRoleSelectToModal();
+  }
+  
   editingStudentId = id;
 
   if (id) {
@@ -82,7 +87,28 @@ function closeStudentModal() {
   document.body.style.overflow = ''; // Restore scroll
 }
 
+function injectRoleSelectToModal() {
+  const formBody = document.querySelector('#studentModal .modal-body');
+  const roleDiv = document.createElement('div');
+  roleDiv.className = 'form-group';
+  roleDiv.style.marginBottom = '15px';
+  roleDiv.innerHTML = `
+    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chức vụ (*)</label>
+    <select id="stdRole" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></select>
+  `;
+  // Chèn vào đầu form
+  formBody.insertBefore(roleDiv, formBody.firstChild);
+  updateRoleSelectOptions();
+}
+
+function updateRoleSelectOptions() {
+  const select = document.getElementById('stdRole');
+  if (!select) return;
+  select.innerHTML = Object.keys(ROLES).map(key => `<option value="${key}">${ROLES[key]}</option>`).join('');
+}
+
 function fillForm(s) {
+  if (document.getElementById('stdRole')) document.getElementById('stdRole').value = s.role || 'student';
   document.getElementById('stdName').value = s.name || '';
   document.getElementById('stdDob').value = s.dob || '';
   document.getElementById('stdGender').value = s.gender || 'Nam';
@@ -101,6 +127,7 @@ function fillForm(s) {
 function clearForm() {
   document.querySelectorAll('input').forEach(i => i.value = '');
   document.getElementById('stdGender').value = 'Nam';
+  if (document.getElementById('stdRole')) document.getElementById('stdRole').value = 'student';
   document.getElementById('stdEthnicity').value = 'Kinh';
 }
 
@@ -114,6 +141,7 @@ function saveStudent() {
   const studentData = {
     id: editingStudentId || Date.now(),
     name: name,
+    role: document.getElementById('stdRole').value,
     dob: document.getElementById('stdDob').value,
     gender: document.getElementById('stdGender').value,
     ethnicity: document.getElementById('stdEthnicity').value,
@@ -138,6 +166,7 @@ function saveStudent() {
 
   // Lưu lên Firebase thay vì localStorage
   saveSharedStudents(STUDENTS);
+  logAction(editingStudentId ? 'Sửa hồ sơ' : 'Thêm học sinh', `Học sinh: ${name} - Chức vụ: ${ROLES[studentData.role]}`);
   // renderStudentsTable(); // Không cần gọi thủ công vì onSharedStudentsChanged sẽ tự chạy
   closeStudentModal();
 }
@@ -146,6 +175,8 @@ function deleteStudent() {
   if (!editingStudentId) return;
 
   if (confirm('Bạn có chắc chắn muốn xóa hồ sơ học sinh này? Hành động này không thể hoàn tác!')) {
+    const s = STUDENTS.find(st => st.id === editingStudentId);
+    logAction('Xóa học sinh', `Đã xóa hồ sơ của: ${s ? s.name : 'Unknown'}`);
     STUDENTS = STUDENTS.filter(s => s.id !== editingStudentId);
     saveSharedStudents(STUDENTS);
     closeStudentModal();
