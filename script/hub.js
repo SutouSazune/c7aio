@@ -230,34 +230,86 @@ function initHubTabs() {
   const canViewLogs = checkPermission('view_logs');
 
   if (canManageStudents || canManageRoles || canViewLogs) {
-    document.getElementById('hubAdminTabs').style.display = 'flex';
+    document.getElementById('adminToolsSection').style.display = 'block';
     
-    if (canManageStudents) document.getElementById('tabBtnStudents').style.display = 'block';
-    if (canManageRoles) document.getElementById('tabBtnRoles').style.display = 'block';
-    if (canViewLogs) document.getElementById('tabBtnLogs').style.display = 'block';
+    if (canManageStudents) document.getElementById('btnNavStudents').style.display = 'flex';
+    if (canManageRoles) document.getElementById('btnNavRoles').style.display = 'flex';
+    if (canViewLogs) document.getElementById('btnNavLogs').style.display = 'flex';
   }
 
   // Inject CSS cho Tabs
   const style = document.createElement('style');
   style.innerHTML = `
-    .admin-tabs-container {
-      display: flex; gap: 10px; padding: 0 20px; margin-top: 20px;
-      overflow-x: auto;
-    }
-    .hub-tab-btn {
-      padding: 10px 20px; border: none; background: white;
-      border-radius: 8px; cursor: pointer; font-weight: 600; color: #666;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .hub-tab-btn.active {
-      background: #667eea; color: white; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
-    }
     .hub-tab-content { display: none; padding-bottom: 40px; animation: fadeIn 0.3s; }
     .hub-tab-content.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     
-    .students-table th, .students-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+    /* --- MODERN ADMIN UI STYLES --- */
+    .admin-view-header {
+      display: flex; align-items: center; gap: 15px; 
+      padding: 20px; background: white; margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .back-btn {
+      padding: 8px 16px; border: 1px solid #ddd; background: #f8f9fa;
+      border-radius: 20px; cursor: pointer; font-weight: 600; color: #555;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: #eee; transform: translateX(-3px); }
+    
+    .table-card {
+      background: white; border-radius: 12px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      margin: 0 20px; overflow: hidden;
+    }
+    .table-actions {
+      padding: 20px; border-bottom: 1px solid #eee;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .modern-input {
+      padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px;
+      width: 300px; font-size: 0.95rem; transition: all 0.2s;
+    }
+    .modern-input:focus { border-color: #667eea; outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+    
+    .modern-btn {
+      padding: 10px 20px; border: none; border-radius: 8px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .modern-btn.primary { background: #667eea; color: white; }
+    .modern-btn.primary:hover { background: #5a6fd6; transform: translateY(-2px); }
+    .modern-btn.success { background: #27ae60; color: white; }
+    .modern-btn.success:hover { background: #219150; transform: translateY(-2px); }
+    .modern-btn.small { padding: 6px 12px; font-size: 0.85rem; }
+    
+    .table-responsive { overflow-x: auto; }
+    .modern-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    .modern-table th {
+      background: #f8f9fa; color: #444; font-weight: 700;
+      padding: 15px 20px; text-align: left; border-bottom: 2px solid #eee;
+    }
+    .modern-table td {
+      padding: 15px 20px; border-bottom: 1px solid #f0f0f0;
+      color: #333; vertical-align: middle;
+    }
+    .modern-table tr:hover td { background: #fafafa; }
+    .modern-table tr:last-child td { border-bottom: none; }
+    
+    /* Checkbox Matrix */
+    .perm-checkbox {
+      appearance: none; width: 20px; height: 20px;
+      border: 2px solid #ddd; border-radius: 4px; cursor: pointer;
+      position: relative; transition: all 0.2s;
+    }
+    .perm-checkbox:checked { background: #667eea; border-color: #667eea; }
+    .perm-checkbox:checked::after {
+      content: '✓'; position: absolute; color: white;
+      font-size: 14px; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
     .role-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; background: #eee; color: #555; }
     .role-badge.admin { background: #e74c3c; color: white; }
     .role-badge.monitor { background: #f1c40f; color: #333; }
@@ -295,11 +347,6 @@ function initHubTabs() {
 function switchHubTab(tabName) {
   currentHubTab = tabName;
   
-  // Update Buttons
-  document.querySelectorAll('.hub-tab-btn').forEach(btn => btn.classList.remove('active'));
-  const activeBtn = document.querySelector(`.hub-tab-btn[onclick="switchHubTab('${tabName}')"]`);
-  if (activeBtn) activeBtn.classList.add('active');
-
   // Update Content
   document.querySelectorAll('.hub-tab-content').forEach(div => {
     div.classList.remove('active');
@@ -334,7 +381,7 @@ function renderHubStudentsTable(data = STUDENTS) {
         ${s.email ? `✉️ ${s.email}` : ''}
       </td>
       <td>
-        <button onclick="openHubStudentModal(${s.id})" style="padding: 5px 10px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">✏️ Sửa</button>
+        <button onclick="openHubStudentModal(${s.id})" class="modern-btn small" style="border: 1px solid #ddd; background: white; color: #333;">✏️ Sửa</button>
       </td>
     </tr>
   `).join('');
@@ -446,7 +493,7 @@ function renderRolesMatrix() {
   if (!container) return;
 
   let html = `
-    <table class="students-table" style="width: 100%;">
+    <table class="modern-table" style="width: 100%;">
       <thead>
         <tr>
           <th>Chức vụ / Quyền hạn</th>
@@ -469,7 +516,7 @@ function renderRolesMatrix() {
           <input type="checkbox" class="perm-checkbox" 
             data-role="${roleKey}" data-perm="${permKey}" 
             ${hasPerm ? 'checked' : ''} 
-            style="transform: scale(1.5); cursor: pointer;">
+            >
         </td>
       `;
     });
@@ -506,7 +553,7 @@ function renderLogsTable() {
   }
 
   let html = `
-    <table class="students-table" style="width: 100%;">
+    <table class="modern-table" style="width: 100%;">
       <thead>
         <tr>
           <th>Thời gian</th>

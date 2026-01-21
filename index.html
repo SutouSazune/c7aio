@@ -32,14 +32,6 @@
     </div>
   </header>
 
-  <!-- ADMIN TABS (Chỉ hiện với Admin/Có quyền) -->
-  <div id="hubAdminTabs" class="admin-tabs-container" style="display:none;">
-    <button class="hub-tab-btn active" onclick="switchHubTab('dashboard')">🏠 Dashboard</button>
-    <button class="hub-tab-btn" id="tabBtnStudents" onclick="switchHubTab('students')" style="display:none;">👨‍🎓 Học sinh</button>
-    <button class="hub-tab-btn" id="tabBtnRoles" onclick="switchHubTab('roles')" style="display:none;">⚙️ Phân quyền</button>
-    <button class="hub-tab-btn" id="tabBtnLogs" onclick="switchHubTab('logs')" style="display:none;">📜 Logs</button>
-  </div>
-
   <!-- TAB CONTENT: DASHBOARD (Mặc định) -->
   <div id="tabContent_dashboard" class="hub-tab-content active">
   <!-- Welcome Banner -->
@@ -129,6 +121,28 @@
     </div>
   </section>
 
+  <!-- ADMIN TOOLS SECTION (Thay thế Tabs ngang) -->
+  <section class="nav-section" id="adminToolsSection" style="display:none; margin-top: 30px; border-top: 2px dashed #eee; padding-top: 30px;">
+    <h2 class="section-title">🛠️ Quản Trị Hệ Thống</h2>
+    <div class="nav-grid">
+      <button class="nav-btn" id="btnNavStudents" onclick="switchHubTab('students')" style="display:none; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white;">
+        <span class="nav-icon">👨‍🎓</span>
+        <span class="nav-text">Học sinh</span>
+        <span class="nav-desc">Quản lý hồ sơ & thông tin</span>
+      </button>
+      <button class="nav-btn" id="btnNavRoles" onclick="switchHubTab('roles')" style="display:none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-text">Phân quyền</span>
+        <span class="nav-desc">Cấp quyền chức vụ</span>
+      </button>
+      <button class="nav-btn" id="btnNavLogs" onclick="switchHubTab('logs')" style="display:none; background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); color: white;">
+        <span class="nav-icon">📜</span>
+        <span class="nav-text">Logs</span>
+        <span class="nav-desc">Nhật ký hoạt động</span>
+      </button>
+    </div>
+  </section>
+
   <!-- Task gần nhất -->
   <section class="recent-section">
     <div class="section-header">
@@ -149,13 +163,17 @@
 
   <!-- TAB CONTENT: STUDENTS -->
   <div id="tabContent_students" class="hub-tab-content" style="display:none;">
-    <div class="table-container" style="padding: 20px;">
-      <div class="table-header" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-        <input type="text" id="hubSearchInput" placeholder="🔍 Tìm học sinh..." onkeyup="searchHubStudents()" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 300px;">
-        <button class="add-btn" onclick="openHubStudentModal()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">+ Thêm học sinh</button>
+    <div class="admin-view-header">
+      <button onclick="switchHubTab('dashboard')" class="back-btn">⬅️ Quay lại</button>
+      <h2>👨‍🎓 Quản Lý Học Sinh</h2>
+    </div>
+    <div class="table-card">
+      <div class="table-actions">
+        <input type="text" id="hubSearchInput" placeholder="🔍 Tìm kiếm theo tên, SĐT..." onkeyup="searchHubStudents()" class="modern-input">
+        <button class="modern-btn primary" onclick="openHubStudentModal()">+ Thêm mới</button>
       </div>
-      <div style="overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <table class="students-table" style="width: 100%; border-collapse: collapse;">
+      <div class="table-responsive">
+        <table class="modern-table">
           <thead>
             <tr style="background: #f8f9fa; text-align: left;">
               <th style="padding: 12px;">STT</th>
@@ -174,13 +192,25 @@
 
   <!-- TAB CONTENT: ROLES -->
   <div id="tabContent_roles" class="hub-tab-content" style="display:none;">
-    <div class="roles-matrix-container" style="overflow-x: auto; background: white; padding: 20px; margin: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);"></div>
-    <div style="padding: 0 20px;"><button onclick="saveRolesConfig()" style="margin-top: 15px; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">💾 Lưu Cấu Hình Phân Quyền</button></div>
+    <div class="admin-view-header">
+      <button onclick="switchHubTab('dashboard')" class="back-btn">⬅️ Quay lại</button>
+      <h2>⚙️ Phân Quyền Hệ Thống</h2>
+    </div>
+    <div class="table-card">
+      <div class="roles-matrix-container table-responsive"></div>
+      <div style="padding: 20px; text-align: right;"><button onclick="saveRolesConfig()" class="modern-btn success">💾 Lưu Cấu Hình</button></div>
+    </div>
   </div>
 
   <!-- TAB CONTENT: LOGS -->
   <div id="tabContent_logs" class="hub-tab-content" style="display:none;">
-    <div class="logs-container" style="overflow-x: auto; background: white; padding: 20px; margin: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);"></div>
+    <div class="admin-view-header">
+      <button onclick="switchHubTab('dashboard')" class="back-btn">⬅️ Quay lại</button>
+      <h2>📜 Nhật Ký Hoạt Động</h2>
+    </div>
+    <div class="table-card">
+      <div class="logs-container table-responsive"></div>
+    </div>
   </div>
 
   <footer class="footer">
