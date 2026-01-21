@@ -132,7 +132,7 @@ function updateSelect2Options() {
     option.value = key;
     option.text = ROLES[key];
     select.appendChild(option);
-    });
+  });
 }
 
 function fillForm(s) {
