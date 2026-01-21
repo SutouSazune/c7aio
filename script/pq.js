@@ -1,3 +1,5 @@
+let currentStudents = [];
+
 window.addEventListener('load', () => {
   // Kiểm tra quyền truy cập
   if (!checkPermission('manage_roles')) {
@@ -9,6 +11,12 @@ window.addEventListener('load', () => {
   // Lắng nghe thay đổi quyền hạn từ Firebase
   onSharedPermissionsChanged((data) => {
     if (data) ROLE_PERMISSIONS_CONFIG = data;
+    renderRolesMatrix();
+  });
+
+  // Lắng nghe danh sách học sinh để hiển thị thành viên
+  onSharedStudentsChanged((data) => {
+    currentStudents = data || [];
     renderRolesMatrix();
   });
 
@@ -34,8 +42,19 @@ function renderRolesMatrix() {
   Object.keys(ROLES).forEach(roleKey => {
     if (roleKey === 'admin') return; // Skip Admin (always full perms)
     
+    // Lọc danh sách thành viên thuộc role này
+    const members = currentStudents.filter(s => s.role === roleKey);
+    const membersHtml = members.length > 0 
+      ? `<div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
+           ${members.map(m => `<div>👤 ${m.name}</div>`).join('')}
+         </div>`
+      : `<div style="margin-top: 5px; font-size: 0.8rem; color: #999; font-style: italic;">(Trống)</div>`;
+
     html += `<tr>
-      <td style="font-weight: bold;">${ROLES[roleKey]}</td>`;
+      <td style="vertical-align: top;">
+        <div style="font-weight: bold; color: #2c3e50;">${ROLES[roleKey]}</div>
+        ${membersHtml}
+      </td>`;
     
     Object.keys(PERMISSIONS).forEach(permKey => {
       const hasPerm = (ROLE_PERMISSIONS_CONFIG[roleKey] || []).includes(permKey);

@@ -24,6 +24,7 @@ function renderStudentsTable(data = STUDENTS) {
     <tr>
       <td>${index + 1}</td>
       <td style="font-weight: 600;">${s.name}</td>
+      <td><span style="background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.85rem;">${ROLES[s.role] || 'Thành viên'}</span></td>
       <td>${formatDate(s.dob)}</td>
       <td>${s.gender || '-'}</td>
       <td>
@@ -154,7 +155,6 @@ function saveStudent() {
     fatherPhone: document.getElementById('stdFatherPhone').value,
     motherName: document.getElementById('stdMotherName').value,
     motherPhone: document.getElementById('stdMotherPhone').value,
-    role: 'student'
   };
 
   if (editingStudentId) {
