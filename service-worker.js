@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v1.0.7'; // Tăng version để cập nhật cache mới
+const CACHE_NAME = 'c7aio-v1.0.8'; // Tăng version để cập nhật cache mới (Fix lỗi cache giao diện cũ)
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
