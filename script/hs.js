@@ -69,6 +69,12 @@ function openStudentModal(id = null) {
   }
     
   updateSelect2Options();
+
+  // Khởi tạo/Refresh Select2 ngay tại đây để đảm bảo nó nhận diện được các options vừa thêm
+  $('#roleSelect').select2({
+    placeholder: 'Chọn chức vụ...',
+    allowClear: true
+  });
   
   editingStudentId = id;
 
@@ -110,14 +116,6 @@ function injectSelect2ToModal() {
   `;
   // Chèn vào đầu form
   formBody.insertBefore(roleDiv, formBody.firstChild);
-  
-  // Khởi tạo Select2 sau khi đã inject vào DOM
-  $(document).ready(function() {
-    $('#roleSelect').select2({
-      placeholder: 'Chọn chức vụ...',
-      allowClear: true
-    });
-  });
 }
 
 function updateSelect2Options() {
