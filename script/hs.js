@@ -67,6 +67,8 @@ function openStudentModal(id = null) {
   if (!document.getElementById('roleCheckboxesContainer')) {
     injectMultiSelectRoleToModal();
   }
+    
+  updateSelect2Options();
   
   editingStudentId = id;
 
@@ -96,61 +98,40 @@ function closeStudentModal() {
   document.body.style.overflow = ''; // Restore scroll
 }
 
-function injectMultiSelectRoleToModal() {
+function injectSelect2ToModal() {
   const formBody = document.querySelector('#studentModal .modal-body');
   const roleDiv = document.createElement('div');
   roleDiv.className = 'form-group';
   roleDiv.style.marginBottom = '15px';
   roleDiv.innerHTML = `
     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chức vụ (*)</label>
-    <div class="multi-select-container" id="roleMultiSelect">
-        <div class="multi-select-display" tabindex="0">
-            <span class="placeholder">Chọn chức vụ...</span>
-            <span class="arrow">▼</span>
-        </div>
-        <div class="multi-select-dropdown" id="roleCheckboxesContainer">
-            <!-- Checkboxes will be injected here -->
-        </div>
-    </div>
+    <select id="roleSelect" multiple="multiple" style="width: 100%;">
+    </select>
   `;
   // Chèn vào đầu form
   formBody.insertBefore(roleDiv, formBody.firstChild);
-  updateMultiSelectOptions();
-  setupMultiSelect();
-}
-
-function updateMultiSelectOptions() {
-  const container = document.getElementById('roleCheckboxesContainer');
-  if (!container) return;
   
-  container.innerHTML = Object.keys(ROLES).map(key => {
-    if (key === 'admin') return ''; // Không cho chọn admin ở đây
-    return `
-      <label>
-        <input type="checkbox" class="role-checkbox" value="${key}">
-        ${ROLES[key]}
-      </label>
-    `;
-  }).join('');
-
-  // Add event listener to new checkboxes
-  document.querySelectorAll('#roleCheckboxesContainer .role-checkbox').forEach(cb => {
-    cb.addEventListener('change', updateMultiSelectDisplayText);
+  // Khởi tạo Select2 sau khi đã inject vào DOM
+  $(document).ready(function() {
+    $('#roleSelect').select2({
+      placeholder: 'Chọn chức vụ...',
+      allowClear: true
+    });
   });
 }
 
-function setupMultiSelect() {
-    const container = document.getElementById('roleMultiSelect');
-    if (!container) return;
+function updateSelect2Options() {
+  const select = document.getElementById('roleSelect');
+  if (!select) return;
 
-    const display = container.querySelector('.multi-select-display');
-
-    display.addEventListener('click', () => container.classList.toggle('open'));
-
-    window.addEventListener('click', (e) => {
-        if (!container.contains(e.target)) {
-            container.classList.remove('open');
-        }
+  // Tạo các option cho select
+  select.innerHTML = '';
+  Object.keys(ROLES).forEach(key => {
+    if (key === 'admin') return; // Không hiển thị admin trong danh sách
+    const option = document.createElement('option');
+    option.value = key;
+    option.text = ROLES[key];
+    select.appendChild(option);
     });
 }
 
@@ -175,15 +156,10 @@ function updateMultiSelectDisplayText() {
 
 function fillForm(s) {
   // Fill Roles
-  const checkboxes = document.querySelectorAll('.role-checkbox');
-  const userRoles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+  const select = document.getElementById('roleSelect');
+  const userRoles = Array.isArray(s.role) ? s.role : [s.role || 'student']; 
   
-  checkboxes.forEach(cb => {
-    cb.checked = userRoles.includes(cb.value);
-  });
-
-  // Update display text
-  updateMultiSelectDisplayText();
+  $(select).val(userRoles).trigger('change');
 
   // Fill other fields
   document.getElementById('stdName').value = s.name || '';
@@ -203,16 +179,10 @@ function fillForm(s) {
 
 function clearForm() {
   document.querySelectorAll('input').forEach(i => i.value = '');
-  document.getElementById('stdGender').value = 'Nam';
-  
-  // Reset checkboxes to 'student' only
-  document.querySelectorAll('.role-checkbox').forEach(cb => {
-    cb.checked = cb.value === 'student';
-  });
+  document.getElementById('stdGender').value = 'Nam';  
 
-  // Update display text
-  updateMultiSelectDisplayText();
-
+  // Reset select2
+  $('#roleSelect').val(null).trigger('change');
   document.getElementById('stdEthnicity').value = 'Kinh';
 }
 
@@ -224,11 +194,10 @@ function saveStudent() {
   }
 
   // Get selected roles
-  const selectedRoles = [];
-  document.querySelectorAll('.role-checkbox:checked').forEach(cb => {
-    selectedRoles.push(cb.value);
-  });
-  if (selectedRoles.length === 0) selectedRoles.push('student'); // Default
+  let selectedRoles = $('#roleSelect').val();
+  if (!selectedRoles || selectedRoles.length === 0) {
+    selectedRoles = ['student'];
+  }
 
   const studentData = {
     id: editingStudentId || Date.now(),
