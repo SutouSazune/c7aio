@@ -20,6 +20,7 @@ const ROLES = {
   'vice_labor': '🧹 Lớp phó lao động',
   'vice_art': '🎭 Lớp phó văn thể mỹ',
   'vice_subject': '📝 Lớp phó bộ môn',
+  'treasurer': '💰 Thủ quỹ',
   'group_leader': '👥 Tổ trưởng',
   'student': '👤 Thành viên'
 };
@@ -43,6 +44,7 @@ let ROLE_PERMISSIONS_CONFIG = {
   'vice_labor': ['manage_tasks'],
   'vice_art': ['manage_tasks'],
   'vice_subject': ['manage_tasks'],
+  'treasurer': ['manage_tasks', 'manage_notifications'],
   'group_leader': [],
   'student': []
 };
@@ -86,9 +88,14 @@ function checkPermission(permissionCode) {
   // Admin luôn có quyền
   if (user.role === 'admin' || user.id === 0) return true;
 
-  const userRole = user.role || 'student';
-  const allowedPerms = ROLE_PERMISSIONS_CONFIG[userRole] || [];
-  return allowedPerms.includes(permissionCode);
+  // Chuyển đổi role thành mảng (để hỗ trợ cả dữ liệu cũ là string và mới là array)
+  const userRoles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+
+  // Kiểm tra xem CÓ BẤT KỲ role nào của user sở hữu quyền này không
+  return userRoles.some(role => {
+    const allowedPerms = ROLE_PERMISSIONS_CONFIG[role] || [];
+    return allowedPerms.includes(permissionCode);
+  });
 }
 
 // Kiểm tra user đã login

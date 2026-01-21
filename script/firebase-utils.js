@@ -487,10 +487,17 @@ async function saveSharedInputHistory(type, list) {
 // --- SHARED LOGS (NHẬT KÝ HOẠT ĐỘNG) ---
 async function logAction(action, detail) {
   const user = getCurrentUser();
+  
+  let roleDisplay = 'Unknown';
+  if (user) {
+    const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+    roleDisplay = roles.map(r => ROLES[r] || r).join(', ');
+  }
+
   const logEntry = {
     id: Date.now(),
     user: user ? user.name : 'Unknown',
-    role: user ? (ROLES[user.role] || user.role) : 'Unknown',
+    role: roleDisplay,
     action: action,
     detail: detail,
     timestamp: new Date().toISOString()

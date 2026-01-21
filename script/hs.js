@@ -20,11 +20,18 @@ window.addEventListener('load', () => {
 function renderStudentsTable(data = STUDENTS) {
   const tbody = document.getElementById('studentsTableBody');
   
-  const rows = data.map((s, index) => `
+  const rows = data.map((s, index) => {
+    // Xử lý hiển thị nhiều role
+    const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+    const roleBadges = roles.map(r => 
+      `<span style="display:inline-block; background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.85rem; margin: 2px;">${ROLES[r] || 'Thành viên'}</span>`
+    ).join('');
+
+    return `
     <tr>
       <td>${index + 1}</td>
       <td style="font-weight: 600;">${s.name}</td>
-      <td><span style="background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.85rem;">${ROLES[s.role] || 'Thành viên'}</span></td>
+      <td>${roleBadges}</td>
       <td>${formatDate(s.dob)}</td>
       <td>${s.gender || '-'}</td>
       <td>
@@ -35,7 +42,8 @@ function renderStudentsTable(data = STUDENTS) {
         <button class="edit-btn" onclick="openStudentModal(${s.id})">✏️ Sửa</button>
       </td>
     </tr>
-  `).join('');
+    `;
+  }).join('');
 
   tbody.innerHTML = rows;
 }
@@ -56,8 +64,8 @@ function openStudentModal(id = null) {
   const btnDelete = document.getElementById('btnDeleteStudent');
   
   // Inject Role Select if missing
-  if (!document.getElementById('stdRole')) {
-    injectRoleSelectToModal();
+  if (!document.getElementById('roleCheckboxesContainer')) {
+    injectRoleCheckboxesToModal();
   }
   
   editingStudentId = id;
@@ -88,28 +96,47 @@ function closeStudentModal() {
   document.body.style.overflow = ''; // Restore scroll
 }
 
-function injectRoleSelectToModal() {
+function injectRoleCheckboxesToModal() {
   const formBody = document.querySelector('#studentModal .modal-body');
   const roleDiv = document.createElement('div');
   roleDiv.className = 'form-group';
   roleDiv.style.marginBottom = '15px';
   roleDiv.innerHTML = `
     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chức vụ (*)</label>
-    <select id="stdRole" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></select>
+    <div id="roleCheckboxesContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+      <!-- Checkboxes will be injected here -->
+    </div>
   `;
   // Chèn vào đầu form
   formBody.insertBefore(roleDiv, formBody.firstChild);
-  updateRoleSelectOptions();
+  updateRoleCheckboxOptions();
 }
 
-function updateRoleSelectOptions() {
-  const select = document.getElementById('stdRole');
-  if (!select) return;
-  select.innerHTML = Object.keys(ROLES).map(key => `<option value="${key}">${ROLES[key]}</option>`).join('');
+function updateRoleCheckboxOptions() {
+  const container = document.getElementById('roleCheckboxesContainer');
+  if (!container) return;
+  
+  container.innerHTML = Object.keys(ROLES).map(key => {
+    if (key === 'admin') return ''; // Không cho chọn admin ở đây
+    return `
+      <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;">
+        <input type="checkbox" class="role-checkbox" value="${key}">
+        ${ROLES[key]}
+      </label>
+    `;
+  }).join('');
 }
 
 function fillForm(s) {
-  if (document.getElementById('stdRole')) document.getElementById('stdRole').value = s.role || 'student';
+  // Fill Roles
+  const checkboxes = document.querySelectorAll('.role-checkbox');
+  const userRoles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+  
+  checkboxes.forEach(cb => {
+    cb.checked = userRoles.includes(cb.value);
+  });
+
+  // Fill other fields
   document.getElementById('stdName').value = s.name || '';
   document.getElementById('stdDob').value = s.dob || '';
   document.getElementById('stdGender').value = s.gender || 'Nam';
@@ -128,7 +155,12 @@ function fillForm(s) {
 function clearForm() {
   document.querySelectorAll('input').forEach(i => i.value = '');
   document.getElementById('stdGender').value = 'Nam';
-  if (document.getElementById('stdRole')) document.getElementById('stdRole').value = 'student';
+  
+  // Reset checkboxes to 'student' only
+  document.querySelectorAll('.role-checkbox').forEach(cb => {
+    cb.checked = cb.value === 'student';
+  });
+
   document.getElementById('stdEthnicity').value = 'Kinh';
 }
 
@@ -139,10 +171,17 @@ function saveStudent() {
     return;
   }
 
+  // Get selected roles
+  const selectedRoles = [];
+  document.querySelectorAll('.role-checkbox:checked').forEach(cb => {
+    selectedRoles.push(cb.value);
+  });
+  if (selectedRoles.length === 0) selectedRoles.push('student'); // Default
+
   const studentData = {
     id: editingStudentId || Date.now(),
     name: name,
-    role: document.getElementById('stdRole').value,
+    role: selectedRoles, // Lưu mảng role
     dob: document.getElementById('stdDob').value,
     gender: document.getElementById('stdGender').value,
     ethnicity: document.getElementById('stdEthnicity').value,
@@ -166,7 +205,8 @@ function saveStudent() {
 
   // Lưu lên Firebase thay vì localStorage
   saveSharedStudents(STUDENTS);
-  logAction(editingStudentId ? 'Sửa hồ sơ' : 'Thêm học sinh', `Học sinh: ${name} - Chức vụ: ${ROLES[studentData.role]}`);
+  const roleNames = selectedRoles.map(r => ROLES[r]).join(', ');
+  logAction(editingStudentId ? 'Sửa hồ sơ' : 'Thêm học sinh', `Học sinh: ${name} - Chức vụ: ${roleNames}`);
   // renderStudentsTable(); // Không cần gọi thủ công vì onSharedStudentsChanged sẽ tự chạy
   closeStudentModal();
 }

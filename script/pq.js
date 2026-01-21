@@ -43,7 +43,11 @@ function renderRolesMatrix() {
     if (roleKey === 'admin') return; // Skip Admin (always full perms)
     
     // Lọc danh sách thành viên thuộc role này
-    const members = currentStudents.filter(s => s.role === roleKey);
+    const members = currentStudents.filter(s => {
+      const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+      return roles.includes(roleKey);
+    });
+
     const membersHtml = members.length > 0 
       ? `<div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
            ${members.map(m => `<div>👤 ${m.name}</div>`).join('')}
