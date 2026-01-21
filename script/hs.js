@@ -65,7 +65,7 @@ function openStudentModal(id = null) {
   
   // Inject Role Select if missing
   if (!document.getElementById('roleCheckboxesContainer')) {
-    injectRoleCheckboxesToModal();
+    injectMultiSelectRoleToModal();
   }
   
   editingStudentId = id;
@@ -96,35 +96,81 @@ function closeStudentModal() {
   document.body.style.overflow = ''; // Restore scroll
 }
 
-function injectRoleCheckboxesToModal() {
+function injectMultiSelectRoleToModal() {
   const formBody = document.querySelector('#studentModal .modal-body');
   const roleDiv = document.createElement('div');
   roleDiv.className = 'form-group';
   roleDiv.style.marginBottom = '15px';
   roleDiv.innerHTML = `
     <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chức vụ (*)</label>
-    <div id="roleCheckboxesContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
-      <!-- Checkboxes will be injected here -->
+    <div class="multi-select-container" id="roleMultiSelect">
+        <div class="multi-select-display" tabindex="0">
+            <span class="placeholder">Chọn chức vụ...</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="multi-select-dropdown" id="roleCheckboxesContainer">
+            <!-- Checkboxes will be injected here -->
+        </div>
     </div>
   `;
   // Chèn vào đầu form
   formBody.insertBefore(roleDiv, formBody.firstChild);
-  updateRoleCheckboxOptions();
+  updateMultiSelectOptions();
+  setupMultiSelect();
 }
 
-function updateRoleCheckboxOptions() {
+function updateMultiSelectOptions() {
   const container = document.getElementById('roleCheckboxesContainer');
   if (!container) return;
   
   container.innerHTML = Object.keys(ROLES).map(key => {
     if (key === 'admin') return ''; // Không cho chọn admin ở đây
     return `
-      <label style="display: flex; align-items: center; gap: 5px; font-size: 0.9rem; cursor: pointer;">
+      <label>
         <input type="checkbox" class="role-checkbox" value="${key}">
         ${ROLES[key]}
       </label>
     `;
   }).join('');
+
+  // Add event listener to new checkboxes
+  document.querySelectorAll('#roleCheckboxesContainer .role-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateMultiSelectDisplayText);
+  });
+}
+
+function setupMultiSelect() {
+    const container = document.getElementById('roleMultiSelect');
+    if (!container) return;
+
+    const display = container.querySelector('.multi-select-display');
+
+    display.addEventListener('click', () => container.classList.toggle('open'));
+
+    window.addEventListener('click', (e) => {
+        if (!container.contains(e.target)) {
+            container.classList.remove('open');
+        }
+    });
+}
+
+function updateMultiSelectDisplayText() {
+    const container = document.getElementById('roleMultiSelect');
+    if (!container) return;
+    const displaySpan = container.querySelector('.multi-select-display span:first-child');
+    
+    const selected = [];
+    document.querySelectorAll('.role-checkbox:checked').forEach(cb => {
+        selected.push(ROLES[cb.value]);
+    });
+
+    if (selected.length > 0) {
+        displaySpan.textContent = selected.join(', ');
+        displaySpan.classList.remove('placeholder');
+    } else {
+        displaySpan.textContent = 'Chọn chức vụ...';
+        displaySpan.classList.add('placeholder');
+    }
 }
 
 function fillForm(s) {
@@ -135,6 +181,9 @@ function fillForm(s) {
   checkboxes.forEach(cb => {
     cb.checked = userRoles.includes(cb.value);
   });
+
+  // Update display text
+  updateMultiSelectDisplayText();
 
   // Fill other fields
   document.getElementById('stdName').value = s.name || '';
@@ -160,6 +209,9 @@ function clearForm() {
   document.querySelectorAll('.role-checkbox').forEach(cb => {
     cb.checked = cb.value === 'student';
   });
+
+  // Update display text
+  updateMultiSelectDisplayText();
 
   document.getElementById('stdEthnicity').value = 'Kinh';
 }
