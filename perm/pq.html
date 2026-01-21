@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea">
+  <title>10C7 AIO - Phân Quyền</title>
+  <link rel="stylesheet" href="../style/pq.css">
+  <link rel="stylesheet" href="../style/console.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="../" class="back-btn">←</a>
+      <h1>⚙️ Phân Quyền Hệ Thống</h1>
+      <p>Quản lý quyền hạn của các chức vụ</p>
+    </div>
+  </header>
+
+  <section class="management-section">
+    <div class="table-card">
+      <div class="roles-matrix-container table-responsive">
+        <!-- Bảng phân quyền sẽ được render ở đây -->
+      </div>
+      <div class="action-bar">
+        <button onclick="saveRolesConfig()" class="save-btn">💾 Lưu Cấu Hình</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>&copy; 2026 Lớp 10C7</p>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../script/firebase-config.js"></script>
+  <script>firebase.initializeApp(firebaseConfig);</script>
+  <script src="../script/firebase-utils.js"></script>
+  <script src="../script/students-list.js"></script>
+  <script src="../script/console.js"></script>
+  <script src="../script/pq.js"></script>
+</body>
+</html>

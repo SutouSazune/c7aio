@@ -14,81 +14,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* --- ADMIN TABS & UI STYLES (Moved from hub.js) --- */
-    .hub-tab-content { display: none; padding-bottom: 40px; animation: fadeIn 0.3s; }
-    .hub-tab-content.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .admin-view-header {
-      display: flex; align-items: center; gap: 15px; 
-      padding: 20px; background: white; margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .back-btn {
-      padding: 8px 16px; border: 1px solid #ddd; background: #f8f9fa;
-      border-radius: 20px; cursor: pointer; font-weight: 600; color: #555;
-      transition: all 0.2s;
-    }
-    .back-btn:hover { background: #eee; transform: translateX(-3px); }
-    
-    .table-card {
-      background: white; border-radius: 12px; 
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-      margin: 0 20px; overflow: hidden;
-    }
-    .table-actions {
-      padding: 20px; border-bottom: 1px solid #eee;
-      display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 10px;
-    }
-    .modern-input {
-      padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px;
-      width: 300px; font-size: 0.95rem; transition: all 0.2s;
-    }
-    .modern-input:focus { border-color: #667eea; outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
-    
-    .modern-btn {
-      padding: 10px 20px; border: none; border-radius: 8px;
-      font-weight: 600; cursor: pointer; transition: all 0.2s;
-      display: inline-flex; align-items: center; gap: 5px;
-    }
-    .modern-btn.primary { background: #667eea; color: white; }
-    .modern-btn.primary:hover { background: #5a6fd6; transform: translateY(-2px); }
-    .modern-btn.success { background: #27ae60; color: white; }
-    .modern-btn.success:hover { background: #219150; transform: translateY(-2px); }
-    .modern-btn.small { padding: 6px 12px; font-size: 0.85rem; }
-    
-    .table-responsive { overflow-x: auto; }
-    .modern-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-    .modern-table th {
-      background: #f8f9fa; color: #444; font-weight: 700;
-      padding: 15px 20px; text-align: left; border-bottom: 2px solid #eee;
-    }
-    .modern-table td {
-      padding: 15px 20px; border-bottom: 1px solid #f0f0f0;
-      color: #333; vertical-align: middle;
-    }
-    .modern-table tr:hover td { background: #fafafa; }
-    .modern-table tr:last-child td { border-bottom: none; }
-    
-    /* Checkbox Matrix */
-    .perm-checkbox {
-      appearance: none; width: 20px; height: 20px;
-      border: 2px solid #ddd; border-radius: 4px; cursor: pointer;
-      position: relative; transition: all 0.2s;
-    }
-    .perm-checkbox:checked { background: #667eea; border-color: #667eea; }
-    .perm-checkbox:checked::after {
-      content: '✓'; position: absolute; color: white;
-      font-size: 14px; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    
-    .role-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; background: #eee; color: #555; }
-    .role-badge.admin { background: #e74c3c; color: white; }
-    .role-badge.monitor { background: #f1c40f; color: #333; }
-  </style>
 </head>
 <body>
 
@@ -190,17 +115,17 @@
       </button>
       
       <!-- Admin Buttons (Integrated) -->
-      <button class="nav-btn" id="btnNavStudents" onclick="switchHubTab('students')" style="display:none; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white;">
+      <button class="nav-btn" id="btnNavStudents" onclick="go('hoso/hs.html')" style="display:none; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white;">
         <span class="nav-icon">👨‍🎓</span>
         <span class="nav-text">Học sinh</span>
         <span class="nav-desc">Quản lý hồ sơ</span>
       </button>
-      <button class="nav-btn" id="btnNavRoles" onclick="switchHubTab('roles')" style="display:none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+      <button class="nav-btn" id="btnNavRoles" onclick="go('perm/pq.html')" style="display:none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
         <span class="nav-icon">⚙️</span>
         <span class="nav-text">Phân quyền</span>
         <span class="nav-desc">Cấp quyền chức vụ</span>
       </button>
-      <button class="nav-btn" id="btnNavLogs" onclick="switchHubTab('logs')" style="display:none; background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); color: white;">
+      <button class="nav-btn" id="btnNavLogs" onclick="go('logs/nk.html')" style="display:none; background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); color: white;">
         <span class="nav-icon">📜</span>
         <span class="nav-text">Logs</span>
         <span class="nav-desc">Nhật ký hoạt động</span>
@@ -226,107 +151,10 @@
   </section>
   </div> <!-- End tabContent_dashboard -->
 
-  <!-- TAB CONTENT: STUDENTS -->
-  <div id="tabContent_students" class="hub-tab-content" style="display:none;">
-    <div class="admin-view-header">
-      <button onclick="switchHubTab('dashboard')" class="back-btn">⬅️ Quay lại</button>
-      <h2>👨‍🎓 Quản Lý Học Sinh</h2>
-    </div>
-    <div class="table-card">
-      <div class="table-actions">
-        <input type="text" id="hubSearchInput" placeholder="🔍 Tìm kiếm theo tên, SĐT..." onkeyup="searchHubStudents()" class="modern-input">
-        <button class="modern-btn primary" onclick="openHubStudentModal()">+ Thêm mới</button>
-      </div>
-      <div class="table-responsive">
-        <table class="modern-table">
-          <thead>
-            <tr style="background: #f8f9fa; text-align: left;">
-              <th style="padding: 12px;">STT</th>
-              <th style="padding: 12px;">Họ và tên</th>
-              <th style="padding: 12px;">Chức vụ</th>
-              <th style="padding: 12px;">Ngày sinh</th>
-              <th style="padding: 12px;">Liên hệ</th>
-              <th style="padding: 12px;">Hành động</th>
-            </tr>
-          </thead>
-          <tbody id="hubStudentsTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB CONTENT: ROLES -->
-  <div id="tabContent_roles" class="hub-tab-content" style="display:none;">
-    <div class="admin-view-header">
-      <button onclick="switchHubTab('dashboard')" class="back-btn">⬅️ Quay lại</button>
-      <h2>⚙️ Phân Quyền Hệ Thống</h2>
-    </div>
-    <div class="table-card">
-      <div class="roles-matrix-container table-responsive"></div>
-      <div style="padding: 20px; text-align: right;"><button onclick="saveRolesConfig()" class="modern-btn success">💾 Lưu Cấu Hình</button></div>
-    </div>
-  </div>
-
-  <!-- TAB CONTENT: LOGS -->
-  <div id="tabContent_logs" class="hub-tab-content" style="display:none;">
-    <div class="admin-view-header">
-      <button onclick="switchHubTab('dashboard')" class="back-btn">⬅️ Quay lại</button>
-      <h2>📜 Nhật Ký Hoạt Động</h2>
-    </div>
-    <div class="table-card">
-      <div class="logs-container table-responsive"></div>
-    </div>
-  </div>
-
   <footer class="footer">
     <p>&copy; 2025 Lớp 10A1. Tất cả quyền được bảo lưu.</p>
     <p class="online-status" id="onlineStatus">🟢 Online</p>
   </footer>
-
-  <!-- MODAL STUDENT (For Hub) -->
-  <div id="hubStudentModal" class="modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
-    <div class="modal-content" style="max-width: 500px; width: 90%; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-      <div class="modal-header" style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #eee; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
-        <h2 id="hubModalTitle" style="margin: 0; font-size: 1.2rem;">Thông tin học sinh</h2>
-        <button onclick="closeHubStudentModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
-      </div>
-      <div class="modal-body" style="padding: 20px; max-height: 70vh; overflow-y: auto;">
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chức vụ (*)</label>
-          <select id="hubStdRole" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></select>
-        </div>
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Họ và tên (*)</label>
-          <input type="text" id="hubStdName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
-          <div style="flex: 1;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Ngày sinh</label>
-            <input type="date" id="hubStdDob" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
-          <div style="flex: 1;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Giới tính</label>
-            <select id="hubStdGender" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-              <option value="Nam">Nam</option>
-              <option value="Nữ">Nữ</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Số điện thoại</label>
-          <input type="tel" id="hubStdPhone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Email</label>
-          <input type="email" id="hubStdEmail" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-          <button id="btnDeleteHubStudent" onclick="deleteHubStudent()" style="padding: 8px 16px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; display: none;">Xóa</button>
-          <button onclick="saveHubStudent()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">💾 Lưu</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
