@@ -64,8 +64,8 @@ function openStudentModal(id = null) {
   const btnDelete = document.getElementById('btnDeleteStudent');
   
   // Inject Role Select if missing
-  if (!document.getElementById('roleCheckboxesContainer')) {
-    injectMultiSelectRoleToModal();
+  if (!document.getElementById('roleSelect')) {
+    injectSelect2ToModal();
   }
     
   updateSelect2Options();
@@ -133,25 +133,6 @@ function updateSelect2Options() {
     option.text = ROLES[key];
     select.appendChild(option);
     });
-}
-
-function updateMultiSelectDisplayText() {
-    const container = document.getElementById('roleMultiSelect');
-    if (!container) return;
-    const displaySpan = container.querySelector('.multi-select-display span:first-child');
-    
-    const selected = [];
-    document.querySelectorAll('.role-checkbox:checked').forEach(cb => {
-        selected.push(ROLES[cb.value]);
-    });
-
-    if (selected.length > 0) {
-        displaySpan.textContent = selected.join(', ');
-        displaySpan.classList.remove('placeholder');
-    } else {
-        displaySpan.textContent = 'Chọn chức vụ...';
-        displaySpan.classList.add('placeholder');
-    }
 }
 
 function fillForm(s) {
