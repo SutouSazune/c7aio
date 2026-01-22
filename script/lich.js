@@ -1835,25 +1835,25 @@ function injectEditModal() {
   
   const modalHtml = `
   <div id="editClassModal" class="modal" style="display: none; z-index: 10000; align-items: center; justify-content: center;">
-    <div class="modal-content" style="max-width: 400px; width: 90%; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-      <div class="modal-header" style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #eee; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin: 0; font-size: 1.2rem;">✏️ Chỉnh Sửa Lớp Học</h2>
-        <button onclick="closeEditClassModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+    <div class="modal-content" style="max-width: 450px; width: 95%; background: white; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 1.1rem; font-weight: 600;">✏️ Chỉnh Sửa Chi Tiết</h2>
+        <button onclick="closeEditClassModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: white; opacity: 0.8;">✕</button>
       </div>
-      <div class="modal-body" style="padding: 20px;">
+      <div class="modal-body" style="padding: 25px; max-height: 80vh; overflow-y: auto;">
         <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tên lớp/Môn học (*)</label>
-          <input type="text" id="classInputEdit" list="manageClassNamesList" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #444;">Tên lớp / Môn học (*)</label>
+          <input type="text" id="classInputEdit" list="manageClassNamesList" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
         </div>
         
         <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Môn học chi tiết</label>
-          <input type="text" id="subjectInputEdit" list="manageSubjectsList" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #444;">Môn học chi tiết (VD: Đại số)</label>
+          <input type="text" id="subjectInputEdit" list="manageSubjectsList" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
         </div>
 
         <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Thứ (*)</label>
-          <select id="daySelectEdit" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #444;">Thứ (*)</label>
+          <select id="daySelectEdit" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; background: white; box-sizing: border-box;">
             <option value="monday">Thứ Hai</option>
             <option value="tuesday">Thứ Ba</option>
             <option value="wednesday">Thứ Tư</option>
@@ -1864,39 +1864,44 @@ function injectEditModal() {
           </select>
         </div>
 
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-            <input type="checkbox" id="usePeriodModeEdit" onchange="togglePeriodModeEdit()">
-            Chọn theo tiết học
+        <div class="form-group" style="margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px;">
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight: 500; color: #555;">
+            <input type="checkbox" id="usePeriodModeEdit" onchange="togglePeriodModeEdit()" style="width: 18px; height: 18px;">
+            Sử dụng khung giờ chuẩn (Tiết học)
           </label>
         </div>
 
         <div id="periodInputGroupEdit" class="form-group" style="display:none; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chọn tiết</label>
-          <select id="startPeriodSelectEdit" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #444;">Chọn tiết</label>
+          <select id="startPeriodSelectEdit" style="width:100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
             <!-- Options generated by JS -->
           </select>
         </div>
 
         <div id="timeInputGroupEdit" class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
           <div class="form-group" style="flex: 1;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Bắt đầu (*)</label>
-            <input type="time" id="timeInputEdit" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #444;">Bắt đầu (*)</label>
+            <input type="time" id="timeInputEdit" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
           </div>
           <div class="form-group" style="flex: 1;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 600;">Kết thúc</label>
-            <input type="time" id="endTimeInputEdit" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #444;">Kết thúc</label>
+            <input type="time" id="endTimeInputEdit" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
           </div>
         </div>
 
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 600;">Phòng học</label>
-          <input type="text" id="roomInputEdit" list="manageRoomsList" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #444;">Phòng học</label>
+          <input type="text" id="roomInputEdit" list="manageRoomsList" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
         </div>
 
-        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button onclick="closeEditClassModal()" style="padding: 8px 16px; background: #eee; border: none; border-radius: 4px; cursor: pointer;">Hủy</button>
-          <button onclick="saveEditClass()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">💾 Lưu Thay Đổi</button>
+        <div class="modal-actions" style="display: flex; gap: 10px; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+          <button onclick="deleteClassFromEditModal()" style="padding: 10px 15px; background: #fff0f0; color: #e74c3c; border: 1px solid #ffcccc; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+            🗑️ Xóa lớp
+          </button>
+          <div style="display: flex; gap: 10px;">
+            <button onclick="closeEditClassModal()" style="padding: 10px 20px; background: #f1f2f6; color: #57606f; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Hủy</button>
+            <button onclick="saveEditClass()" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);">💾 Lưu Thay Đổi</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1922,6 +1927,15 @@ function togglePeriodModeEdit() {
 function closeEditClassModal() {
   document.getElementById('editClassModal').style.display = 'none';
   editingClassIndex = null;
+}
+
+function deleteClassFromEditModal() {
+  if (!editingClassIndex) return;
+  // Gọi hàm deleteClass gốc (nó đã có confirm và logic xóa)
+  // Lưu ý: deleteClass cần tham số (day, idx)
+  deleteClass(editingClassIndex.day, editingClassIndex.idx);
+  // Sau khi xóa xong thì đóng modal edit
+  closeEditClassModal();
 }
 
 function saveEditClass() {
@@ -1953,7 +1967,8 @@ function saveEditClass() {
   
   const weekKey = `week-${currentWeek}`;
   const oldDay = editingClassIndex.day;
-  const oldIdx = editingClassIndex.index;
+  // FIX BUG: Sử dụng .idx thay vì .index (do editClass lưu là {day, idx})
+  const oldIdx = editingClassIndex.idx;
   
   if (!schedules[weekKey][oldDay] || !schedules[weekKey][oldDay][oldIdx]) {
     alert('Lỗi: Không tìm thấy lớp học gốc để sửa.');
