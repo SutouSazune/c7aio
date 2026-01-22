@@ -5,6 +5,7 @@ let currentDate = new Date(); // For calendar navigation
 let selectedDate = null; // Selected date to determine week
 let currentWeek = 0; // No week selected initially
 let currentUser = null;
+let isScheduleDataSynced = false; // Cờ để chặn lưu dữ liệu khi chưa đồng bộ xong
 let viewMode = 'week'; // 'week', 'day', 'daily'
 let modalViewMode = 'week'; // View mode in modal
 let filteredClassName = ''; // For filtering classes
@@ -54,6 +55,10 @@ const PERIODS = {
 window.addEventListener('load', () => {
   currentUser = getCurrentUser();
   
+  // ROOT FIX: Đảm bảo trang luôn có thể cuộn khi tải, tránh lỗi kẹt overflow:hidden
+  document.body.style.overflow = 'auto';
+  document.documentElement.style.overflow = 'auto';
+  
   // Show admin controls in manage modal
   const manageClassAdminSection = document.getElementById('manageClassAdminSection');
   const manageClassFilterSection = document.getElementById('manageClassFilterSection');
@@ -99,15 +104,15 @@ window.addEventListener('load', () => {
 
 function setupRealtimeSync() {
   onSharedSchedulesChanged((data) => {
+    isScheduleDataSynced = true; // Đánh dấu đã nhận dữ liệu từ server
     schedules = data || {};
-    // Nếu chưa có dữ liệu nào, khởi tạo tuần 1
-    if (Object.keys(schedules).length === 0) {
-      schedules['week-1'] = initEmptyWeek();
-    }
-    buildHeaderClassFilterOptions(); // Cập nhật droplist khi có dữ liệu mới
+    
+    // FIX LOGIC SYNC: Không bao giờ tự động saveSchedules() ở đây.
+    // Chỉ cập nhật UI theo dữ liệu nhận được (dù rỗng hay có dữ liệu).
+    buildHeaderClassFilterOptions();
     buildModalClassFilterOptions();
     buildManageClassFilterOptions();
-    initInterface(); // Re-render
+    initInterface();
   });
 
   onSharedWeekMetadataChanged((data) => {
@@ -130,23 +135,32 @@ function initInterface() {
 }
 
 function saveWeekMetadata() {
+  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
+  if (!isScheduleDataSynced) {
+    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    return;
+  }
   // Lưu lên Firebase thay vì localStorage
   saveSharedWeekMetadata(weekMetadata);
 }
 
 function initializeSchedules() {
-  // Khởi tạo week 1 nếu chưa có
-  if (!schedules['week-1']) {
-    schedules['week-1'] = initEmptyWeek();
-    saveSchedules();
-  }
   
   // Set selectedDate = today
   if (!selectedDate) {
     selectedDate = new Date();
   }
   
-  // Keep currentWeek = 0 to not highlight any week on initial load
+  // FIX: Luôn tính toán currentWeek dựa trên ngày hiện tại nếu chưa có
+  // Để đảm bảo UI luôn hiển thị đúng tuần (dù là tuần trống)
+  if (currentWeek === 0) {
+    const foundKey = findWeekKeyByDate(selectedDate);
+    if (foundKey) {
+      currentWeek = parseInt(foundKey.split('-')[1]);
+    } else {
+      currentWeek = getWeekNumberFromDate(selectedDate);
+    }
+  }
   
   // Display first week in header
   const availableWeeks = Object.keys(schedules).sort((a, b) => {
@@ -163,6 +177,9 @@ function initializeSchedules() {
     if (checkPermission('manage_schedule')) {
       updateWeekDropdown();
     }
+  } else {
+    // Trường hợp chưa có dữ liệu, vẫn hiển thị tên tuần hiện tại
+    updateCurrentWeekDisplay(currentWeek);
   }
 }
 
@@ -224,6 +241,19 @@ function initEmptyWeek() {
 }
 
 function saveSchedules() {
+  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
+  if (!isScheduleDataSynced) {
+    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    return;
+  }
+
+  // FIX SYNC: Client-side Guard
+  // Nếu dữ liệu local đang rỗng, tuyệt đối không gửi lệnh lưu (tránh trường hợp cache lỗi làm mất data server)
+  if (!schedules || Object.keys(schedules).length === 0) {
+    console.warn('⚠️ Client Guard: Chặn lưu lịch học rỗng.');
+    return;
+  }
+
   // Lưu lên Firebase thay vì localStorage
   if (typeof saveSharedSchedules === 'function') {
     saveSharedSchedules(schedules);
@@ -502,6 +532,7 @@ function selectWeekModal(weekNum) {
   wrapper.style.display = 'flex';
   
   document.body.style.overflow = 'hidden'; // Khóa scroll nền
+  document.documentElement.style.overflow = 'hidden'; // Khóa scroll cho cả trang
 
   updateModalSchedule();
   
@@ -809,6 +840,7 @@ function openScheduleModal(date) {
   wrapper.style.display = 'flex';
   
   document.body.style.overflow = 'hidden'; // Khóa scroll nền
+  document.documentElement.style.overflow = 'hidden'; // Khóa scroll cho cả trang
 
   // Update view mode buttons
   document.querySelectorAll('.view-mode-btn').forEach(btn => {
@@ -830,7 +862,8 @@ function closeScheduleModal() {
   wrapper.classList.remove('active');
   wrapper.style.display = 'none';
 
-  document.body.style.overflow = ''; // Mở khóa scroll nền
+  document.body.style.overflow = 'auto'; // Mở khóa scroll nền
+  document.documentElement.style.overflow = 'auto';
 
   // Reset trạng thái sửa
   editingClassIndex = null;
@@ -1361,12 +1394,14 @@ function openAddWeekModal() {
   document.querySelector('input[name="durationType"][value="date"]').checked = true;
   
   document.body.style.overflow = 'hidden'; // Lock body
+  document.documentElement.style.overflow = 'hidden';
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 
 function closeAddWeekModal() {
   document.getElementById('addWeekModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
+  document.body.style.overflow = 'auto'; // Restore scroll
+  document.documentElement.style.overflow = 'auto';
 }
 
 function saveWeekInfo() {
@@ -1452,6 +1487,7 @@ function openWeekManager(weekNum) {
   }
   
   document.body.style.overflow = 'hidden'; // Lock body
+  document.documentElement.style.overflow = 'hidden';
   document.getElementById('addWeekModal').style.display = 'flex';
 }
 
@@ -1615,6 +1651,13 @@ function injectResponsiveStyles() {
   const style = document.createElement('style');
   style.innerHTML = `
     /* --- COMMON STYLES --- */
+    html, body {
+      width: 100%;
+      overflow-x: hidden; /* Ngăn cuộn ngang gây lỗi zoom trên mobile */
+      position: relative;
+      min-height: 100vh;
+    }
+
     #modalsWrapper {
       display: none;
       position: fixed;

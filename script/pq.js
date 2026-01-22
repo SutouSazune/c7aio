@@ -1,4 +1,5 @@
 let currentStudents = [];
+let isPermissionsDataSynced = false; // Cờ để chặn lưu dữ liệu khi chưa đồng bộ
 
 window.addEventListener('load', () => {
   // Kiểm tra quyền truy cập
@@ -11,6 +12,7 @@ window.addEventListener('load', () => {
   // Lắng nghe thay đổi quyền hạn từ Firebase
   onSharedPermissionsChanged((data) => {
     if (data) ROLE_PERMISSIONS_CONFIG = data;
+    isPermissionsDataSynced = true; // Đánh dấu đã nhận dữ liệu từ server
     renderRolesMatrix();
   });
 
@@ -79,6 +81,19 @@ function renderRolesMatrix() {
 }
 
 function saveRolesConfig() {
+  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
+  if (!isPermissionsDataSynced) {
+    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    return;
+  }
+  
+  // FIX SYNC: Client-side Guard
+  // Kiểm tra nếu config rỗng bất thường (Admin luôn phải có quyền)
+  if (!ROLE_PERMISSIONS_CONFIG || !ROLE_PERMISSIONS_CONFIG['admin'] || ROLE_PERMISSIONS_CONFIG['admin'].length === 0) {
+    console.warn('⚠️ Client Guard: Chặn lưu cấu hình phân quyền lỗi/rỗng.');
+    return;
+  }
+
   if (!confirm('Lưu thay đổi phân quyền?')) return;
   const newConfig = { ...ROLE_PERMISSIONS_CONFIG };
   Object.keys(ROLES).forEach(role => {

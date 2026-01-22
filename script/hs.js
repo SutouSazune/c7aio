@@ -1,4 +1,5 @@
 let editingStudentId = null;
+let isStudentsDataSynced = false; // Cờ để chặn lưu dữ liệu khi chưa đồng bộ
 
 window.addEventListener('load', () => {
   if (!isAdmin()) {
@@ -13,6 +14,7 @@ window.addEventListener('load', () => {
   // Kết nối Firebase để lấy dữ liệu realtime
   onSharedStudentsChanged((data) => {
     STUDENTS = data || []; // Cập nhật biến toàn cục
+    isStudentsDataSynced = true; // Đánh dấu đã nhận dữ liệu từ server
     renderStudentsTable(STUDENTS);
   });
 });
@@ -166,9 +168,21 @@ function clearForm() {
 }
 
 function saveStudent() {
+  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
+  if (!isStudentsDataSynced) {
+    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    return;
+  }
+
   const name = document.getElementById('stdName').value.trim();
   if (!name) {
     alert('Vui lòng nhập họ tên!');
+    return;
+  }
+
+  // FIX SYNC: Client-side Guard
+  if (!STUDENTS || STUDENTS.length === 0) {
+    console.warn('⚠️ Client Guard: Chặn lưu danh sách học sinh rỗng.');
     return;
   }
 
@@ -212,6 +226,12 @@ function saveStudent() {
 }
 
 function deleteStudent() {
+  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
+  if (!isStudentsDataSynced) {
+    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    return;
+  }
+
   if (!editingStudentId) return;
 
   if (confirm('Bạn có chắc chắn muốn xóa hồ sơ học sinh này? Hành động này không thể hoàn tác!')) {

@@ -337,10 +337,18 @@ function onSharedStudentsChanged(callback) {
 // Lưu toàn bộ danh sách học sinh (Admin dùng)
 async function saveSharedStudents(studentsList) {
   try {
-    // Đảm bảo lưu array sạch
     const cleanList = Array.isArray(studentsList) ? studentsList : [];
-    await db.ref('shared/students').set(cleanList);
-    console.log('✅ Đã đồng bộ danh sách học sinh lên Firebase');
+    
+    // FIX SYNC: Dùng transaction để kiểm tra trước khi lưu
+    await db.ref('shared/students').transaction((currentData) => {
+      // Nếu server đang có dữ liệu (>0) mà client định lưu rỗng (0) -> CHẶN
+      if (currentData && currentData.length > 0 && cleanList.length === 0) {
+        console.warn('⛔ Transaction blocked: Ngăn chặn ghi đè danh sách học sinh bằng dữ liệu rỗng.');
+        return; // Hủy update
+      }
+      return cleanList;
+    });
+    console.log('✅ Đã đồng bộ danh sách học sinh (Safe Sync)');
   } catch (error) {
     console.error('❌ Lỗi lưu học sinh:', error);
     alert('Lỗi khi lưu dữ liệu lên server!');
@@ -437,8 +445,16 @@ function onSharedSchedulesChanged(callback) {
 // Lưu lịch học
 async function saveSharedSchedules(schedules) {
   try {
-    await db.ref('shared/schedules').set(schedules);
-    console.log('✅ Đã lưu lịch học lên Firebase');
+    // FIX SYNC: Dùng transaction để kiểm tra trước khi lưu
+    await db.ref('shared/schedules').transaction((currentData) => {
+      // Nếu server đang có dữ liệu mà client định lưu rỗng -> CHẶN
+      if (currentData && Object.keys(currentData).length > 0 && (!schedules || Object.keys(schedules).length === 0)) {
+        console.warn('⛔ Transaction blocked: Ngăn chặn ghi đè lịch học bằng dữ liệu rỗng.');
+        return; // Hủy update
+      }
+      return schedules;
+    });
+    console.log('✅ Đã lưu lịch học (Safe Sync)');
   } catch (error) {
     console.error('❌ Lỗi lưu lịch học:', error);
   }
