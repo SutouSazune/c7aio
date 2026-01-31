@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v2.2.0'; // FORCE UPDATE: Fix SW path & Animations
+const CACHE_NAME = 'c7aio-v2.3.0'; // STABLE UPDATE: Fix infinite refresh loop
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
