@@ -38,12 +38,12 @@ function renderLogsTable() {
       <tbody>
   `;
 
-  systemLogs.forEach(log => {
+  systemLogs.forEach((log, index) => {
     const date = new Date(log.timestamp);
     const timeStr = `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')} ${date.getDate()}/${date.getMonth()+1}`;
     
     html += `
-      <tr>
+      <tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);">
         <td style="white-space: nowrap; color: #666;">${timeStr}</td>
         <td style="font-weight: 600;">${log.user}</td>
         <td>${log.role}</td>

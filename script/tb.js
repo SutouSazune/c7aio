@@ -43,7 +43,7 @@ window.addEventListener('load', () => {
 
 function addNotification() {
   if (!checkPermission('manage_notifications')) {
-    alert('Bạn không có quyền thêm thông báo');
+    showToast('Bạn không có quyền thêm thông báo', 'error');
     return;
   }
 
@@ -53,7 +53,7 @@ function addNotification() {
   const type = typeSelect.value;
 
   if (!message) {
-    alert('Vui lòng nhập nội dung thông báo');
+    showToast('Vui lòng nhập nội dung thông báo', 'error');
     return;
   }
 
@@ -67,18 +67,20 @@ function addNotification() {
 
   saveSharedNotification(newNotification);
   logAction('Thêm thông báo', `Nội dung: ${message}`);
+  showToast('Đã đăng thông báo!', 'success');
   input.value = '';
 }
 
 function deleteNotification(notifId) {
   if (!checkPermission('manage_notifications')) {
-    alert('Bạn không có quyền xóa thông báo');
+    showToast('Bạn không có quyền xóa thông báo', 'error');
     return;
   }
 
   if (confirm('Xóa thông báo này?')) {
     deleteSharedNotification(notifId);
     logAction('Xóa thông báo', `ID: ${notifId}`);
+    showToast('Đã xóa thông báo', 'success');
   }
 }
 
@@ -148,14 +150,14 @@ function renderNotifications() {
   }
 
   container.innerHTML = filtered
-    .map(notif => {
+    .map((notif, index) => {
       const totalStudents = STUDENTS.length;
       const completions = notif.completions || {};
       const completedCount = Object.values(completions).filter(v => v).length;
       const userCompleted = completions[currentUser.id] || false;
 
       return `
-        <li class="notification-item ${notif.type} ${userCompleted ? 'completed' : ''}">
+        <li class="notification-item ${notif.type} ${userCompleted ? 'completed' : ''}" style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; opacity: 0; transform: translateY(20px);">
           <button class="notification-checkbox-btn ${userCompleted ? 'active' : ''}" 
                   onclick="toggleNotificationCompletion(${notif.id})">
             ${userCompleted ? '✅' : '⭕'}

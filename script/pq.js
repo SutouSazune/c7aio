@@ -41,7 +41,7 @@ function renderRolesMatrix() {
       <tbody>
   `;
 
-  Object.keys(ROLES).forEach(roleKey => {
+  Object.keys(ROLES).forEach((roleKey, index) => {
     if (roleKey === 'admin') return; // Skip Admin (always full perms)
     
     // Lọc danh sách thành viên thuộc role này
@@ -56,7 +56,7 @@ function renderRolesMatrix() {
          </div>`
       : `<div style="margin-top: 5px; font-size: 0.8rem; color: #999; font-style: italic;">(Trống)</div>`;
 
-    html += `<tr>
+    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; opacity: 0; transform: translateY(20px);">
       <td style="vertical-align: top;">
         <div style="font-weight: bold; color: #2c3e50;">${ROLES[roleKey]}</div>
         ${membersHtml}
@@ -83,7 +83,7 @@ function renderRolesMatrix() {
 function saveRolesConfig() {
   // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
   if (!isPermissionsDataSynced) {
-    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    showToast('⏳ Đang đồng bộ dữ liệu, vui lòng đợi...', 'info');
     return;
   }
   
@@ -105,4 +105,5 @@ function saveRolesConfig() {
     if (newConfig[role]) newConfig[role].push(perm);
   });
   saveSharedPermissions(newConfig);
+  showToast('Đã cập nhật phân quyền!', 'success');
 }

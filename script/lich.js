@@ -137,7 +137,7 @@ function initInterface() {
 function saveWeekMetadata() {
   // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
   if (!isScheduleDataSynced) {
-    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    showToast('⏳ Đang đồng bộ dữ liệu, vui lòng đợi...', 'info');
     return;
   }
   // Lưu lên Firebase thay vì localStorage
@@ -243,7 +243,7 @@ function initEmptyWeek() {
 function saveSchedules() {
   // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
   if (!isScheduleDataSynced) {
-    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    showToast('⏳ Đang đồng bộ dữ liệu, vui lòng đợi...', 'info');
     return;
   }
 
@@ -613,7 +613,7 @@ function renderWeekView(weekSchedule, container, selectedDayName) {
       classes.forEach((cls, idx) => {
         const isCompleted = cls.completions && cls.completions[currentUser.id];
         html += `
-          <div class="class-item ${isCompleted ? 'completed' : ''}" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
+          <div class="class-item ${isCompleted ? 'completed' : ''}" style="animation: popIn 0.4s var(--ease-spring) forwards; animation-delay: ${idx * 0.05}s; opacity: 0; transform: scale(0.9);" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
             <div class="class-content">
               <div class="class-time">${cls.time}</div>
               <div class="class-name">${cls.name}</div>
@@ -656,7 +656,7 @@ function renderDayView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="class-item ${isCompleted ? 'completed' : ''}" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="class-item ${isCompleted ? 'completed' : ''}" style="animation: popIn 0.4s var(--ease-spring) forwards; animation-delay: ${idx * 0.05}s; opacity: 0; transform: scale(0.9);" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="class-content">
             <div class="class-time">${cls.time}</div>
             <div class="class-name">${cls.name}</div>
@@ -698,7 +698,7 @@ function renderDailyView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="daily-class-item ${isCompleted ? 'completed' : ''}" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="daily-class-item ${isCompleted ? 'completed' : ''}" style="animation: fadeInUp 0.4s var(--ease-spring) forwards; animation-delay: ${idx * 0.05}s; opacity: 0; transform: translateY(20px);" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="daily-time">${cls.time}</div>
           <div class="daily-details">
             <div class="daily-class-name">${cls.name}</div>
@@ -727,7 +727,7 @@ function getDayStringFromDate(date) {
 
 function addClass() {
   if (!checkPermission('manage_schedule')) {
-    alert('Bạn không có quyền thêm lớp');
+    showToast('Bạn không có quyền thêm lớp', 'error');
     return;
   }
 
@@ -742,7 +742,7 @@ function addClass() {
   const day = daySelect.value;
 
   if (!name || !time) {
-    alert('Vui lòng nhập tên lớp và thời gian');
+    showToast('Vui lòng nhập tên lớp và thời gian', 'error');
     return;
   }
 
@@ -767,6 +767,7 @@ function addClass() {
   schedules[weekKey][day].push(newClass);
   saveSchedules();
   logAction('Thêm lớp học', `Lớp: ${name} - Thứ: ${day}`);
+  showToast('Đã thêm lớp học!', 'success');
 
   nameInput.value = '';
   timeInput.value = '';
@@ -776,7 +777,7 @@ function addClass() {
 
 function deleteClass(day, idx) {
   if (!checkPermission('manage_schedule')) {
-    alert('Bạn không có quyền xóa lớp');
+    showToast('Bạn không có quyền xóa lớp', 'error');
     return;
   }
 
@@ -786,6 +787,7 @@ function deleteClass(day, idx) {
     schedules[weekKey][day].splice(idx, 1);
     saveSchedules();
     logAction('Xóa lớp học', `Lớp: ${cls.name} - Thứ: ${day}`);
+    showToast('Đã xóa lớp học', 'success');
     buildHeaderClassFilterOptions();
     buildModalClassFilterOptions();
     buildManageClassFilterOptions();
@@ -1197,14 +1199,14 @@ function addClassFromModal() {
     endTime = document.getElementById('endTimeInputManage').value.trim();
     
     if (!time) {
-      alert('Vui lòng nhập thời gian bắt đầu');
+      showToast('Vui lòng nhập thời gian bắt đầu', 'error');
       return;
     }
     duration = endTime ? `${time} - ${endTime}` : `${time} - ?`;
   }
 
   if (!name) {
-    alert('Vui lòng nhập tên lớp');
+    showToast('Vui lòng nhập tên lớp', 'error');
     return;
   }
 
@@ -1231,6 +1233,7 @@ function addClassFromModal() {
   schedules[weekKey][day].push(newClass);
   saveSchedules();
   logAction('Thêm lớp học', `Lớp: ${name} - Thứ: ${day}`);
+  showToast('Đã thêm lớp học!', 'success');
   buildHeaderClassFilterOptions(); // Cập nhật droplist
 
   // Reset form
@@ -1314,7 +1317,7 @@ function addClassFromManageModal() {
   }
 
   if (!name || !time) {
-    alert('Vui lòng nhập tên lớp và thời gian bắt đầu');
+    showToast('Vui lòng nhập tên lớp và thời gian bắt đầu', 'error');
     return;
   }
 
@@ -1347,6 +1350,7 @@ function addClassFromManageModal() {
 
   saveSchedules();
   logAction('Thêm lớp học', `Lớp: ${name} - Thứ: ${day}`);
+  showToast('Đã thêm lớp học!', 'success');
   buildHeaderClassFilterOptions(); // Cập nhật droplist
   buildModalClassFilterOptions();
   buildManageClassFilterOptions();
@@ -1412,7 +1416,7 @@ function saveWeekInfo() {
   const durationType = document.querySelector('input[name="durationType"]:checked').value;
   
   if (!name) {
-    alert('Vui lòng nhập tên tuần');
+    showToast('Vui lòng nhập tên tuần', 'error');
     return;
   }
   
@@ -1436,6 +1440,7 @@ function saveWeekInfo() {
   
   saveWeekMetadata();
   logAction('Cập nhật tuần', `Tuần: ${name}`);
+  showToast('Đã lưu thông tin tuần!', 'success');
   renderWeekSelector();
   renderCalendar(); // Cập nhật lịch để hiển thị đúng khoảng thời gian
 
@@ -1452,6 +1457,7 @@ function deleteCurrentWeek() {
     delete weekMetadata[weekKey];
     saveSchedules();
     logAction('Xóa tuần', `Tuần: ${editingWeek}`);
+    showToast('Đã xóa tuần thành công', 'success');
     saveWeekMetadata();
     renderWeekSelector();
     renderCalendar();
@@ -1961,7 +1967,7 @@ function saveEditClass() {
   }
   
   if (!name || !time) {
-    alert('Thiếu tên hoặc thời gian!');
+    showToast('Thiếu tên hoặc thời gian!', 'error');
     return;
   }
   
@@ -1971,7 +1977,7 @@ function saveEditClass() {
   const oldIdx = editingClassIndex.idx;
   
   if (!schedules[weekKey][oldDay] || !schedules[weekKey][oldDay][oldIdx]) {
-    alert('Lỗi: Không tìm thấy lớp học gốc để sửa.');
+    showToast('Lỗi: Không tìm thấy lớp học gốc để sửa.', 'error');
     closeEditClassModal();
     return;
   }
@@ -1989,6 +1995,7 @@ function saveEditClass() {
   
   saveSchedules();
   logAction('Sửa lớp học', `Lớp: ${name} - Thứ: ${day}`);
+  showToast('Đã cập nhật lớp học!', 'success');
   buildHeaderClassFilterOptions();
   updateModalSchedule();
   renderCalendar();

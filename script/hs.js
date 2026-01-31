@@ -43,7 +43,7 @@ function renderStudentsTable(data = STUDENTS) {
     ).join('');
 
     return `
-    <tr style="animation: fadeIn 0.3s ease forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(10px);">
+    <tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.04}s; opacity: 0; transform: translateY(20px);">
       <td>${index + 1}</td>
       <td style="font-weight: 600;">${s.name}</td>
       <td>${roleBadges}</td>
@@ -65,9 +65,8 @@ function renderStudentsTable(data = STUDENTS) {
     const style = document.createElement('style');
     style.id = 'row-animation-style';
     style.innerHTML = `
-      @keyframes fadeIn {
-        to { opacity: 1; transform: translateY(0); }
-      }
+      /* Keyframes đã được chuyển sang hub.js để dùng chung */
+      /* Giữ lại block này để tránh lỗi logic nếu có check id */
     `;
     document.head.appendChild(style);
   }

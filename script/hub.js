@@ -226,12 +226,18 @@ if ('serviceWorker' in navigator) {
 const globalStyle = document.createElement('style');
 globalStyle.innerHTML = `
   :root {
+    /* Core Colors */
     --primary-color: #667eea;
     --bg-color: #f4f7f6;
     --text-color: #333;
     --card-bg: #ffffff;
     --toast-bg: #333;
     --toast-text: #fff;
+    
+    /* Animation Physics */
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --hdr-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
   }
 
   /* Dark Mode Variables */
@@ -242,12 +248,54 @@ globalStyle.innerHTML = `
     --primary-color: #0f3460;
     --toast-bg: #fff;
     --toast-text: #000;
+    --hdr-shadow: 0 10px 30px -10px rgba(15, 52, 96, 0.6);
   }
 
   body {
     background-color: var(--bg-color);
     color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- HDR & Glassmorphism Effects --- */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  [data-theme="dark"] .glass-panel {
+    background: rgba(22, 33, 62, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* --- Global Interactive Elements --- */
+  button, .card, .nav-btn, .stat-card, input, select {
+    transition: all 0.4s var(--ease-smooth);
+  }
+
+  button:active, .nav-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* HDR Glow on Hover */
+  .add-btn:hover, .save-btn:hover, .nav-btn:hover {
+    box-shadow: var(--hdr-shadow);
+    filter: contrast(1.1);
+    transform: translateY(-2px);
+  }
+
+  /* --- Keyframes --- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
   }
 
   /* Toast Notification */
@@ -270,7 +318,7 @@ globalStyle.innerHTML = `
     display: flex;
     align-items: center;
     gap: 10px;
-    animation: slideInRight 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    animation: slideInRight 0.4s var(--ease-spring);
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     min-width: 250px;

@@ -133,11 +133,11 @@ function renderTaskStats() {
   
   html += '<th>Hoàn thành</th></tr></thead><tbody>';
 
-  tasks.forEach(task => {
+  tasks.forEach((task, index) => {
     const completions = task.completions || {};
     const completedCount = Object.values(completions).filter(v => v).length;
     
-    html += `<tr><td>${task.name}</td>`;
+    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);"><td>${task.name}</td>`;
     
     STUDENTS.forEach(student => {
       const isCompleted = completions[student.id];
@@ -178,11 +178,11 @@ function renderEventStats() {
 
   html += '<th>Hoàn thành</th></tr></thead><tbody>';
 
-  allEvents.forEach(event => {
+  allEvents.forEach((event, index) => {
     const completions = event.completions || {};
     const completedCount = Object.values(completions).filter(v => v).length;
     
-    html += `<tr><td>${event.name} (${event.date})</td>`;
+    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);"><td>${event.name} (${event.date})</td>`;
     
     STUDENTS.forEach(student => {
       const isCompleted = completions[student.id];
@@ -213,11 +213,11 @@ function renderNotificationStats() {
   
   html += '<th>Đã xem</th></tr></thead><tbody>';
 
-  notifications.forEach(notif => {
+  notifications.forEach((notif, index) => {
     const completions = notif.completions || {};
     const completedCount = Object.values(completions).filter(v => v).length;
     
-    html += `<tr><td>${notif.message}</td>`;
+    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);"><td>${notif.message}</td>`;
     
     STUDENTS.forEach(student => {
       const isCompleted = completions[student.id];

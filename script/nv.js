@@ -97,7 +97,7 @@ function closeTaskModal() {
 
 function saveTask() {
   if (!checkPermission('manage_tasks')) {
-    alert('Bạn không có quyền thêm nhiệm vụ');
+    showToast('Bạn không có quyền thêm nhiệm vụ', 'error');
     return;
   }
 
@@ -108,12 +108,12 @@ function saveTask() {
   const end = document.getElementById('modalEndTime').value;
 
   if (!name || !start || !end) {
-    alert('Vui lòng nhập tên, thời gian bắt đầu và kết thúc!');
+    showToast('Vui lòng nhập đầy đủ thông tin!', 'error');
     return;
   }
 
   if (new Date(start) >= new Date(end)) {
-    alert('Thời gian kết thúc phải sau thời gian bắt đầu!');
+    showToast('Thời gian kết thúc phải sau thời gian bắt đầu!', 'error');
     return;
   }
 
@@ -132,6 +132,7 @@ function saveTask() {
   // Lưu lên Firebase
   saveSharedTask(newTask);
   logAction('Thêm nhiệm vụ', `Tên: ${name}`);
+  showToast('Đã thêm nhiệm vụ mới!', 'success');
   closeTaskModal();
 }
 
@@ -232,13 +233,14 @@ function closeProgressModal() {
 
 async function deleteTask(taskId) {
   if (!checkPermission('manage_tasks')) {
-    alert('Bạn không có quyền xóa nhiệm vụ');
+    showToast('Bạn không có quyền xóa nhiệm vụ', 'error');
     return;
   }
 
   if (confirm('Xóa nhiệm vụ này?')) {
     deleteSharedTask(taskId);
     logAction('Xóa nhiệm vụ', `ID: ${taskId}`);
+    showToast('Đã xóa nhiệm vụ', 'success');
   }
 }
 
@@ -302,7 +304,7 @@ function renderTasks() {
 
   taskList.innerHTML = filtered
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .map(task => {
+    .map((task, index) => {
       const isCompleted = task.completions && task.completions[currentUser.id];
       const completionCount = Object.values(task.completions || {}).filter(v => v).length;
       
@@ -327,7 +329,7 @@ function renderTasks() {
       const timeRange = `${formatDateTime(start)} - ${formatDateTime(end)}`;
 
       return `
-        <li class="task-item ${isCompleted ? 'completed' : ''}">
+        <li class="task-item ${isCompleted ? 'completed' : ''}" style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; opacity: 0; transform: translateY(20px);">
           <button class="task-checkbox-btn" onclick="toggleCompletion(${task.id})" title="${isCompleted ? 'Bỏ check-in' : 'Check-in'}">
             ${isCompleted ? '✅' : '☐'}
           </button>
