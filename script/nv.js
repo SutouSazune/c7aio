@@ -21,6 +21,12 @@ window.addEventListener('load', () => {
     style.innerHTML = `
       :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      
+      /* Task Specific Styles */
+      .task-btn, .view-content-btn, .view-img-btn {
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
     `;
     document.head.appendChild(style);
   }

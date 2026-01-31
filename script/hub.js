@@ -216,7 +216,7 @@ window.addEventListener('load', () => {
 // 1. Register Service Worker
 if ('serviceWorker' in navigator) {
   // Điều chỉnh đường dẫn sw.js tùy theo môi trường (GitHub Pages hoặc Local)
-  const swPath = BASE_PATH + 'sw.js';
+  const swPath = BASE_PATH + 'service-worker.js';
   navigator.serviceWorker.register(swPath)
     .then(reg => console.log('✅ Service Worker Registered', reg.scope))
     .catch(err => console.log('❌ Service Worker Failed', err));
@@ -249,6 +249,7 @@ globalStyle.innerHTML = `
     --toast-bg: #fff;
     --toast-text: #000;
     --hdr-shadow: 0 10px 30px -10px rgba(15, 52, 96, 0.6);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   body {
@@ -285,6 +286,53 @@ globalStyle.innerHTML = `
     box-shadow: var(--hdr-shadow);
     filter: contrast(1.1);
     transform: translateY(-2px);
+  }
+
+  /* --- UNIFIED HDR LIST ITEMS (Task, Notif, Class) --- */
+  .task-item, .notification-item, .class-item, .daily-class-item {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+    border-radius: 12px !important;
+    margin-bottom: 12px !important;
+    transition: all 0.4s var(--ease-spring) !important;
+  }
+
+  [data-theme="dark"] .task-item, 
+  [data-theme="dark"] .notification-item,
+  [data-theme="dark"] .class-item {
+    background: rgba(30, 30, 40, 0.8) !important;
+    border: var(--glass-border) !important;
+    color: #fff;
+  }
+
+  .task-item:hover, .notification-item:hover, .class-item:hover, .daily-class-item:hover {
+    transform: translateY(-4px) scale(1.01) !important;
+    box-shadow: var(--hdr-shadow) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    z-index: 10;
+  }
+
+  /* --- HDR TABLES (Thống kê, Phân quyền) --- */
+  .modern-table, .completion-table {
+    border-collapse: separate !important; 
+    border-spacing: 0 8px !important; /* Tách dòng */
+    width: 100%;
+  }
+  
+  .modern-table tr, .completion-table tr {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    transition: transform 0.3s var(--ease-smooth);
+  }
+
+  .modern-table tr:hover, .completion-table tr:hover {
+    transform: scale(1.01);
+    background: #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    z-index: 5;
   }
 
   /* --- Keyframes --- */

@@ -25,6 +25,12 @@ window.addEventListener('load', () => {
     style.innerHTML = `
       :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      
+      /* Stats Table Styles */
+      .completion-table td {
+        padding: 12px !important;
+        border-radius: 8px;
+      }
     `;
     document.head.appendChild(style);
   }

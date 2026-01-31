@@ -68,6 +68,17 @@ window.addEventListener('load', () => {
       :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes popIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+      
+      /* Injected Styles for Calendar */
+      .calendar-day {
+        transition: all 0.3s var(--ease-spring) !important;
+        border-radius: 12px !important;
+      }
+      .calendar-day:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        z-index: 10;
+      }
     `;
     document.head.appendChild(style);
   }
