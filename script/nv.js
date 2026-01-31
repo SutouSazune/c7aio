@@ -13,6 +13,18 @@ window.addEventListener('load', () => {
     document.getElementById('adminControls').style.display = 'block';
   }
 
+  // --- FALLBACK ---
+  if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
+  if (!document.getElementById('fallback-animation-style')) {
+    const style = document.createElement('style');
+    style.id = 'fallback-animation-style';
+    style.innerHTML = `
+      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    `;
+    document.head.appendChild(style);
+  }
+
   // Khởi tạo Quill Editor
   quill = new Quill('#editor-container', {
     theme: 'snow',

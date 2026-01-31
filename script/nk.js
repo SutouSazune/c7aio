@@ -8,6 +8,17 @@ window.addEventListener('load', () => {
     return;
   }
 
+  // --- FALLBACK ---
+  if (!document.getElementById('fallback-animation-style')) {
+    const style = document.createElement('style');
+    style.id = 'fallback-animation-style';
+    style.innerHTML = `
+      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    `;
+    document.head.appendChild(style);
+  }
+
   // Lắng nghe Logs từ Firebase
   onSharedLogsChanged((data) => {
     systemLogs = data;
