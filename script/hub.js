@@ -211,6 +211,109 @@ window.addEventListener('load', () => {
   checkAdminButtons();
 });
 
+// --- SYSTEM UPGRADE: UI/UX & PWA ---
+
+// 1. Register Service Worker
+if ('serviceWorker' in navigator) {
+  // Điều chỉnh đường dẫn sw.js tùy theo môi trường (GitHub Pages hoặc Local)
+  const swPath = BASE_PATH + 'sw.js';
+  navigator.serviceWorker.register(swPath)
+    .then(reg => console.log('✅ Service Worker Registered', reg.scope))
+    .catch(err => console.log('❌ Service Worker Failed', err));
+}
+
+// 2. Inject Global Styles (Toast, Animations, Dark Mode)
+const globalStyle = document.createElement('style');
+globalStyle.innerHTML = `
+  :root {
+    --primary-color: #667eea;
+    --bg-color: #f4f7f6;
+    --text-color: #333;
+    --card-bg: #ffffff;
+    --toast-bg: #333;
+    --toast-text: #fff;
+  }
+
+  /* Dark Mode Variables */
+  [data-theme="dark"] {
+    --bg-color: #1a1a2e;
+    --text-color: #e0e0e0;
+    --card-bg: #16213e;
+    --primary-color: #0f3460;
+    --toast-bg: #fff;
+    --toast-text: #000;
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Toast Notification */
+  #toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toast {
+    background: var(--toast-bg);
+    color: var(--toast-text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInRight 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    min-width: 250px;
+  }
+
+  .toast.success { border-left: 4px solid #2ecc71; }
+  .toast.error { border-left: 4px solid #e74c3c; }
+  .toast.info { border-left: 4px solid #3498db; }
+  .toast.hiding { animation: fadeOutRight 0.3s forwards; }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fadeOutRight {
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(globalStyle);
+
+// 3. Global Toast Function
+window.showToast = function(message, type = 'info') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+  toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+
+  container.appendChild(toast);
+
+  // Auto remove
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    toast.addEventListener('animationend', () => toast.remove());
+  }, 3000);
+};
+
 function checkAdminButtons() {
   const user = getCurrentUser();
   if (!user) return;

@@ -3,7 +3,7 @@ let isStudentsDataSynced = false; // Cờ để chặn lưu dữ liệu khi chư
 
 window.addEventListener('load', () => {
   if (!isAdmin()) {
-    alert('Chỉ Admin mới có quyền truy cập trang này!');
+    // Dùng alert ở đây là ok vì chưa load xong UI, nhưng tốt nhất là redirect luôn
     window.location.href = '../index.html';
     return;
   }
@@ -19,6 +19,19 @@ window.addEventListener('load', () => {
   });
 });
 
+// Helper: Debounce function (Tránh lag khi gõ tìm kiếm)
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+// Override searchStudents với debounce
+const originalSearch = searchStudents;
+searchStudents = debounce(originalSearch, 300);
+
 function renderStudentsTable(data = STUDENTS) {
   const tbody = document.getElementById('studentsTableBody');
   
@@ -30,7 +43,7 @@ function renderStudentsTable(data = STUDENTS) {
     ).join('');
 
     return `
-    <tr>
+    <tr style="animation: fadeIn 0.3s ease forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(10px);">
       <td>${index + 1}</td>
       <td style="font-weight: 600;">${s.name}</td>
       <td>${roleBadges}</td>
@@ -47,10 +60,22 @@ function renderStudentsTable(data = STUDENTS) {
     `;
   }).join('');
 
+  // Inject keyframes nếu chưa có
+  if (!document.getElementById('row-animation-style')) {
+    const style = document.createElement('style');
+    style.id = 'row-animation-style';
+    style.innerHTML = `
+      @keyframes fadeIn {
+        to { opacity: 1; transform: translateY(0); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   tbody.innerHTML = rows;
 }
 
-function searchStudents() {
+function searchStudents() { // Hàm gốc, sẽ được debounce ở trên
   const term = document.getElementById('searchInput').value.toLowerCase();
   const filtered = STUDENTS.filter(s => 
     s.name.toLowerCase().includes(term) || 
@@ -127,7 +152,6 @@ function updateSelect2Options() {
   // Tạo các option cho select
   select.innerHTML = '';
   Object.keys(ROLES).forEach(key => {
-    if (key === 'admin') return; // Không hiển thị admin trong danh sách
     const option = document.createElement('option');
     option.value = key;
     option.text = ROLES[key];
@@ -170,13 +194,13 @@ function clearForm() {
 function saveStudent() {
   // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
   if (!isStudentsDataSynced) {
-    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    showToast('⏳ Đang đồng bộ dữ liệu, vui lòng đợi...', 'info');
     return;
   }
 
   const name = document.getElementById('stdName').value.trim();
   if (!name) {
-    alert('Vui lòng nhập họ tên!');
+    showToast('Vui lòng nhập họ tên!', 'error');
     return;
   }
 
@@ -221,6 +245,7 @@ function saveStudent() {
   saveSharedStudents(STUDENTS);
   const roleNames = selectedRoles.map(r => ROLES[r]).join(', ');
   logAction(editingStudentId ? 'Sửa hồ sơ' : 'Thêm học sinh', `Học sinh: ${name} - Chức vụ: ${roleNames}`);
+  showToast(editingStudentId ? 'Đã cập nhật hồ sơ!' : 'Đã thêm học sinh mới!', 'success');
   // renderStudentsTable(); // Không cần gọi thủ công vì onSharedStudentsChanged sẽ tự chạy
   closeStudentModal();
 }
@@ -228,7 +253,7 @@ function saveStudent() {
 function deleteStudent() {
   // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
   if (!isStudentsDataSynced) {
-    alert('Dữ liệu đang được đồng bộ, vui lòng đợi và thử lại sau giây lát.');
+    showToast('⏳ Đang đồng bộ dữ liệu...', 'info');
     return;
   }
 
@@ -239,6 +264,7 @@ function deleteStudent() {
     logAction('Xóa học sinh', `Đã xóa hồ sơ của: ${s ? s.name : 'Unknown'}`);
     STUDENTS = STUDENTS.filter(s => s.id !== editingStudentId);
     saveSharedStudents(STUDENTS);
+    showToast('Đã xóa học sinh thành công', 'success');
     closeStudentModal();
   }
 }
