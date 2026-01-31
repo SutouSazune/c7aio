@@ -215,10 +215,36 @@ window.addEventListener('load', () => {
 
 // 1. Register Service Worker
 if ('serviceWorker' in navigator) {
+  // FIX: Gỡ bỏ Service Worker cũ bị lỗi (sw.js) nếu có
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    for (let reg of regs) {
+      if (reg.active && reg.active.scriptURL.includes('sw.js')) {
+        console.log('🗑️ Đang gỡ bỏ Service Worker lỗi (sw.js)...');
+        reg.unregister();
+      }
+    }
+  });
+
   // Điều chỉnh đường dẫn sw.js tùy theo môi trường (GitHub Pages hoặc Local)
   const swPath = BASE_PATH + 'service-worker.js';
   navigator.serviceWorker.register(swPath)
-    .then(reg => console.log('✅ Service Worker Registered', reg.scope))
+    .then(reg => {
+      console.log('✅ Service Worker Registered', reg.scope);
+      
+      // Lắng nghe cập nhật phiên bản mới
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('🔄 Phiên bản mới có sẵn! Cập nhật tự động...');
+            if (typeof showToast === 'function') showToast('🔄 Đang cập nhật phiên bản mới...', 'info');
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }
+        });
+      });
+    })
     .catch(err => console.log('❌ Service Worker Failed', err));
 }
 
@@ -333,6 +359,18 @@ globalStyle.innerHTML = `
     background: #fff;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     z-index: 5;
+  }
+
+  /* --- SKELETON LOADING (Hiệu ứng chờ tải) --- */
+  .skeleton {
+    background: linear-gradient(90deg, rgba(190, 190, 190, 0.2) 25%, rgba(129, 129, 129, 0.24) 37%, rgba(190, 190, 190, 0.2) 63%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease infinite;
+    border-radius: 4px;
+  }
+  @keyframes skeleton-loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
   }
 
   /* --- Keyframes --- */

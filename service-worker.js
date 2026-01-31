@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v1.0.10'; // Tăng version để fix lỗi cache file js cũ
+const CACHE_NAME = 'c7aio-v2.1.0'; // Removed console.js
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -13,14 +13,12 @@ const ASSETS_TO_CACHE = [
   './style/tb.css',
   './style/tk.css',
   './style/hs.css',
-  './style/console.css',
   './script/hub.js',
   './script/lich.js',
   './script/nv.js',
   './script/tb.js',
   './script/tk.js',
   './script/hs.js',
-  './script/console.js',
   './manifest.json'
 ];
 

@@ -21,8 +21,13 @@ window.addEventListener('load', () => {
     document.head.appendChild(style);
   }
   
-  // Hiển thị dữ liệu mặc định ngay lập tức (tránh bị trống bảng khi chờ mạng)
-  renderStudentsTable(STUDENTS);
+  // Nếu chưa có dữ liệu, hiển thị Skeleton Loading
+  if (!STUDENTS || STUDENTS.length === 0) {
+    renderSkeletonTable();
+  } else {
+    // Hiển thị dữ liệu cache ngay lập tức
+    renderStudentsTable(STUDENTS);
+  }
 
   // Kết nối Firebase để lấy dữ liệu realtime
   onSharedStudentsChanged((data) => {
@@ -44,6 +49,27 @@ function debounce(func, wait) {
 // Override searchStudents với debounce
 const originalSearch = searchStudents;
 searchStudents = debounce(originalSearch, 300);
+
+// Hàm render Skeleton (Hiệu ứng chờ)
+function renderSkeletonTable() {
+  const tbody = document.getElementById('studentsTableBody');
+  let html = '';
+  // Tạo 5 dòng skeleton giả lập
+  for (let i = 0; i < 5; i++) {
+    html += `
+      <tr>
+        <td><div class="skeleton" style="height: 20px; width: 30px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 150px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
+        <td><div class="skeleton" style="height: 20px; width: 50px;"></div></td>
+        <td><div class="skeleton" style="height: 40px; width: 120px;"></div></td>
+        <td><div class="skeleton" style="height: 30px; width: 60px;"></div></td>
+      </tr>
+    `;
+  }
+  tbody.innerHTML = html;
+}
 
 function renderStudentsTable(data = STUDENTS) {
   const tbody = document.getElementById('studentsTableBody');

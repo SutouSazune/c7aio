@@ -35,8 +35,12 @@ window.addEventListener('load', () => {
     document.head.appendChild(style);
   }
 
-  // Render ngay từ cache
-  renderNotifications();
+  // Render Skeleton hoặc Cache
+  if (!notifications || notifications.length === 0) {
+    renderSkeletonNotifications();
+  } else {
+    renderNotifications();
+  }
 
   // Lắng nghe dữ liệu từ Firebase
   onSharedNotificationsChanged((data) => {
@@ -52,6 +56,23 @@ window.addEventListener('load', () => {
     }
   });
 });
+
+function renderSkeletonNotifications() {
+  const container = document.getElementById('notificationList');
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    html += `
+      <li class="notification-item" style="padding: 20px; display: flex; gap: 15px;">
+        <div class="skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+        <div style="flex: 1;">
+          <div class="skeleton" style="width: 80%; height: 20px; margin-bottom: 8px;"></div>
+          <div class="skeleton" style="width: 30%; height: 14px;"></div>
+        </div>
+      </li>
+    `;
+  }
+  container.innerHTML = html;
+}
 
 function addNotification() {
   if (!checkPermission('manage_notifications')) {

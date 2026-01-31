@@ -52,8 +52,12 @@ window.addEventListener('load', () => {
     selectLocalFile();
   });
 
-  // Render ngay dữ liệu từ cache (nếu có)
-  renderTasks();
+  // Render Skeleton hoặc Cache
+  if (!tasks || tasks.length === 0) {
+    renderSkeletonTasks();
+  } else {
+    renderTasks();
+  }
 
   // Lắng nghe dữ liệu từ Firebase thay vì loadTasks từ localStorage
   onSharedTasksChanged((updatedTasks) => {
@@ -61,6 +65,23 @@ window.addEventListener('load', () => {
     renderTasks();
   });
 });
+
+function renderSkeletonTasks() {
+  const taskList = document.getElementById('taskList');
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    html += `
+      <li class="task-item" style="padding: 20px; display: flex; gap: 15px; align-items: center;">
+        <div class="skeleton" style="width: 24px; height: 24px; border-radius: 4px;"></div>
+        <div style="flex: 1;">
+          <div class="skeleton" style="width: 60%; height: 24px; margin-bottom: 10px;"></div>
+          <div class="skeleton" style="width: 40%; height: 16px;"></div>
+        </div>
+      </li>
+    `;
+  }
+  taskList.innerHTML = html;
+}
 
 // Hàm chọn file từ máy tính và chèn vào editor
 function selectLocalFile() {

@@ -35,8 +35,27 @@ window.addEventListener('load', () => {
     document.head.appendChild(style);
   }
 
+  // Show Skeleton ban đầu
+  renderSkeletonDashboard();
+
   setupRealtimeListeners();
 });
+
+function renderSkeletonDashboard() {
+  const container = document.getElementById('statsContainer');
+  // Skeleton cho 3 bảng
+  let html = '<div class="dashboard-grid">';
+  for (let i = 0; i < 3; i++) {
+    html += `
+      <div class="dashboard-section">
+        <div class="skeleton" style="width: 150px; height: 30px; margin-bottom: 20px;"></div>
+        <div class="skeleton" style="width: 100%; height: 200px; border-radius: 12px;"></div>
+      </div>
+    `;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
 
 function setupRealtimeListeners() {
   // 1. Lắng nghe danh sách học sinh (để render cột bảng đúng)
