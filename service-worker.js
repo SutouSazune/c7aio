@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v2.1.0'; // Removed console.js
+const CACHE_NAME = 'c7aio-v2.2.0'; // FORCE UPDATE: Fix SW path & Animations
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

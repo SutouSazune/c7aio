@@ -226,7 +226,10 @@ if ('serviceWorker' in navigator) {
   });
 
   // Điều chỉnh đường dẫn sw.js tùy theo môi trường (GitHub Pages hoặc Local)
-  const swPath = BASE_PATH + 'service-worker.js';
+  // Thêm timestamp để tránh cache file SW cũ
+  const swPath = BASE_PATH + 'service-worker.js?v=' + Date.now();
+  console.log('🚀 Registering SW at:', swPath);
+  
   navigator.serviceWorker.register(swPath)
     .then(reg => {
       console.log('✅ Service Worker Registered', reg.scope);

@@ -69,6 +69,13 @@ window.addEventListener('load', () => {
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes popIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
       
+      /* Fallback visibility */
+      .class-item, .daily-class-item { opacity: 1 !important; transform: none !important; animation: none !important; }
+      @supports (animation: popIn) {
+        .class-item { opacity: 0 !important; animation: popIn 0.4s var(--ease-spring) forwards !important; }
+        .daily-class-item { opacity: 0 !important; animation: fadeInUp 0.4s var(--ease-spring) forwards !important; }
+      }
+      
       /* Injected Styles for Calendar */
       .calendar-day {
         transition: all 0.3s var(--ease-spring) !important;

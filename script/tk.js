@@ -25,6 +25,12 @@ window.addEventListener('load', () => {
     style.innerHTML = `
       :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      /* Đảm bảo bảng hiện ra kể cả khi animation lỗi */
+      tr { opacity: 1 !important; transform: none !important; animation: none !important; }
+      /* Ghi đè lại animation nếu trình duyệt hỗ trợ tốt */
+      @supports (animation: fadeInUp) {
+        tr { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
+      }
       
       /* Stats Table Styles */
       .completion-table td {

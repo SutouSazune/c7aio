@@ -22,6 +22,12 @@ window.addEventListener('load', () => {
       :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       
+      /* Fallback visibility */
+      .task-item { opacity: 1 !important; transform: none !important; animation: none !important; }
+      @supports (animation: fadeInUp) {
+        .task-item { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
+      }
+      
       /* Task Specific Styles */
       .task-btn, .view-content-btn, .view-img-btn {
         border-radius: 6px;
