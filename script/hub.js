@@ -385,6 +385,7 @@ globalStyle.innerHTML = `
     0% { opacity: 0; transform: scale(0.9); }
     100% { opacity: 1; transform: scale(1); }
   }
+  .class-item, .daily-class-item { opacity: 1 !important; }
 
   /* Toast Notification */
   #toast-container {

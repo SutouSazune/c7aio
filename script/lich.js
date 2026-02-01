@@ -70,8 +70,8 @@ window.addEventListener('load', () => {
       @keyframes popIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
       
       /* Safe Animation Styles */
-      .class-item { animation: popIn 0.4s var(--ease-spring) both; }
-      .daily-class-item { animation: fadeInUp 0.4s var(--ease-spring) both; }
+      .class-item { opacity: 1; animation: popIn 0.4s var(--ease-spring); }
+      .daily-class-item { opacity: 1; animation: fadeInUp 0.4s var(--ease-spring); }
       
       /* Injected Styles for Calendar */
       .calendar-day {
@@ -641,7 +641,7 @@ function renderWeekView(weekSchedule, container, selectedDayName) {
       classes.forEach((cls, idx) => {
         const isCompleted = cls.completions && cls.completions[currentUser.id];
         html += `
-          <div class="class-item ${isCompleted ? 'completed' : ''}" style="animation: popIn 0.4s var(--ease-spring) both; animation-delay: ${idx * 0.05}s;" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
+          <div class="class-item ${isCompleted ? 'completed' : ''}" style="animation: popIn 0.4s var(--ease-spring); animation-delay: ${idx * 0.05}s;" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${day}', ${idx})"` : ''}>
             <div class="class-content">
               <div class="class-time">${cls.time}</div>
               <div class="class-name">${cls.name}</div>
@@ -684,7 +684,7 @@ function renderDayView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="class-item ${isCompleted ? 'completed' : ''}" style="animation: popIn 0.4s var(--ease-spring) both; animation-delay: ${idx * 0.05}s;" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="class-item ${isCompleted ? 'completed' : ''}" style="animation: popIn 0.4s var(--ease-spring); animation-delay: ${idx * 0.05}s;" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="class-content">
             <div class="class-time">${cls.time}</div>
             <div class="class-name">${cls.name}</div>
@@ -726,7 +726,7 @@ function renderDailyView(weekSchedule, dayName, container) {
     classes.forEach((cls, idx) => {
       const isCompleted = cls.completions && cls.completions[currentUser.id];
       html += `
-        <div class="daily-class-item ${isCompleted ? 'completed' : ''}" style="animation: fadeInUp 0.4s var(--ease-spring) both; animation-delay: ${idx * 0.05}s;" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
+        <div class="daily-class-item ${isCompleted ? 'completed' : ''}" style="animation: fadeInUp 0.4s var(--ease-spring); animation-delay: ${idx * 0.05}s;" ${checkPermission('manage_schedule') ? `oncontextmenu="event.preventDefault(); editClass('${dayName}', ${idx})"` : ''}>
           <div class="daily-time">${cls.time}</div>
           <div class="daily-details">
             <div class="daily-class-name">${cls.name}</div>
