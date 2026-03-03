@@ -2,6 +2,7 @@ let notifications = JSON.parse(localStorage.getItem('c7aio_notifications_cache')
 let currentFilter = 'all';
 let currentUser = null;
 let notifQuill = null;
+let editingNotifId = null;
 
 const notificationIcons = {
   info: 'ℹ️',
@@ -99,9 +100,32 @@ function renderSkeletonNotifications() {
   container.innerHTML = html;
 }
 
-function openNotificationModal() {
-  console.log("Opening Modal...");
+function openNotificationModal(notifId = null) {
   const modal = document.getElementById('notificationModal');
+  const titleEl = modal.querySelector('.modal-header h2');
+  const saveBtn = modal.querySelector('.save-btn');
+  
+  if (notifId) {
+    // Chế độ Sửa
+    editingNotifId = notifId;
+    const notif = notifications.find(n => n.id === notifId);
+    if (notif) {
+      document.getElementById('modalNotifTitle').value = notif.message;
+      document.getElementById('modalNotifType').value = notif.type;
+      if (notifQuill) notifQuill.root.innerHTML = notif.content || '';
+      titleEl.innerHTML = '✏️ Chỉnh Sửa Thông Báo';
+      saveBtn.textContent = 'Cập Nhật Thông Báo';
+    }
+  } else {
+    // Chế độ Thêm mới
+    editingNotifId = null;
+    document.getElementById('modalNotifTitle').value = '';
+    document.getElementById('modalNotifType').value = 'info';
+    if (notifQuill) notifQuill.setContents([]);
+    titleEl.innerHTML = '📢 Đăng Thông Báo Mới';
+    saveBtn.textContent = 'Đăng Thông Báo';
+  }
+
   if (modal) modal.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
@@ -110,6 +134,7 @@ function closeNotificationModal() {
   const modal = document.getElementById('notificationModal');
   if (modal) modal.classList.remove('show');
   document.body.style.overflow = '';
+  editingNotifId = null;
 }
 
 function saveNotification() {
@@ -123,15 +148,16 @@ function saveNotification() {
   }
 
   const newNotif = {
-    id: Date.now(),
+    id: editingNotifId || Date.now(),
     message: title,
     content: content === '<p><br></p>' ? '' : content,
     type: type,
-    createdAt: new Date().toISOString()
+    createdAt: editingNotifId ? (notifications.find(n => n.id === editingNotifId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
 
   saveSharedNotification(newNotif);
-  showToast('Đã đăng thông báo!', 'success');
+  showToast(editingNotifId ? 'Đã cập nhật thông báo!' : 'Đã đăng thông báo!', 'success');
   closeNotificationModal();
 }
 
@@ -243,7 +269,12 @@ function renderNotifications() {
               <span class="notification-time">${formatTime(notif.createdAt)}</span>
             </div>
           </div>
-          ${checkPermission('manage_notifications') ? `<button class="notification-delete-btn" onclick="deleteNotification('${notif.id}', event)">🗑️</button>` : ''}
+          ${checkPermission('manage_notifications') ? `
+            <div class="admin-actions" style="display: flex; gap: 8px;">
+              <button class="notification-edit-btn" onclick="openNotificationModal('${notif.id}', event)" style="background: #f1f2f6; border: none; padding: 8px; border-radius: 8px; cursor: pointer;">✏️</button>
+              <button class="notification-delete-btn" onclick="deleteNotification('${notif.id}', event)">🗑️</button>
+            </div>
+          ` : ''}
         </li>
       `;
     })

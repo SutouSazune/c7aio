@@ -121,6 +121,14 @@ body {
 .add-notification-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(250, 112, 154, 0.4);
+
+.notification-edit-btn:hover {
+  background: #e2e8f0 !important;
+  transform: scale(1.1);
+}
+
+.notification-item.completed .notification-message {
+  text-decoration: none; /* Bỏ gạch ngang cũ */
 }
 
 .add-notification-btn:active {
@@ -359,8 +367,8 @@ body {
 
 /* Nâng cấp Modal UI */
 .modal {
-  background: rgba(0, 0, 0, 0.7) !important;
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(12px) saturate(180%);
   align-items: center;
   justify-content: center;
   transition: opacity 0.3s ease;
@@ -368,16 +376,28 @@ body {
 
 .modal-content {
   background: white;
-  border-radius: 20px !important;
-  padding: 30px !important;
-  max-width: 550px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 24px !important;
+  padding: 0 !important;
+  max-width: 650px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3) !important;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 20px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 .modal-header h2 {
-  color: var(--primary-color);
-  font-size: 1.5rem;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.modal-body {
+  padding: 30px;
 }
 
 .save-btn {
