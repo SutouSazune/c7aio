@@ -16,18 +16,19 @@ window.addEventListener('load', () => {
   // Inject CSS cho bộ chọn học sinh
   const style = document.createElement('style');
   style.innerHTML = `
-    .task-modal-layout { display: flex; gap: 25px; min-height: 500px; }
+    .task-modal-layout { display: flex !important; flex-direction: row !important; gap: 25px; min-height: 550px; width: 100%; align-items: stretch; }
     .task-form-inputs { flex: 1.6; display: flex; flex-direction: column; gap: 15px; }
     .task-student-selection { 
       flex: 1; 
-      background: #f8f9fa;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
       border-radius: 16px;
       padding: 20px; 
       display: flex; 
       flex-direction: column;
-      border: 1px solid #e9ecef;
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
     }
+    #taskModal .modal-content { max-width: 1000px !important; width: 95%; padding: 30px; }
     .search-student-box {
       width: 100%;
       padding: 10px 15px;
@@ -177,14 +178,15 @@ function openTaskModal() {
   const modal = document.getElementById('taskModal');
   const modalBody = modal.querySelector('.modal-body');
 
-  // Tái cấu trúc Modal Body thành 2 cột nếu chưa có
+  // Tái cấu trúc Modal Body thành 2 cột
   if (!modalBody.querySelector('.task-modal-layout')) {
+    const originalContent = Array.from(modalBody.children);
     const layout = document.createElement('div');
     layout.className = 'task-modal-layout';
     
     const left = document.createElement('div');
     left.className = 'task-form-inputs';
-    while (modalBody.firstChild) left.appendChild(modalBody.firstChild);
+    originalContent.forEach(child => left.appendChild(child));
     
     const right = document.createElement('div');
     right.className = 'task-student-selection';

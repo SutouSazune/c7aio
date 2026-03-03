@@ -13,6 +13,32 @@ const notificationIcons = {
 window.addEventListener('load', () => {
   currentUser = getCurrentUser();
   
+  // Inject CSS để ẩn Modal và sửa lỗi GUI hiển thị sai
+  const style = document.createElement('style');
+  style.innerHTML = `
+    #notificationModal, #notifContentModal { 
+      display: none !important; 
+      position: fixed !important; 
+      top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.7); 
+      z-index: 9999; 
+      align-items: center; 
+      justify-content: center; 
+      backdrop-filter: blur(8px);
+    }
+    #notificationModal.show, #notifContentModal.show { 
+      display: flex !important; 
+    }
+    .modal-content { 
+      background: white; padding: 25px; border-radius: 16px; width: 90%; max-width: 500px; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: popIn 0.3s var(--ease-spring);
+    }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+    .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+  `;
+  document.head.appendChild(style);
+
   // Chỉ admin mới thêm được thông báo
   if (checkPermission('manage_notifications')) {
     document.getElementById('adminControls').style.display = 'block';
@@ -87,6 +113,51 @@ function renderSkeletonNotifications() {
     `;
   }
   container.innerHTML = html;
+}
+
+function openNotificationModal() {
+  document.getElementById('notificationModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeNotificationModal() {
+  document.getElementById('notificationModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function saveNotification() {
+  const title = document.getElementById('modalNotifTitle').value.trim();
+  const type = document.getElementById('modalNotifType').value;
+  const content = notifQuill.root.innerHTML;
+
+  if (!title) {
+    showToast('Vui lòng nhập tiêu đề', 'error');
+    return;
+  }
+
+  const newNotif = {
+    id: Date.now(),
+    message: title,
+    content: content === '<p><br></p>' ? '' : content,
+    type: type,
+    createdAt: new Date().toISOString()
+  };
+
+  saveSharedNotification(newNotif);
+  showToast('Đã đăng thông báo!', 'success');
+  closeNotificationModal();
+}
+
+function viewNotificationContent(notifId) {
+  const notif = notifications.find(n => n.id === notifId);
+  if (!notif) return;
+  document.getElementById('viewNotifTitle').textContent = notif.message;
+  document.getElementById('viewNotifBody').innerHTML = notif.content || 'Không có nội dung.';
+  document.getElementById('notifContentModal').style.display = 'flex';
+}
+
+function closeNotifContentModal() {
+  document.getElementById('notifContentModal').style.display = 'none';
 }
 
 function addNotification() {
