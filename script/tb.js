@@ -100,36 +100,9 @@ function renderSkeletonNotifications() {
   container.innerHTML = html;
 }
 
-function openNotificationModal(notifId = null, event = null) {
-  if (event) event.stopPropagation(); // Chặn mở chi tiết khi bấm nút sửa
-
+function openNotificationModal() {
+  console.log("Opening Modal...");
   const modal = document.getElementById('notificationModal');
-  if (!modal) return;
-
-  const titleEl = modal.querySelector('.modal-header h2');
-  const saveBtn = modal.querySelector('.save-btn');
-  
-  if (notifId) {
-    // Chế độ Sửa
-    editingNotifId = notifId;
-    const notif = notifications.find(n => n.id === notifId);
-    if (notif) {
-      document.getElementById('modalNotifTitle').value = notif.message;
-      document.getElementById('modalNotifType').value = notif.type;
-      if (notifQuill) notifQuill.root.innerHTML = notif.content || '';
-      titleEl.innerHTML = '✏️ Chỉnh Sửa Thông Báo';
-      saveBtn.textContent = 'Cập Nhật Thông Báo';
-    }
-  } else {
-    // Chế độ Thêm mới
-    editingNotifId = null;
-    document.getElementById('modalNotifTitle').value = '';
-    document.getElementById('modalNotifType').value = 'info';
-    if (notifQuill) notifQuill.setContents([]);
-    titleEl.innerHTML = '📢 Đăng Thông Báo Mới';
-    saveBtn.textContent = 'Đăng Thông Báo';
-  }
-
   if (modal) modal.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
@@ -138,7 +111,6 @@ function closeNotificationModal() {
   const modal = document.getElementById('notificationModal');
   if (modal) modal.classList.remove('show');
   document.body.style.overflow = '';
-  editingNotifId = null;
 }
 
 function saveNotification() {
@@ -190,7 +162,7 @@ function deleteNotification(notifId, event) {
     return;
   }
 
-  window.showConfirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa thông báo này không? Hành động này không thể hoàn tác.', () => {
+  window.showConfirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa thông báo này không? Hành động này không thể hoàn tác.', function() {
     deleteSharedNotification(notifId);
     logAction('Xóa thông báo', `ID: ${notifId}`);
     showToast('Đã xóa thông báo', 'success');

@@ -178,19 +178,20 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.4s var(--ease-spring);
   will-change: transform, box-shadow;
   contain: content;
   border-left: 4px solid;
   border: 1px solid rgba(0,0,0,0.05);
-  opacity: 1;
-  visibility: visible;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
 }
 
 @supports (animation: fadeInUp) {
   .notification-item {
-    opacity: 0; /* Sẽ được animation đưa lên 1 */
-    animation: fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0 !important;
+    animation: fadeInUp 0.5s var(--ease-spring) forwards !important;
   }
 }
 

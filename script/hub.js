@@ -543,6 +543,8 @@ window.showToast = function(message, type = 'info') {
 
 // 4. Global Dialog Function (Thay thế alert)
 window.showDialog = function(title, message, icon = 'ℹ️') {
+  const existing = document.querySelector('.custom-dialog-overlay');
+  if (existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.className = 'custom-dialog-overlay';
   overlay.innerHTML = `
@@ -560,6 +562,8 @@ window.showDialog = function(title, message, icon = 'ℹ️') {
 
 // 5. Global Confirm Function (Thay thế confirm)
 window.showConfirm = function(title, message, onConfirm) {
+  const existing = document.querySelector('.custom-dialog-overlay');
+  if (existing) existing.remove();
   const overlay = document.createElement('div');
   overlay.className = 'custom-dialog-overlay';
   overlay.innerHTML = `

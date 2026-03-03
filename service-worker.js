@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v2.3.1-fix-config'; // BUMP VERSION: Force update config & hub.js
+const CACHE_NAME = 'c7aio-v2.4.0-premium-ui'; // FORCE UPDATE: New Dialog System & Premium UI
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
