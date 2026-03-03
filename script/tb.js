@@ -160,11 +160,11 @@ function deleteNotification(notifId, event) {
     return;
   }
 
-  if (confirm('Xóa thông báo này?')) {
+  window.showConfirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa thông báo này không? Hành động này không thể hoàn tác.', () => {
     deleteSharedNotification(notifId);
     logAction('Xóa thông báo', `ID: ${notifId}`);
     showToast('Đã xóa thông báo', 'success');
-  }
+  });
 }
 
 function filterNotifications(filter, event) {

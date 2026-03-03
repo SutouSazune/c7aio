@@ -49,6 +49,13 @@ async function loadStats() {
       updateUIStats();
     });
   }
+
+  // Lắng nghe thông báo để cập nhật Badge và Ticker ở trang chủ
+  if (typeof onSharedNotificationsChanged === 'function') {
+    onSharedNotificationsChanged((notifs) => {
+      updateNotificationReminders(notifs);
+    });
+  }
 }
 
 function updateUIStats() {
@@ -146,6 +153,32 @@ function updateRecentTasks(nearDeadlineTasks) {
     
     ul.appendChild(li);
   });
+}
+
+function updateNotificationReminders(notifs) {
+  const badge = document.getElementById('notifBadge');
+  const ticker = document.getElementById('notifTicker');
+  const tickerText = document.getElementById('notifTickerText');
+
+  if (!notifs || notifs.length === 0) {
+    if (badge) badge.style.display = 'none';
+    if (ticker) ticker.style.display = 'none';
+    return;
+  }
+
+  // 1. Cập nhật Badge
+  if (badge) {
+    badge.textContent = notifs.length > 9 ? '9+' : notifs.length;
+    badge.style.display = 'flex';
+  }
+
+  // 2. Cập nhật Ticker (Thông báo mới nhất)
+  if (ticker && tickerText) {
+    const latest = notifs[0];
+    tickerText.textContent = `📢 MỚI: ${latest.message}`;
+    ticker.style.display = 'flex';
+    ticker.onclick = () => go('thongbao/tb.html');
+  }
 }
 
 function go(page) {
@@ -270,6 +303,7 @@ globalStyle.innerHTML = `
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
     --hdr-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
+    --danger-color: #ff4757;
   }
 
   /* Dark Mode Variables */
@@ -429,6 +463,58 @@ globalStyle.innerHTML = `
   @keyframes fadeOutRight {
     to { transform: translateX(100%); opacity: 0; }
   }
+
+  /* --- HIGH-END DIALOG SYSTEM --- */
+  .custom-dialog-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+    z-index: 20000; display: flex; justify-content: center; align-items: flex-start;
+    padding-top: 50px; animation: fadeIn 0.3s ease;
+  }
+  .custom-dialog {
+    background: white; width: 90%; max-width: 400px; border-radius: 20px;
+    padding: 25px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: slideDownPop 0.4s var(--ease-spring); text-align: center;
+  }
+  .dialog-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+  .dialog-title { font-size: 1.25rem; font-weight: 700; color: #333; margin-bottom: 10px; }
+  .dialog-message { color: #666; margin-bottom: 25px; line-height: 1.5; }
+  .dialog-actions { display: flex; gap: 10px; justify-content: center; }
+  .dialog-btn {
+    padding: 10px 25px; border-radius: 12px; border: none; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; flex: 1;
+  }
+  .btn-confirm { background: var(--primary-color); color: white; }
+  .btn-cancel { background: #f1f2f6; color: #57606f; }
+  
+  @keyframes slideDownPop {
+    from { transform: translateY(-50px) scale(0.9); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Badge Style */
+  .notif-badge {
+    position: absolute; top: -5px; right: -5px;
+    background: var(--danger-color); color: white;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 0.7rem; font-weight: 800;
+    display: none; align-items: center; justify-content: center;
+    border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+
+  /* Ticker Style */
+  .notif-ticker {
+    background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(5px);
+    padding: 10px 20px; border-radius: 50px; margin-bottom: 20px;
+    display: none; align-items: center; gap: 10px;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    animation: fadeInUp 0.5s var(--ease-spring);
+  }
+  .notif-ticker:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15); }
+  #notifTickerText { font-size: 0.9rem; font-weight: 600; color: var(--primary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 `;
 document.head.appendChild(globalStyle);
 
@@ -454,6 +540,50 @@ window.showToast = function(message, type = 'info') {
     toast.addEventListener('animationend', () => toast.remove());
   }, 3000);
 };
+
+// 4. Global Dialog Function (Thay thế alert)
+window.showDialog = function(title, message, icon = 'ℹ️') {
+  const overlay = document.createElement('div');
+  overlay.className = 'custom-dialog-overlay';
+  overlay.innerHTML = `
+    <div class="custom-dialog">
+      <span class="dialog-icon">${icon}</span>
+      <div class="dialog-title">${title}</div>
+      <div class="dialog-message">${message}</div>
+      <div class="dialog-actions">
+        <button class="dialog-btn btn-confirm" onclick="this.closest('.custom-dialog-overlay').remove()">Đã hiểu</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+};
+
+// 5. Global Confirm Function (Thay thế confirm)
+window.showConfirm = function(title, message, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'custom-dialog-overlay';
+  overlay.innerHTML = `
+    <div class="custom-dialog">
+      <span class="dialog-icon">❓</span>
+      <div class="dialog-title">${title}</div>
+      <div class="dialog-message">${message}</div>
+      <div class="dialog-actions">
+        <button class="dialog-btn btn-cancel" id="dlgCancel">Hủy</button>
+        <button class="dialog-btn btn-confirm" id="dlgConfirm">Xác nhận</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  document.getElementById('dlgConfirm').onclick = () => {
+    overlay.remove();
+    if (onConfirm) onConfirm();
+  };
+  document.getElementById('dlgCancel').onclick = () => overlay.remove();
+};
+
+// Ghi đè alert mặc định (Tùy chọn, nhưng giúp code cũ tự chạy theo UI mới)
+window.alert = (msg) => window.showDialog('Thông báo', msg);
 
 function checkAdminButtons() {
   const user = getCurrentUser();

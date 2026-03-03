@@ -351,7 +351,7 @@ async function saveSharedStudents(studentsList) {
     console.log('✅ Đã đồng bộ danh sách học sinh (Safe Sync)');
   } catch (error) {
     console.error('❌ Lỗi lưu học sinh:', error);
-    alert('Lỗi khi lưu dữ liệu lên server!');
+    window.showDialog('Lỗi hệ thống', 'Không thể lưu danh sách học sinh. Vui lòng kiểm tra kết nối.', '❌');
   }
 }
 
@@ -570,7 +570,7 @@ async function saveSharedPermissions(perms) {
     console.log('✅ Đã lưu phân quyền lên Firebase');
   } catch (error) {
     console.error('❌ Lỗi lưu phân quyền:', error);
-    alert('Lỗi khi lưu phân quyền!');
+    window.showToast('Lỗi khi lưu phân quyền!', 'error');
   }
 }
 
