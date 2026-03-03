@@ -19,22 +19,8 @@ window.addEventListener('load', () => {
     if (adminCtrl) adminCtrl.style.display = 'block';
   }
 
-  // Khởi tạo Quill Editor cho Thông báo
-  const editorEl = document.getElementById('notif-editor-container');
-  if (editorEl && typeof Quill !== 'undefined') {
-    notifQuill = new Quill('#notif-editor-container', {
-    theme: 'snow',
-    placeholder: 'Nhập nội dung chi tiết nếu có...',
-    modules: {
-      toolbar: [
-        ['bold', 'italic', 'underline'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['link', 'image'],
-        ['clean']
-      ]
-    }
-  });
-  }
+  // Khởi tạo Editor an toàn
+  initNotificationEditor();
 
   // --- FALLBACK ---
   if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
@@ -42,11 +28,11 @@ window.addEventListener('load', () => {
     const style = document.createElement('style');
     style.id = 'fallback-animation-style';
     style.innerHTML = `
-      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); --primary-color: #667eea; }
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       
-      /* Fallback visibility */
-      .notification-item { opacity: 1 !important; transform: none !important; }
+      /* Đảm bảo luôn hiển thị kể cả khi animation lỗi */
+      .notification-item { opacity: 1; transform: none; }
       @supports (animation: fadeInUp) {
         .notification-item { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
       }
@@ -75,6 +61,26 @@ window.addEventListener('load', () => {
     }
   });
 });
+
+function initNotificationEditor() {
+  const editorEl = document.getElementById('notif-editor-container');
+  if (editorEl && typeof Quill !== 'undefined') {
+    try {
+      notifQuill = new Quill('#notif-editor-container', {
+        theme: 'snow',
+        placeholder: 'Nhập nội dung chi tiết nếu có...',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['link', 'image'],
+            ['clean']
+          ]
+        }
+      });
+    } catch (e) { console.error("Quill Init Error:", e); }
+  }
+}
 
 function renderSkeletonNotifications() {
   const container = document.getElementById('notificationList');
@@ -219,7 +225,7 @@ function renderNotifications() {
       return `
         <li class="notification-item ${notif.type}" 
             onclick="${(notif.content && notif.content !== '<p><br></p>') ? `viewNotificationContent('${notif.id}')` : ''}"
-            style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; cursor: ${notif.content ? 'pointer' : 'default'};">
+            style="animation-delay: ${index * 0.05}s; cursor: ${(notif.content && notif.content !== '<p><br></p>') ? 'pointer' : 'default'};">
           <div class="notification-content" style="flex: 1;">
             <div class="notification-icon">${notificationIcons[notif.type]}</div>
             <div class="notification-message">
