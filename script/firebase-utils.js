@@ -404,8 +404,12 @@ function onSharedNotificationsChanged(callback) {
     snapshot.forEach(child => {
       const val = child.val();
       if (val) {
-        // Đảm bảo luôn có ID (lấy từ key nếu trong object không có)
-        notifications.push({ id: val.id || child.key, ...val });
+        // Đảm bảo luôn có ID và ngày tháng (cứu dữ liệu cũ)
+        notifications.push({ 
+          id: val.id || child.key, 
+          createdAt: val.createdAt || new Date().toISOString(),
+          ...val 
+        });
       }
     });
     // Sắp xếp mới nhất lên đầu

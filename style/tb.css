@@ -162,22 +162,24 @@ body {
 
 .notification-item {
   background: white;
-  padding: 1.2rem;
+  padding: 1.5rem;
   margin-bottom: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: all 0.3s ease;
+  transition: all 0.4s var(--ease-spring);
   will-change: transform, box-shadow;
   contain: content;
   border-left: 4px solid;
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
 .notification-item:hover {
-  transform: translateX(5px);
-  box-shadow: 0 6px 20px rgba(250, 112, 154, 0.2);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  background: #fff;
 }
 
 .notification-item.info {

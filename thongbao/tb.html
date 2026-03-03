@@ -14,14 +14,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     /* Critical CSS: Ẩn ngay lập tức các modal khi trang vừa nạp */
-    .modal { 
+    #notificationModal, #notifContentModal { 
       display: none !important; 
-      position: fixed; 
+      position: fixed !important; 
       top: 0; left: 0; width: 100%; height: 100%; 
-      z-index: 9999;
+      background: rgba(0,0,0,0.7); 
+      z-index: 9999; 
+      align-items: center; 
+      justify-content: center; 
+      backdrop-filter: blur(8px);
     }
-    .modal.show { 
+    #notificationModal.show, #notifContentModal.show { 
       display: flex !important; 
+    }
+    .modal-content { 
+      background: white; 
+      border-radius: 20px; 
+      padding: 30px; 
+      max-width: 550px; 
+      width: 90%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
     /* Chống giật lag layout khi chưa load xong CSS */
     .admin-controls { min-height: 50px; }
@@ -66,7 +78,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>📢 Đăng Thông Báo</h2>
-        <button class="modal-close" onclick="closeNotificationModal()">✕</button>
+        <button class="modal-close" type="button" onclick="closeNotificationModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -96,7 +108,7 @@
     <div class="modal-content content-view-modal">
       <div class="modal-header">
         <h2 id="viewNotifTitle">Chi tiết thông báo</h2>
-        <button class="modal-close" onclick="closeNotifContentModal()">✕</button>
+        <button class="modal-close" type="button" onclick="closeNotifContentModal()">✕</button>
       </div>
       <div class="modal-body ql-editor" id="viewNotifBody"></div>
     </div>

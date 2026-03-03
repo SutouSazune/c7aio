@@ -15,11 +15,14 @@ window.addEventListener('load', () => {
   
   // Chỉ admin mới thêm được thông báo
   if (checkPermission('manage_notifications')) {
-    document.getElementById('adminControls').style.display = 'block';
+    const adminCtrl = document.getElementById('adminControls');
+    if (adminCtrl) adminCtrl.style.display = 'block';
   }
 
   // Khởi tạo Quill Editor cho Thông báo
-  notifQuill = new Quill('#notif-editor-container', {
+  const editorEl = document.getElementById('notif-editor-container');
+  if (editorEl && typeof Quill !== 'undefined') {
+    notifQuill = new Quill('#notif-editor-container', {
     theme: 'snow',
     placeholder: 'Nhập nội dung chi tiết nếu có...',
     modules: {
@@ -31,6 +34,7 @@ window.addEventListener('load', () => {
       ]
     }
   });
+  }
 
   // --- FALLBACK ---
   if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
@@ -42,7 +46,7 @@ window.addEventListener('load', () => {
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       
       /* Fallback visibility */
-      .notification-item { opacity: 1; transform: none; }
+      .notification-item { opacity: 1 !important; transform: none !important; }
       @supports (animation: fadeInUp) {
         .notification-item { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
       }
@@ -90,19 +94,22 @@ function renderSkeletonNotifications() {
 }
 
 function openNotificationModal() {
-  document.getElementById('notificationModal').classList.add('show');
+  console.log("Opening Modal...");
+  const modal = document.getElementById('notificationModal');
+  if (modal) modal.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
 function closeNotificationModal() {
-  document.getElementById('notificationModal').classList.remove('show');
+  const modal = document.getElementById('notificationModal');
+  if (modal) modal.classList.remove('show');
   document.body.style.overflow = '';
 }
 
 function saveNotification() {
   const title = document.getElementById('modalNotifTitle').value.trim();
   const type = document.getElementById('modalNotifType').value;
-  const content = notifQuill.root.innerHTML;
+  const content = notifQuill ? notifQuill.root.innerHTML : '';
 
   if (!title) {
     showToast('Vui lòng nhập tiêu đề', 'error');
@@ -127,14 +134,21 @@ function viewNotificationContent(notifId) {
   if (!notif) return;
   document.getElementById('viewNotifTitle').textContent = notif.message;
   document.getElementById('viewNotifBody').innerHTML = notif.content || 'Không có nội dung.';
-  document.getElementById('notifContentModal').classList.add('show');
+  const modal = document.getElementById('notifContentModal');
+  if (modal) modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeNotifContentModal() {
-  document.getElementById('notifContentModal').classList.remove('show');
+  const modal = document.getElementById('notifContentModal');
+  if (modal) modal.classList.remove('show');
+  document.body.style.overflow = '';
 }
 
-function deleteNotification(notifId) {
+function deleteNotification(notifId, event) {
+  // Ngăn chặn việc bấm nút xóa lại nhảy vào xem chi tiết thông báo
+  if (event) event.stopPropagation();
+
   if (!checkPermission('manage_notifications')) {
     showToast('Bạn không có quyền xóa thông báo', 'error');
     return;
@@ -204,7 +218,7 @@ function renderNotifications() {
     .map((notif, index) => {
       return `
         <li class="notification-item ${notif.type}" 
-            onclick="${notif.content ? `viewNotificationContent('${notif.id}')` : ''}"
+            onclick="${(notif.content && notif.content !== '<p><br></p>') ? `viewNotificationContent('${notif.id}')` : ''}"
             style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; cursor: ${notif.content ? 'pointer' : 'default'};">
           <div class="notification-content" style="flex: 1;">
             <div class="notification-icon">${notificationIcons[notif.type]}</div>
