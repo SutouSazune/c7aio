@@ -13,6 +13,42 @@ window.addEventListener('load', () => {
     document.getElementById('adminControls').style.display = 'block';
   }
 
+  // Inject CSS cho bộ chọn học sinh
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .task-modal-layout { display: flex; gap: 20px; min-height: 400px; }
+    .task-form-inputs { flex: 1.5; }
+    .task-student-selection { 
+      flex: 1; 
+      border-left: 1px solid #eee; 
+      padding-left: 20px; 
+      display: flex; 
+      flex-direction: column;
+    }
+    .student-selector-list { 
+      flex: 1; 
+      overflow-y: auto; 
+      margin-top: 10px; 
+      max-height: 350px;
+      padding-right: 5px;
+    }
+    .student-select-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .student-select-item:hover { background: #f0f4ff; }
+    @media (max-width: 768px) {
+      .task-modal-layout { flex-direction: column; }
+      .task-student-selection { border-left: none; padding-left: 0; border-top: 1px solid #eee; padding-top: 20px; }
+    }
+  `;
+  document.head.appendChild(style);
+
   // --- FALLBACK ---
   if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
   if (!document.getElementById('fallback-animation-style')) {
@@ -117,6 +153,28 @@ function selectLocalFile() {
 // --- MODAL FUNCTIONS ---
 function openTaskModal() {
   const modal = document.getElementById('taskModal');
+  const modalBody = modal.querySelector('.modal-body');
+
+  // Tái cấu trúc Modal Body thành 2 cột nếu chưa có
+  if (!modalBody.querySelector('.task-modal-layout')) {
+    const layout = document.createElement('div');
+    layout.className = 'task-modal-layout';
+    
+    const left = document.createElement('div');
+    left.className = 'task-form-inputs';
+    while (modalBody.firstChild) left.appendChild(modalBody.firstChild);
+    
+    const right = document.createElement('div');
+    right.className = 'task-student-selection';
+    right.id = 'studentSelectorContainer';
+    
+    layout.appendChild(left);
+    layout.appendChild(right);
+    modalBody.appendChild(layout);
+  }
+
+  renderStudentSelector();
+
   if (window.innerWidth < 768) {
     modal.style.alignItems = 'flex-start';
     modal.style.overflowY = 'auto';
@@ -128,6 +186,34 @@ function openTaskModal() {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('modalStartTime').value = now.toISOString().slice(0, 16);
+}
+
+function renderStudentSelector() {
+  const container = document.getElementById('studentSelectorContainer');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h3 style="font-size: 1rem; margin: 0;">👥 Giao cho:</h3>
+      <button onclick="toggleSelectAllStudents()" style="font-size: 0.8rem; padding: 4px 8px; cursor: pointer; border-radius: 4px; border: 1px solid #ddd; background: #fff;">Chọn tất cả</button>
+    </div>
+    <div class="student-selector-list">
+      ${STUDENTS.map(s => `
+        <label class="student-select-item">
+          <input type="checkbox" class="student-assign-checkbox" value="${s.id}" checked>
+          <span style="font-size: 0.9rem;">${s.name}</span>
+        </label>
+      `).join('')}
+    </div>
+  `;
+}
+
+let allSelected = true;
+function toggleSelectAllStudents() {
+  const checkboxes = document.querySelectorAll('.student-assign-checkbox');
+  allSelected = !allSelected;
+  checkboxes.forEach(cb => cb.checked = allSelected);
+  event.target.textContent = allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả';
 }
 
 function closeTaskModal() {
@@ -151,9 +237,13 @@ function saveTask() {
   const image = document.getElementById('modalTaskImage').value.trim();
   const start = document.getElementById('modalStartTime').value;
   const end = document.getElementById('modalEndTime').value;
+  
+  // Lấy danh sách ID học sinh được chọn
+  const assignedIds = Array.from(document.querySelectorAll('.student-assign-checkbox:checked'))
+                           .map(cb => parseInt(cb.value));
 
-  if (!name || !start || !end) {
-    showToast('Vui lòng nhập đầy đủ thông tin!', 'error');
+  if (!name || !start || !end || assignedIds.length === 0) {
+    showToast('Vui lòng nhập đầy đủ thông tin và chọn ít nhất 1 học sinh!', 'error');
     return;
   }
 
@@ -169,6 +259,7 @@ function saveTask() {
     imageUrl: image,
     startTime: start,
     endTime: end,
+    assignedStudents: assignedIds,
     deadline: end.split('T')[0], // Giữ field cũ để tương thích ngược nếu cần
     createdAt: new Date().toISOString(),
     completions: {}
@@ -234,11 +325,16 @@ function viewTaskProgress(taskId) {
 
   const completions = task.completions || {};
   
+  // Chỉ hiển thị những học sinh được giao nhiệm vụ này
+  const targetStudents = task.assignedStudents && task.assignedStudents.length > 0 
+    ? STUDENTS.filter(s => task.assignedStudents.includes(s.id))
+    : STUDENTS;
+
   // Phân loại học sinh
   const doneList = [];
   const pendingList = [];
 
-  STUDENTS.forEach(student => {
+  targetStudents.forEach(student => {
     if (completions[student.id]) {
       doneList.push(student);
     } else {
@@ -323,13 +419,20 @@ function filterTasks(filter) {
 }
 
 function getFilteredTasks() {
+  // Lọc theo phân quyền: Học sinh chỉ thấy task được giao cho mình
+  const visibleTasks = tasks.filter(t => {
+    if (isAdmin()) return true;
+    if (!t.assignedStudents || t.assignedStudents.length === 0) return true; // Task cũ hoặc giao cho tất cả
+    return t.assignedStudents.includes(currentUser.id);
+  });
+
   switch (currentFilter) {
     case 'done':
-      return tasks.filter(t => t.completions && t.completions[currentUser.id]);
+      return visibleTasks.filter(t => t.completions && t.completions[currentUser.id]);
     case 'pending':
-      return tasks.filter(t => !t.completions || !t.completions[currentUser.id]);
+      return visibleTasks.filter(t => !t.completions || !t.completions[currentUser.id]);
     default:
-      return tasks;
+      return visibleTasks;
   }
 }
 
@@ -352,6 +455,8 @@ function renderTasks() {
     .map((task, index) => {
       const isCompleted = task.completions && task.completions[currentUser.id];
       const completionCount = Object.values(task.completions || {}).filter(v => v).length;
+      // Tính tổng số người được giao
+      const totalAssigned = task.assignedStudents ? task.assignedStudents.length : STUDENTS.length;
       
       // Xử lý thời gian
       const now = new Date();
@@ -389,7 +494,7 @@ function renderTasks() {
               </div>
               
               <div class="task-completion">
-                👥 ${completionCount} đã xong
+                👥 ${completionCount} / ${totalAssigned} đã xong
               </div>
 
               ${checkPermission('manage_tasks') ? `

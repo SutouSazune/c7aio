@@ -1,6 +1,7 @@
 let notifications = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
 let currentFilter = 'all';
 let currentUser = null;
+let notifQuill = null;
 
 const notificationIcons = {
   info: 'ℹ️',
@@ -12,16 +13,24 @@ const notificationIcons = {
 window.addEventListener('load', () => {
   currentUser = getCurrentUser();
   
-  document.getElementById('notificationInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      addNotification();
+  // Chỉ admin mới thêm được thông báo
+  if (checkPermission('manage_notifications')) {
+    document.getElementById('adminControls').style.display = 'block';
+  }
+
+  // Khởi tạo Quill Editor cho Thông báo
+  notifQuill = new Quill('#notif-editor-container', {
+    theme: 'snow',
+    placeholder: 'Nhập nội dung chi tiết nếu có...',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link', 'image'],
+        ['clean']
+      ]
     }
   });
-
-  // Chỉ admin mới thêm được thông báo
-  if (!checkPermission('manage_notifications')) {
-    document.querySelector('.notification-input-area').style.display = 'none';
-  }
 
   // --- FALLBACK ---
   if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
@@ -33,7 +42,7 @@ window.addEventListener('load', () => {
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       
       /* Fallback visibility */
-      .notification-item { opacity: 1 !important; transform: none !important; animation: none !important; }
+      .notification-item { opacity: 1; transform: none; }
       @supports (animation: fadeInUp) {
         .notification-item { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
       }
@@ -123,18 +132,6 @@ function deleteNotification(notifId) {
   }
 }
 
-function toggleNotificationCompletion(notifId) {
-  const notif = notifications.find(n => n.id === notifId);
-  if (!notif) return;
-
-  if (!notif.completions) {
-    notif.completions = {};
-  }
-
-  notif.completions[currentUser.id] = !notif.completions[currentUser.id];
-  updateSharedNotificationCompletion(notifId, notif.completions);
-}
-
 function filterNotifications(filter) {
   currentFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -190,28 +187,21 @@ function renderNotifications() {
 
   container.innerHTML = filtered
     .map((notif, index) => {
-      const totalStudents = STUDENTS.length;
-      const completions = notif.completions || {};
-      const completedCount = Object.values(completions).filter(v => v).length;
-      const userCompleted = completions[currentUser.id] || false;
-
       return `
-        <li class="notification-item ${notif.type} ${userCompleted ? 'completed' : ''}" style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; opacity: 0; transform: translateY(20px);">
-          <button class="notification-checkbox-btn ${userCompleted ? 'active' : ''}" 
-                  onclick="toggleNotificationCompletion(${notif.id})">
-            ${userCompleted ? '✅' : '⭕'}
-          </button>
-          <div class="notification-content">
+        <li class="notification-item ${notif.type}" 
+            onclick="${notif.content ? `viewNotificationContent(${notif.id})` : ''}"
+            style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; cursor: ${notif.content ? 'pointer' : 'default'};">
+          <div class="notification-content" style="flex: 1;">
             <div class="notification-icon">${notificationIcons[notif.type]}</div>
-            <div class="notification-message ${userCompleted ? 'completed' : ''}">
-              ${notif.message}
+            <div class="notification-message">
+              ${escapeHtml(notif.message)}
+              ${notif.content ? '<span style="font-size: 0.7rem; color: var(--primary-color); margin-left: 5px;">(Xem chi tiết)</span>' : ''}
             </div>
             <div class="notification-meta">
               <span class="notification-time">${formatTime(notif.createdAt)}</span>
-              <span class="notification-completion">${completedCount} / ${totalStudents} đã xem</span>
             </div>
           </div>
-          ${checkPermission('manage_notifications') ? `<button class="notification-delete-btn" onclick="deleteNotification(${notif.id})">🗑️</button>` : ''}
+          ${checkPermission('manage_notifications') ? `<button class="notification-delete-btn" onclick="deleteNotification(${notif.id}, event)">🗑️</button>` : ''}
         </li>
       `;
     })

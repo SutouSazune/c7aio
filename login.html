@@ -308,6 +308,16 @@
       <!-- Danh sách học sinh sẽ được thêm vào đây -->
     </div>
 
+    <!-- Form đăng nhập cho Học sinh (Yêu cầu Ngày sinh) -->
+    <div class="admin-form" id="studentLoginForm">
+      <div class="form-group">
+        <label class="form-label">Ngày sinh của <span id="selectedStudentName" style="color: #667eea;"></span></label>
+        <input type="date" id="studentDobInput" class="form-input" />
+      </div>
+      <button class="admin-submit-btn" onclick="submitStudentLogin()">Xác nhận đăng nhập</button>
+      <button class="admin-cancel-btn" onclick="cancelStudentForm()">Quay lại</button>
+    </div>
+
     <div class="admin-section">
       <button class="admin-toggle-btn" id="adminToggleBtn" onclick="toggleAdminForm()">
         <span>👨‍💼 Đăng nhập Admin</span>
@@ -335,6 +345,7 @@
   <script src="script/students-list.js"></script>
   <script>
     let adminFormOpen = false;
+    let selectedStudent = null;
 
     // Render danh sách học sinh
     function renderStudents() {
@@ -349,10 +360,30 @@
 
     // Đăng nhập học sinh
     function loginAsStudent(studentId) {
-      const student = STUDENTS.find(s => s.id === studentId);
-      if (student) {
-        setCurrentUser(student);
+      selectedStudent = STUDENTS.find(s => s.id === studentId);
+      if (selectedStudent) {
+        // Ẩn grid và hiện form nhập DOB
+        document.getElementById('studentGrid').style.display = 'none';
+        document.getElementById('adminToggleBtn').style.display = 'none';
+        document.getElementById('selectedStudentName').textContent = selectedStudent.name;
+        document.getElementById('studentLoginForm').classList.add('show');
+        document.getElementById('studentDobInput').focus();
+      }
+    }
+
+    // Xác nhận đăng nhập học sinh
+    function submitStudentLogin() {
+      const dob = document.getElementById('studentDobInput').value;
+      if (!dob) {
+        showError('Vui lòng chọn ngày sinh để xác thực');
+        return;
+      }
+
+      const user = loginUser(selectedStudent.name, dob);
+      if (user) {
         window.location.href = buildUrl('index.html');
+      } else {
+        showError('Ngày sinh không chính xác!');
       }
     }
 
@@ -370,6 +401,15 @@
         form.classList.remove('show');
         btn.classList.remove('active');
       }
+    }
+
+    // Hủy form học sinh
+    function cancelStudentForm() {
+      selectedStudent = null;
+      document.getElementById('studentLoginForm').classList.remove('show');
+      document.getElementById('studentGrid').style.display = 'grid';
+      document.getElementById('adminToggleBtn').style.display = 'flex';
+      document.getElementById('studentDobInput').value = '';
     }
 
     // Cancel Admin Form
@@ -392,12 +432,12 @@
         return;
       }
 
-      // Kiểm tra mã admin (mã mặc định: "admin123")
-      if (code === ADMIN.code) {
-        setCurrentUser(ADMIN);
+      // Sử dụng hàm loginUser tập trung
+      const user = loginUser('admin', code);
+      if (user) {
         window.location.href = buildUrl('index.html');
       } else {
-        showError('Mã admin sai');
+        showError('Mã bảo mật Admin không đúng');
         document.getElementById('adminCodeInput').value = '';
       }
     }
@@ -414,8 +454,12 @@
 
     // Handle Enter key
     document.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && adminFormOpen) {
-        submitAdminLogin();
+      if (e.key === 'Enter') {
+        if (adminFormOpen) {
+          submitAdminLogin();
+        } else if (selectedStudent) {
+          submitStudentLogin();
+        }
       }
     });
 

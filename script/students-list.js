@@ -11,6 +11,48 @@ const ADMIN = {
   code: "admin123" // Mã admin mặc định, có thể thay đổi
 };
 
+/**
+ * Xử lý đăng nhập.
+ * - Nếu là Admin, xác thực bằng code.
+ * - Nếu là học sinh, xác thực bằng tên và ngày sinh (định dạng YYYY-MM-DD).
+ * @param {string} name Tên đăng nhập.
+ * @param {string} secret Mật khẩu (code cho admin) hoặc ngày sinh (cho học sinh).
+ * @returns {object|null} Trả về đối tượng user nếu thành công, ngược lại trả về null.
+ */
+function loginUser(name, secret) {
+  // 1. Xử lý đăng nhập Admin
+  if (name.toLowerCase() === ADMIN.name.toLowerCase() || name.toLowerCase() === 'admin') {
+    if (secret === ADMIN.code) {
+      console.log('✅ Admin login successful.');
+      setCurrentUser(ADMIN);
+      return ADMIN;
+    } else {
+      console.warn('❌ Admin login failed: Incorrect code.');
+      return null;
+    }
+  }
+
+  // 2. Xử lý đăng nhập học sinh
+  // Tìm học sinh trong danh sách (không phân biệt hoa thường, bỏ khoảng trắng thừa)
+  const student = STUDENTS.find(s => s.name.toLowerCase() === name.trim().toLowerCase());
+
+  // Nếu không tìm thấy học sinh
+  if (!student) {
+    console.warn(`Login failed: Student "${name}" not found.`);
+    return null;
+  }
+
+  // Kiểm tra ngày sinh (secret) - phải khớp định dạng YYYY-MM-DD
+  if (student.dob === secret) {
+    console.log(`✅ Login successful for ${student.name}`);
+    setCurrentUser(student);
+    return student;
+  } else {
+    console.warn(`Login failed: Incorrect date of birth for ${student.name}. Provided: ${secret}, Expected: ${student.dob}`);
+    return null;
+  }
+}
+
 // --- CẤU HÌNH CHỨC VỤ & QUYỀN HẠN ---
 const ROLES = {
   'admin': '👨‍💼 Quản trị viên (Admin)',

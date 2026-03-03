@@ -60,7 +60,7 @@ window.addEventListener('load', () => {
   document.documentElement.style.overflow = 'auto';
   
   // --- FALLBACK ---
-  if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
+  //if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
   if (!document.getElementById('fallback-animation-style')) {
     const style = document.createElement('style');
     style.id = 'fallback-animation-style';
