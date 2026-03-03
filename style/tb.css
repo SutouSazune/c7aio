@@ -344,6 +344,8 @@ body {
   .notification-delete-btn {
     width: 100%;
   }
+}
+
 /* Nâng cấp Modal UI */
 .modal {
   background: rgba(0, 0, 0, 0.7) !important;
@@ -379,4 +381,3 @@ body {
 }
 
 .save-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
-}

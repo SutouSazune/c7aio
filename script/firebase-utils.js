@@ -402,7 +402,11 @@ function onSharedNotificationsChanged(callback) {
   ref.on('value', snapshot => {
     const notifications = [];
     snapshot.forEach(child => {
-      notifications.push(child.val());
+      const val = child.val();
+      if (val) {
+        // Đảm bảo luôn có ID (lấy từ key nếu trong object không có)
+        notifications.push({ id: val.id || child.key, ...val });
+      }
     });
     // Sắp xếp mới nhất lên đầu
     notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

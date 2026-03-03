@@ -134,36 +134,6 @@ function closeNotifContentModal() {
   document.getElementById('notifContentModal').classList.remove('show');
 }
 
-function addNotification() {
-  if (!checkPermission('manage_notifications')) {
-    showToast('Bạn không có quyền thêm thông báo', 'error');
-    return;
-  }
-
-  const input = document.getElementById('notificationInput');
-  const typeSelect = document.getElementById('notificationType');
-  const message = input.value.trim();
-  const type = typeSelect.value;
-
-  if (!message) {
-    showToast('Vui lòng nhập nội dung thông báo', 'error');
-    return;
-  }
-
-  const newNotification = {
-    id: Date.now(),
-    message: message,
-    type: type,
-    createdAt: new Date().toISOString(),
-    completions: {} // { userId: true/false }
-  };
-
-  saveSharedNotification(newNotification);
-  logAction('Thêm thông báo', `Nội dung: ${message}`);
-  showToast('Đã đăng thông báo!', 'success');
-  input.value = '';
-}
-
 function deleteNotification(notifId) {
   if (!checkPermission('manage_notifications')) {
     showToast('Bạn không có quyền xóa thông báo', 'error');
@@ -218,7 +188,7 @@ function formatTime(dateString) {
 
 function renderNotifications() {
   const container = document.getElementById('notificationList');
-  const filtered = (getFilteredNotifications() || []).filter(n => n && n.id);
+  const filtered = getFilteredNotifications() || [];
 
   if (!filtered || filtered.length === 0) {
     container.innerHTML = `
@@ -234,7 +204,7 @@ function renderNotifications() {
     .map((notif, index) => {
       return `
         <li class="notification-item ${notif.type}" 
-            onclick="${notif.content ? `viewNotificationContent(${notif.id})` : ''}"
+            onclick="${notif.content ? `viewNotificationContent('${notif.id}')` : ''}"
             style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; cursor: ${notif.content ? 'pointer' : 'default'};">
           <div class="notification-content" style="flex: 1;">
             <div class="notification-icon">${notificationIcons[notif.type]}</div>
@@ -246,7 +216,7 @@ function renderNotifications() {
               <span class="notification-time">${formatTime(notif.createdAt)}</span>
             </div>
           </div>
-          ${checkPermission('manage_notifications') ? `<button class="notification-delete-btn" onclick="deleteNotification(${notif.id}, event)">🗑️</button>` : ''}
+          ${checkPermission('manage_notifications') ? `<button class="notification-delete-btn" onclick="deleteNotification('${notif.id}', event)">🗑️</button>` : ''}
         </li>
       `;
     })
