@@ -16,35 +16,57 @@ window.addEventListener('load', () => {
   // Inject CSS cho bộ chọn học sinh
   const style = document.createElement('style');
   style.innerHTML = `
-    .task-modal-layout { display: flex; gap: 20px; min-height: 400px; }
-    .task-form-inputs { flex: 1.5; }
+    .task-modal-layout { display: flex; gap: 25px; min-height: 500px; }
+    .task-form-inputs { flex: 1.6; display: flex; flex-direction: column; gap: 15px; }
     .task-student-selection { 
       flex: 1; 
-      border-left: 1px solid #eee; 
-      padding-left: 20px; 
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px; 
       display: flex; 
       flex-direction: column;
+      border: 1px solid #e9ecef;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
     }
+    .search-student-box {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .search-student-box:focus { border-color: var(--primary-color); }
     .student-selector-list { 
       flex: 1; 
       overflow-y: auto; 
-      margin-top: 10px; 
-      max-height: 350px;
+      max-height: 400px;
       padding-right: 5px;
     }
+    .student-selector-list::-webkit-scrollbar { width: 5px; }
+    .student-selector-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    
     .student-select-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px;
-      border-radius: 8px;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 10px;
       cursor: pointer;
       transition: background 0.2s;
+      margin-bottom: 4px;
     }
-    .student-select-item:hover { background: #f0f4ff; }
+    .student-select-item:hover { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .student-assign-checkbox { width: 18px; height: 18px; cursor: pointer; }
+    
+    .select-all-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .btn-select-all { background: #fff; border: 1px solid #ddd; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+
     @media (max-width: 768px) {
       .task-modal-layout { flex-direction: column; }
-      .task-student-selection { border-left: none; padding-left: 0; border-top: 1px solid #eee; padding-top: 20px; }
+      .task-student-selection { max-height: 300px; }
     }
   `;
   document.head.appendChild(style);
@@ -191,15 +213,18 @@ function openTaskModal() {
 function renderStudentSelector() {
   const container = document.getElementById('studentSelectorContainer');
   if (!container) return;
+  
+  allSelected = true; // Reset state khi mở modal
 
   container.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div class="select-all-bar">
       <h3 style="font-size: 1rem; margin: 0;">👥 Giao cho:</h3>
-      <button onclick="toggleSelectAllStudents()" style="font-size: 0.8rem; padding: 4px 8px; cursor: pointer; border-radius: 4px; border: 1px solid #ddd; background: #fff;">Chọn tất cả</button>
+      <button class="btn-select-all" id="btnToggleAll" onclick="toggleSelectAllStudents()">Bỏ chọn tất cả</button>
     </div>
-    <div class="student-selector-list">
+    <input type="text" class="search-student-box" placeholder="Tìm tên học sinh..." oninput="filterStudentSelection(this.value)">
+    <div class="student-selector-list" id="studentCheckList">
       ${STUDENTS.map(s => `
-        <label class="student-select-item">
+        <label class="student-select-item" data-name="${s.name.toLowerCase()}">
           <input type="checkbox" class="student-assign-checkbox" value="${s.id}" checked>
           <span style="font-size: 0.9rem;">${s.name}</span>
         </label>
@@ -208,12 +233,23 @@ function renderStudentSelector() {
   `;
 }
 
+function filterStudentSelection(query) {
+  const term = query.toLowerCase();
+  const items = document.querySelectorAll('.student-select-item');
+  items.forEach(item => {
+    const name = item.getAttribute('data-name');
+    item.style.display = name.includes(term) ? 'flex' : 'none';
+  });
+}
+
 let allSelected = true;
 function toggleSelectAllStudents() {
   const checkboxes = document.querySelectorAll('.student-assign-checkbox');
+  const btn = document.getElementById('btnToggleAll');
+  
   allSelected = !allSelected;
   checkboxes.forEach(cb => cb.checked = allSelected);
-  event.target.textContent = allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả';
+  btn.textContent = allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả';
 }
 
 function closeTaskModal() {

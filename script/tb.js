@@ -173,9 +173,9 @@ function formatTime(dateString) {
 
 function renderNotifications() {
   const container = document.getElementById('notificationList');
-  const filtered = getFilteredNotifications();
+  const filtered = getFilteredNotifications() || [];
 
-  if (filtered.length === 0) {
+  if (!filtered || filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📭</div>
