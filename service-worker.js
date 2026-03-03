@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v2.3.0'; // STABLE UPDATE: Fix infinite refresh loop
+const CACHE_NAME = 'c7aio-v2.3.1-fix-config'; // BUMP VERSION: Force update config & hub.js
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
