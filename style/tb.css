@@ -121,6 +121,7 @@ body {
 .add-notification-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(250, 112, 154, 0.4);
+}
 
 .notification-edit-btn:hover {
   background: #e2e8f0 !important;
@@ -367,37 +368,45 @@ body {
 
 /* Nâng cấp Modal UI */
 .modal {
-  background: rgba(15, 23, 42, 0.8) !important;
-  backdrop-filter: blur(12px) saturate(180%);
+  background: rgba(15, 23, 42, 0.7) !important;
+  backdrop-filter: blur(10px) saturate(150%);
   align-items: center;
   justify-content: center;
-  transition: opacity 0.3s ease;
+  transition: all 0.3s var(--ease-smooth);
 }
 
 .modal-content {
   background: white;
-  border-radius: 24px !important;
+  border-radius: 28px !important;
   padding: 0 !important;
-  max-width: 650px !important;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3) !important;
+  max-width: 680px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 40px 80px -15px rgba(0, 0, 0, 0.35) !important;
   overflow: hidden;
+  animation: slideDownPop 0.4s var(--ease-spring);
 }
 
 .modal-header {
-  padding: 20px 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 25px 35px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .modal-header h2 {
   color: white;
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 700;
+  margin: 0;
 }
 
 .modal-body {
-  padding: 30px;
+  padding: 35px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .save-btn {

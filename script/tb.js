@@ -100,8 +100,12 @@ function renderSkeletonNotifications() {
   container.innerHTML = html;
 }
 
-function openNotificationModal(notifId = null) {
+function openNotificationModal(notifId = null, event = null) {
+  if (event) event.stopPropagation(); // Chặn mở chi tiết khi bấm nút sửa
+
   const modal = document.getElementById('notificationModal');
+  if (!modal) return;
+
   const titleEl = modal.querySelector('.modal-header h2');
   const saveBtn = modal.querySelector('.save-btn');
   
