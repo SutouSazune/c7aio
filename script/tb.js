@@ -31,10 +31,10 @@ window.addEventListener('load', () => {
       :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); --primary-color: #667eea; }
       @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       
-      /* Đảm bảo luôn hiển thị kể cả khi animation lỗi */
-      .notification-item { opacity: 1; transform: none; }
+      /* Mặc định hiển thị để tránh lỗi tàng hình */
+      .notification-item { opacity: 1; transform: none; transition: opacity 0.3s ease; }
       @supports (animation: fadeInUp) {
-        .notification-item { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
+        .notification-item { opacity: 0; animation: fadeInUp 0.5s var(--ease-spring) forwards; }
       }
     `;
     document.head.appendChild(style);
@@ -167,12 +167,12 @@ function deleteNotification(notifId, event) {
   }
 }
 
-function filterNotifications(filter) {
+function filterNotifications(filter, event) {
   currentFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.remove('active');
   });
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
   renderNotifications();
 }
 
@@ -206,6 +206,12 @@ function formatTime(dateString) {
   }
 }
 
+function isContentEmpty(content) {
+  if (!content) return true;
+  const stripped = content.replace(/<[^>]*>/g, '').trim();
+  return stripped.length === 0 && !content.includes('<img');
+}
+
 function renderNotifications() {
   const container = document.getElementById('notificationList');
   const filtered = getFilteredNotifications() || [];
@@ -222,15 +228,16 @@ function renderNotifications() {
 
   container.innerHTML = filtered
     .map((notif, index) => {
+      const hasContent = !isContentEmpty(notif.content);
       return `
         <li class="notification-item ${notif.type}" 
-            onclick="${(notif.content && notif.content !== '<p><br></p>') ? `viewNotificationContent('${notif.id}')` : ''}"
-            style="animation-delay: ${index * 0.05}s; cursor: ${(notif.content && notif.content !== '<p><br></p>') ? 'pointer' : 'default'};">
+            onclick="${hasContent ? `viewNotificationContent('${notif.id}')` : ''}"
+            style="animation-delay: ${index * 0.05}s; cursor: ${hasContent ? 'pointer' : 'default'};">
           <div class="notification-content" style="flex: 1;">
             <div class="notification-icon">${notificationIcons[notif.type]}</div>
             <div class="notification-message">
               ${escapeHtml(notif.message)}
-              ${notif.content ? '<span style="font-size: 0.7rem; color: var(--primary-color); margin-left: 5px;">(Xem chi tiết)</span>' : ''}
+              ${hasContent ? '<span style="font-size: 0.7rem; color: var(--primary-color); margin-left: 5px;">(Xem chi tiết)</span>' : ''}
             </div>
             <div class="notification-meta">
               <span class="notification-time">${formatTime(notif.createdAt)}</span>
