@@ -183,15 +183,20 @@ body {
   contain: content;
   border-left: 4px solid;
   border: 1px solid rgba(0,0,0,0.05);
-  opacity: 1 !important;
-  visibility: visible !important;
-  transform: none !important;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @supports (animation: fadeInUp) {
   .notification-item {
-    opacity: 0 !important;
-    animation: fadeInUp 0.5s var(--ease-spring) forwards !important;
+    opacity: 0;
+    animation: fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 }
 

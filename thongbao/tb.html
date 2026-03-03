@@ -77,18 +77,18 @@
   <!-- Modal Thêm Thông Báo -->
   <div id="notificationModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+      <div class="modal-header">
         <h2>📢 Đăng Thông Báo</h2>
-        <button class="modal-close" type="button" onclick="closeNotificationModal()" style="color: white; opacity: 0.8;">✕</button>
+        <button class="modal-close" type="button" onclick="closeNotificationModal()">✕</button>
       </div>
-      <div class="modal-body" style="padding: 25px;">
+      <div class="modal-body">
         <div class="form-group">
           <label>Tiêu đề / Nội dung ngắn (*)</label>
           <input type="text" id="modalNotifTitle" placeholder="Nhập tiêu đề thông báo...">
         </div>
         <div class="form-group">
           <label>Loại thông báo</label>
-          <select id="modalNotifType" class="form-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+          <select id="modalNotifType">
             <option value="info">ℹ️ Thông tin</option>
             <option value="warning">⚠️ Cảnh báo</option>
             <option value="success">✅ Quan trọng</option>

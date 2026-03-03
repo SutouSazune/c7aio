@@ -100,10 +100,35 @@ function renderSkeletonNotifications() {
   container.innerHTML = html;
 }
 
-function openNotificationModal() {
-  console.log("Opening Modal...");
+function openNotificationModal(notifId = null, event = null) {
+  if (event) event.stopPropagation();
+
   const modal = document.getElementById('notificationModal');
-  if (modal) modal.classList.add('show');
+  if (!modal) return;
+
+  const titleEl = modal.querySelector('.modal-header h2');
+  const saveBtn = modal.querySelector('.save-btn');
+
+  if (notifId) {
+    editingNotifId = notifId;
+    const notif = notifications.find(n => n.id === notifId);
+    if (notif) {
+      document.getElementById('modalNotifTitle').value = notif.message;
+      document.getElementById('modalNotifType').value = notif.type;
+      if (notifQuill) notifQuill.root.innerHTML = notif.content || '';
+      titleEl.innerHTML = '✏️ Chỉnh Sửa Thông Báo';
+      saveBtn.textContent = 'Cập Nhật Thông Báo';
+    }
+  } else {
+    editingNotifId = null;
+    document.getElementById('modalNotifTitle').value = '';
+    document.getElementById('modalNotifType').value = 'info';
+    if (notifQuill) notifQuill.setContents([]);
+    titleEl.innerHTML = '📢 Đăng Thông Báo Mới';
+    saveBtn.textContent = 'Đăng Thông Báo';
+  }
+
+  modal.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
@@ -111,6 +136,7 @@ function closeNotificationModal() {
   const modal = document.getElementById('notificationModal');
   if (modal) modal.classList.remove('show');
   document.body.style.overflow = '';
+  editingNotifId = null;
 }
 
 function saveNotification() {
