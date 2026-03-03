@@ -66,9 +66,11 @@ function updateUIStats() {
   
   const openTasks = totalTasks - doneTasks;
   
-  document.getElementById("totalTask").innerText = totalTasks;
-  document.getElementById("doneTask").innerText = doneTasks;
-  document.getElementById("openTask").innerText = openTasks;
+  // Chỉ cập nhật nếu các phần tử này tồn tại (đang ở trang Dashboard)
+  const totalEl = document.getElementById("totalTask");
+  if (totalEl) totalEl.innerText = totalTasks;
+  if (document.getElementById("doneTask")) document.getElementById("doneTask").innerText = doneTasks;
+  if (document.getElementById("openTask")) document.getElementById("openTask").innerText = openTasks;
 
   const today = new Date();
   const nearDeadlineTasks = tasks.filter(t => {
@@ -85,7 +87,7 @@ function updateUIStats() {
     return daysUntil <= 3; 
   });
 
-  document.getElementById("nearDeadline").innerText = nearDeadlineTasks.length;
+  if (document.getElementById("nearDeadline")) document.getElementById("nearDeadline").innerText = nearDeadlineTasks.length;
 
   // Cập nhật task gần hạn
   updateRecentTasks(nearDeadlineTasks);
@@ -157,7 +159,8 @@ function updateWelcomeMessage() {
   const user = getCurrentUser();
   if (user) {
     const firstName = user.name.split(' ').pop();
-    document.getElementById('welcomeName').textContent = firstName;
+    const welcomeNameEl = document.getElementById('welcomeName');
+    if (welcomeNameEl) welcomeNameEl.textContent = firstName;
     
     // Thay đổi lời chào dựa trên thời gian
     const hour = new Date().getHours();
@@ -173,7 +176,8 @@ function updateWelcomeMessage() {
       greeting = '🌙 Đã khá muộn rồi! Hãy tiến hành công việc còn lại.';
     }
     
-    document.getElementById('welcomeMessage').textContent = greeting;
+    const welcomeMsgEl = document.getElementById('welcomeMessage');
+    if (welcomeMsgEl) welcomeMsgEl.textContent = greeting;
   }
 }
 
