@@ -109,15 +109,22 @@ function openNotificationModal(notifId = null, event = null) {
   const titleEl = modal.querySelector('.modal-header h2');
   const saveBtn = modal.querySelector('.save-btn');
 
+  // Chuyển sang so sánh không nghiêm ngặt (==) để xử lý trường hợp ID từ DOM là string
+  // và ID trong notifications array là number.
   if (notifId) {
     editingNotifId = notifId;
-    const notif = notifications.find(n => n.id === notifId);
+    const notif = notifications.find(n => n.id == notifId);
     if (notif) {
       document.getElementById('modalNotifTitle').value = notif.message;
       document.getElementById('modalNotifType').value = notif.type;
       if (notifQuill) notifQuill.root.innerHTML = notif.content || '';
       titleEl.innerHTML = '✏️ Chỉnh Sửa Thông Báo';
       saveBtn.textContent = 'Cập Nhật Thông Báo';
+    } else {
+      // Fallback nếu không tìm thấy thông báo (có thể ID đã cũ hoặc lỗi)
+      showToast('Không tìm thấy thông báo để sửa!', 'error');
+      closeNotificationModal();
+      return;
     }
   } else {
     editingNotifId = null;
@@ -148,13 +155,16 @@ function saveNotification() {
     showToast('Vui lòng nhập tiêu đề', 'error');
     return;
   }
+  
+  const isEditing = !!editingNotifId;
+  const idToSave = isEditing ? editingNotifId : String(Date.now());
 
   const newNotif = {
-    id: editingNotifId || Date.now(),
+    id: idToSave,
     message: title,
     content: content === '<p><br></p>' ? '' : content,
     type: type,
-    createdAt: editingNotifId ? (notifications.find(n => n.id === editingNotifId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+    createdAt: isEditing ? (notifications.find(n => n.id == editingNotifId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
 
