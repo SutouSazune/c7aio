@@ -154,35 +154,33 @@ function selectLocalFile() {
 
   const input = document.createElement('input');
   input.type = 'file';
-  input.style.position = 'fixed';
-  input.style.left = '-9999px';
   input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
-  document.body.appendChild(input);
-
-  input.onchange = () => {
-    const file = input.files[0];
+  
+  // Bắt sự kiện chọn file
+  input.onchange = (e) => {
+    const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        // Kiểm tra range an toàn, nếu null thì chèn vào cuối văn bản
+      reader.onload = (event) => {
         const range = quill.getSelection(true) || { index: quill.getLength() };
-        const index = range.index !== undefined ? range.index : quill.getLength();
+        const index = range.index;
 
         if (file.type.startsWith('image/')) {
-          quill.insertEmbed(index, 'image', e.target.result, 'user');
+          quill.insertEmbed(index, 'image', event.target.result, 'user');
           quill.setSelection(index + 1, 'user');
         } else {
-          quill.insertText(index, file.name, 'link', e.target.result, 'user');
+          quill.insertText(index, file.name, 'link', event.target.result, 'user');
           quill.setSelection(index + file.name.length, 'user');
         }
       };
       reader.readAsDataURL(file);
     }
-    // Dọn dẹp input sau khi chọn
-    setTimeout(() => { if (input.parentNode) document.body.removeChild(input); }, 100);
   };
 
-  input.click();
+  // Kích hoạt click trong một task mới để tránh xung đột focus với Quill
+  setTimeout(() => {
+    input.click();
+  }, 0);
 }
 
 // --- MODAL FUNCTIONS ---
