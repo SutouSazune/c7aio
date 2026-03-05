@@ -155,6 +155,13 @@ function selectLocalFile() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
+  // Opera GX yêu cầu input phải nằm trong DOM để kích hoạt click tin cậy
+  input.style.position = 'fixed';
+  input.style.top = '0';
+  input.style.left = '0';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+  document.body.appendChild(input);
   
   // Bắt sự kiện chọn file
   input.onchange = (e) => {
@@ -175,12 +182,11 @@ function selectLocalFile() {
       };
       reader.readAsDataURL(file);
     }
+    document.body.removeChild(input);
   };
 
-  // Kích hoạt click trong một task mới để tránh xung đột focus với Quill
-  setTimeout(() => {
-    input.click();
-  }, 0);
+  // Gọi trực tiếp, không dùng setTimeout để giữ quyền "User Activation"
+  input.click();
 }
 
 // --- MODAL FUNCTIONS ---

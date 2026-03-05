@@ -101,6 +101,13 @@ function selectLocalFileForNotif() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
+  // Opera GX yêu cầu input phải nằm trong DOM
+  input.style.position = 'fixed';
+  input.style.top = '0';
+  input.style.left = '0';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+  document.body.appendChild(input);
 
   input.onchange = (e) => {
     const file = e.target.files[0];
@@ -120,12 +127,11 @@ function selectLocalFileForNotif() {
       };
       reader.readAsDataURL(file);
     }
+    document.body.removeChild(input);
   };
 
-  // Kích hoạt click trong một task mới
-  setTimeout(() => {
-    input.click();
-  }, 0);
+  // Gọi trực tiếp để tránh bị trình duyệt chặn
+  input.click();
 }
 
 function renderSkeletonNotifications() {
