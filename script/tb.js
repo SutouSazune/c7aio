@@ -37,6 +37,13 @@ window.addEventListener('load', () => {
       @supports (animation: fadeInUp) {
         .notification-item { opacity: 0; animation: fadeInUp 0.5s var(--ease-spring) forwards; }
       }
+
+      .notif-check-btn {
+        background: none; border: none; font-size: 1.2rem; cursor: pointer; 
+        padding: 5px; transition: transform 0.2s; display: flex; align-items: center;
+      }
+      .notif-check-btn:hover { transform: scale(1.2); }
+      .notification-item.completed { opacity: 0.6; filter: grayscale(0.5); }
     `;
     document.head.appendChild(style);
   }
@@ -79,8 +86,39 @@ function initNotificationEditor() {
           ]
         }
       });
+
+      // Thêm Handler cho nút Image để hỗ trợ upload file local
+      notifQuill.getModule('toolbar').addHandler('image', () => {
+        selectLocalFileForNotif();
+      });
     } catch (e) { console.error("Quill Init Error:", e); }
   }
+}
+
+function selectLocalFileForNotif() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+
+  input.onchange = () => {
+    const file = input.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const range = notifQuill.getSelection(true);
+        if (file.type.startsWith('image/')) {
+          notifQuill.insertEmbed(range.index, 'image', e.target.result);
+        } else {
+          notifQuill.insertText(range.index, file.name, 'link', e.target.result);
+        }
+        notifQuill.setSelection(range.index + 1);
+      };
+      reader.readAsDataURL(file);
+    }
+    document.body.removeChild(input);
+  };
+  input.click();
 }
 
 function renderSkeletonNotifications() {
@@ -205,6 +243,21 @@ function deleteNotification(notifId, event) {
   });
 }
 
+async function toggleNotificationCompletion(notifId, event) {
+  // Ngăn chặn việc bấm nút check lại nhảy vào xem chi tiết
+  if (event) event.stopPropagation();
+
+  const notif = notifications.find(n => n.id == notifId);
+  if (!notif) return;
+
+  if (!notif.completions) {
+    notif.completions = {};
+  }
+
+  notif.completions[currentUser.id] = !notif.completions[currentUser.id];
+  updateSharedNotificationCompletion(notifId, notif.completions);
+}
+
 function filterNotifications(filter, event) {
   currentFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -267,10 +320,15 @@ function renderNotifications() {
   container.innerHTML = filtered
     .map((notif, index) => {
       const hasContent = !isContentEmpty(notif.content);
+      const isCompleted = notif.completions && notif.completions[currentUser.id];
+
       return `
-        <li class="notification-item ${notif.type}" 
+        <li class="notification-item ${notif.type} ${isCompleted ? 'completed' : ''}" 
             onclick="${hasContent ? `viewNotificationContent('${notif.id}')` : ''}"
             style="animation-delay: ${index * 0.05}s; cursor: ${hasContent ? 'pointer' : 'default'};">
+          <button class="notif-check-btn" onclick="toggleNotificationCompletion('${notif.id}', event)" title="${isCompleted ? 'Đánh dấu chưa đọc' : 'Đánh dấu đã đọc'}">
+            ${isCompleted ? '✅' : '☐'}
+          </button>
           <div class="notification-content" style="flex: 1;">
             <div class="notification-icon">${notificationIcons[notif.type]}</div>
             <div class="notification-message">

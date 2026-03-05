@@ -151,26 +151,29 @@ function renderSkeletonTasks() {
 // Hàm chọn file từ máy tính và chèn vào editor
 function selectLocalFile() {
   const input = document.createElement('input');
-  input.setAttribute('type', 'file');
-  // Không giới hạn accept để cho phép chọn cả file tài liệu
-  input.click();
+  input.type = 'file';
+  input.style.display = 'none';
+  document.body.appendChild(input);
 
   input.onchange = () => {
     const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const range = quill.getSelection(true);
-      if (file.type.startsWith('image/')) {
-        quill.insertEmbed(range.index, 'image', e.target.result);
-      } else {
-        const text = file.name;
-        quill.insertText(range.index, text, 'link', e.target.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const range = quill.getSelection(true);
+        if (file.type.startsWith('image/')) {
+          quill.insertEmbed(range.index, 'image', e.target.result);
+        } else {
+          quill.insertText(range.index, file.name, 'link', e.target.result);
+        }
+        quill.setSelection(range.index + 1);
+      };
+      reader.readAsDataURL(file);
+    }
+    document.body.removeChild(input);
   };
+
+  input.click();
 }
 
 // --- MODAL FUNCTIONS ---
