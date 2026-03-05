@@ -96,9 +96,13 @@ function initNotificationEditor() {
 }
 
 function selectLocalFileForNotif() {
+  if (!notifQuill) return;
+
   const input = document.createElement('input');
   input.type = 'file';
-  input.style.display = 'none';
+  input.style.position = 'fixed';
+  input.style.left = '-9999px';
+  input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
   document.body.appendChild(input);
 
   input.onchange = () => {
@@ -106,17 +110,21 @@ function selectLocalFileForNotif() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const range = notifQuill.getSelection(true);
+        // Kiểm tra range an toàn
+        const range = notifQuill.getSelection(true) || { index: notifQuill.getLength() };
+        const index = range.index !== undefined ? range.index : notifQuill.getLength();
+
         if (file.type.startsWith('image/')) {
-          notifQuill.insertEmbed(range.index, 'image', e.target.result);
+          notifQuill.insertEmbed(index, 'image', e.target.result, 'user');
+          notifQuill.setSelection(index + 1, 'user');
         } else {
-          notifQuill.insertText(range.index, file.name, 'link', e.target.result);
+          notifQuill.insertText(index, file.name, 'link', e.target.result, 'user');
+          notifQuill.setSelection(index + file.name.length, 'user');
         }
-        notifQuill.setSelection(range.index + 1);
       };
       reader.readAsDataURL(file);
     }
-    document.body.removeChild(input);
+    setTimeout(() => { if (input.parentNode) document.body.removeChild(input); }, 100);
   };
   input.click();
 }

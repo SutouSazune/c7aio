@@ -150,9 +150,13 @@ function renderSkeletonTasks() {
 
 // Hàm chọn file từ máy tính và chèn vào editor
 function selectLocalFile() {
+  if (!quill) return;
+
   const input = document.createElement('input');
   input.type = 'file';
-  input.style.display = 'none';
+  input.style.position = 'fixed';
+  input.style.left = '-9999px';
+  input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
   document.body.appendChild(input);
 
   input.onchange = () => {
@@ -160,17 +164,22 @@ function selectLocalFile() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const range = quill.getSelection(true);
+        // Kiểm tra range an toàn, nếu null thì chèn vào cuối văn bản
+        const range = quill.getSelection(true) || { index: quill.getLength() };
+        const index = range.index !== undefined ? range.index : quill.getLength();
+
         if (file.type.startsWith('image/')) {
-          quill.insertEmbed(range.index, 'image', e.target.result);
+          quill.insertEmbed(index, 'image', e.target.result, 'user');
+          quill.setSelection(index + 1, 'user');
         } else {
-          quill.insertText(range.index, file.name, 'link', e.target.result);
+          quill.insertText(index, file.name, 'link', e.target.result, 'user');
+          quill.setSelection(index + file.name.length, 'user');
         }
-        quill.setSelection(range.index + 1);
       };
       reader.readAsDataURL(file);
     }
-    document.body.removeChild(input);
+    // Dọn dẹp input sau khi chọn
+    setTimeout(() => { if (input.parentNode) document.body.removeChild(input); }, 100);
   };
 
   input.click();
