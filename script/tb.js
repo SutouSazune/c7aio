@@ -98,24 +98,25 @@ function initNotificationEditor() {
 function selectLocalFileForNotif() {
   if (!notifQuill) return;
 
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
-  // Opera GX yêu cầu input phải nằm trong DOM
-  input.style.position = 'fixed';
-  input.style.top = '0';
-  input.style.left = '0';
-  input.style.opacity = '0';
-  input.style.pointerEvents = 'none';
-  document.body.appendChild(input);
+  // 1. Tạo input vĩnh viễn nếu chưa có
+  let input = document.getElementById('quill-file-input-notif');
+  if (!input) {
+    input = document.createElement('input');
+    input.id = 'quill-file-input-notif';
+    input.type = 'file';
+    input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+  }
 
+  // 2. Gán sự kiện
   input.onchange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const range = notifQuill.getSelection(true) || { index: notifQuill.getLength() };
-        const index = range.index;
+        const index = (range.index !== null && range.index !== undefined) ? range.index : notifQuill.getLength();
         
         if (file.type.startsWith('image/')) {
           notifQuill.insertEmbed(index, 'image', event.target.result, 'user');
@@ -127,10 +128,10 @@ function selectLocalFileForNotif() {
       };
       reader.readAsDataURL(file);
     }
-    document.body.removeChild(input);
+    input.value = '';
   };
 
-  // Gọi trực tiếp để tránh bị trình duyệt chặn
+  // 3. Kích hoạt
   input.click();
 }
 

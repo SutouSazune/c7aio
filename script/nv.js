@@ -152,25 +152,27 @@ function renderSkeletonTasks() {
 function selectLocalFile() {
   if (!quill) return;
 
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
-  // Opera GX yêu cầu input phải nằm trong DOM để kích hoạt click tin cậy
-  input.style.position = 'fixed';
-  input.style.top = '0';
-  input.style.left = '0';
-  input.style.opacity = '0';
-  input.style.pointerEvents = 'none';
-  document.body.appendChild(input);
-  
-  // Bắt sự kiện chọn file
+  // 1. Kiểm tra xem input đã tồn tại chưa, nếu chưa thì tạo mới và gắn vĩnh viễn vào DOM
+  let input = document.getElementById('quill-file-input-task');
+  if (!input) {
+    input = document.createElement('input');
+    input.id = 'quill-file-input-task';
+    input.type = 'file';
+    input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
+    input.style.display = 'none'; // Ẩn hoàn toàn
+    document.body.appendChild(input);
+  }
+
+  // 2. Gán lại sự kiện onchange (để cập nhật closure scope nếu cần, hoặc reset logic)
   input.onchange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
+        // Lấy vị trí con trỏ hiện tại hoặc cuối văn bản
         const range = quill.getSelection(true) || { index: quill.getLength() };
-        const index = range.index;
+        // Đảm bảo index là số hợp lệ
+        const index = (range.index !== null && range.index !== undefined) ? range.index : quill.getLength();
 
         if (file.type.startsWith('image/')) {
           quill.insertEmbed(index, 'image', event.target.result, 'user');
@@ -182,10 +184,11 @@ function selectLocalFile() {
       };
       reader.readAsDataURL(file);
     }
-    document.body.removeChild(input);
+    // Reset giá trị để có thể chọn lại cùng 1 file nếu muốn
+    input.value = '';
   };
 
-  // Gọi trực tiếp, không dùng setTimeout để giữ quyền "User Activation"
+  // 3. Kích hoạt click
   input.click();
 }
 
