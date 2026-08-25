@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.1-11c7';
+const CACHE_NAME = 'c7aio-v3.3.2-clean';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -29,60 +29,60 @@ const ASSETS_TO_CACHE = [
   './script/tk.js',
   './script/hs.js',
   './script/pq.js',
-  './script/nk.js',
-  './manifest.json'
+  './script/nk.js'
 ];
 
-self.addEventListener('install', event => {
+// Cài đặt Service Worker và lưu trữ tài nguyên
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('✅ Caching C7AIO assets v3.3.1...');
-      return cache.addAll(ASSETS_TO_CACHE).catch(err => {
-        console.log('Lỗi khi cache một số assets:', err);
-        return Promise.resolve();
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
+// Kích hoạt SW và dọn dẹp các cache cũ không dùng nữa
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames
-          .filter(cacheName => cacheName !== CACHE_NAME)
-          .map(cacheName => {
-            console.log('🗑️ Xóa cache cũ:', cacheName);
-            return caches.delete(cacheName);
-          })
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  if (request.method !== 'GET') return;
-
-  event.respondWith(
-    fetch(request)
-      .then(networkResponse => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        return caches.match(request).then(cachedResponse => {
-          if (cachedResponse) return cachedResponse;
-          if (request.destination === 'document') {
-            return caches.match('./index.html');
+// Chiến lược Network First, fallback về Cache khi mất mạng
+self.addEventListener('fetch', (event) => {
+  // Chỉ cache các request HTTP/HTTPS cơ bản (bỏ qua Firebase realtime websocket hoặc chrome-extension)
+  if (event.request.url.startsWith('http') && !event.request.url.includes('firebasedatabase.app')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Lưu bản sao vào cache nếu response hợp lệ
+          if (response && response.status === 200 && response.type === 'basic') {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
           }
-          return new Response('Offline', { status: 503, statusText: 'Offline' });
-        });
-      })
-  );
+          return response;
+        })
+        .catch(() => {
+          // Khi offline, trả về dữ liệu từ cache
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
+              return caches.match('./index.html');
+            }
+          });
+        })
+    );
+  }
 });
