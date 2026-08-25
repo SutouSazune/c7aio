@@ -208,56 +208,66 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-.user-badge-btn {
-  display: flex;
+.header-user-bubble, .user-badge-btn {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 14px 5px 6px;
+  padding: 4px 12px 4px 6px;
   background: var(--card-bg);
   border: var(--glass-border);
   border-radius: var(--radius-full);
-  cursor: pointer;
   box-shadow: var(--shadow-sm);
-  transition: all 0.3s var(--ease-smooth);
   color: var(--text-main);
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  transition: all 0.2s ease;
 }
 
-.user-badge-btn:hover {
+.header-user-bubble:hover, .user-badge-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--primary);
 }
 
-.user-avatar-mini {
+.header-avatar-circle, .user-avatar-mini {
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  font-weight: 800;
   font-size: 0.8rem;
-  font-weight: 700;
+  box-shadow: var(--shadow-sm);
 }
 
-.btn-logout {
+.header-user-name {
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.btn-logout, .c7-btn-logout {
   background: rgba(239, 68, 68, 0.1);
   color: var(--danger);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  padding: 8px 14px;
+  padding: 6px 14px;
   border-radius: var(--radius-md);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
   transition: all 0.2s ease;
+  font-family: inherit;
 }
 
-.btn-logout:hover {
+.btn-logout:hover, .c7-btn-logout:hover {
   background: var(--danger);
   color: white;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 /* ==================== LAYOUT & MAIN CONTAINER ==================== */
