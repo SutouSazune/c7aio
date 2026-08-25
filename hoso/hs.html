@@ -3,123 +3,171 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#667eea">
-  <title>10C7 AIO - Quản Lý Hồ Sơ</title>
-  <link rel="stylesheet" href="../style/hs.css">
+  <meta name="theme-color" content="#6366f1">
+  <title>10C7 AIO - Quản Lý Hồ Sơ Học Sinh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style/hub.css">
+  <link rel="stylesheet" href="../style/hs.css">
 </head>
 <body>
+
   <header class="header">
     <div class="header-content">
-      <a href="../" class="back-btn">←</a>
-      <h1>📂 Hồ Sơ Học Sinh</h1>
-      <p>Quản lý thông tin chi tiết thành viên lớp</p>
+      <div class="header-left">
+        <a href="../index.html" class="back-btn">←</a>
+        <div class="header-titles">
+          <h1>👨‍🎓 Hồ Sơ Học Sinh</h1>
+          <p>Danh bạ & thông tin chi tiết thành viên lớp 10C7</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <!-- Theme toggle injected by hub.js -->
+        <button class="user-badge-btn" onclick="go('index.html')">
+          <span id="userNameDisplay">Học sinh</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <section class="management-section">
-    <div class="controls-area">
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên, SĐT..." onkeyup="searchStudents()">
-      </div>
-      <button class="add-btn" onclick="openStudentModal()">+ Thêm Học Sinh</button>
-    </div>
+  <main class="hs-page-container">
 
-    <div class="students-table-container">
-      <table class="students-table">
+    <!-- Top Action & Search Bar -->
+    <section class="hs-top-bar">
+      <div class="search-task-box">
+        <span class="search-icon-task">🔍</span>
+        <input type="text" id="hsSearchInput" class="search-task-input" placeholder="Tìm kiếm theo tên, SĐT, Email..." oninput="handleStudentSearch(this.value)">
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="c7-btn c7-btn-secondary" onclick="exportStudentsCsv()">
+          📤 Xuất CSV
+        </button>
+        <button class="c7-btn c7-btn-secondary" onclick="triggerImportCsv()">
+          📥 Nhập CSV
+        </button>
+        <input type="file" id="csvFileInput" accept=".csv, .json" style="display: none;" onchange="handleCsvFile(event)">
+        <button class="btn-add-task" onclick="openAddStudentModal()">
+          <span>+</span> Thêm Học Sinh
+        </button>
+      </div>
+    </section>
+
+    <!-- Students Table Card -->
+    <section class="hs-table-card">
+      <table class="matrix-table">
         <thead>
           <tr>
-            <th>STT</th>
+            <th style="width: 50px;">STT</th>
             <th>Họ và Tên</th>
             <th>Chức vụ</th>
             <th>Ngày sinh</th>
             <th>Giới tính</th>
-            <th>Liên lạc</th>
-            <th>Hành động</th>
+            <th>Liên hệ</th>
+            <th>Tổ</th>
+            <th style="width: 120px;">Hành động</th>
           </tr>
         </thead>
-        <tbody id="studentsTableBody">
-          <!-- Dữ liệu sẽ được render ở đây -->
+        <tbody id="hsStudentsTableBody">
+          <!-- Rendered by hs.js -->
         </tbody>
       </table>
-    </div>
-  </section>
+    </section>
 
-  <!-- Modal Thêm/Sửa Học Sinh -->
-  <div id="studentModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="modalTitle">Thông Tin Học Sinh</h2>
-        <button class="modal-close" onclick="closeStudentModal()">✕</button>
+  </main>
+
+  <!-- Modal: Add / Edit Student -->
+  <div class="c7-dialog-overlay" id="hsStudentModalOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 650px; text-align: left;">
+      <h3 id="hsModalTitle" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;">➕ Thêm Học Sinh Mới</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; padding-right: 6px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Họ và tên (*)</label>
+            <input type="text" id="inputStdName" class="form-control-custom" placeholder="vd: Nguyễn Văn An">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày sinh (* YYYY-MM-DD)</label>
+            <input type="date" id="inputStdDob" class="form-control-custom">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Giới tính</label>
+            <select id="selectStdGender" class="form-control-custom">
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Chức vụ chính</label>
+            <select id="selectStdRole" class="form-control-custom">
+              <option value="student">👤 Học sinh</option>
+              <option value="monitor">⭐️ Lớp trưởng</option>
+              <option value="secretary">🔥 Bí thư chi đoàn</option>
+              <option value="vice_study">📚 Lớp phó học tập</option>
+              <option value="treasurer">💰 Thủ quỹ</option>
+              <option value="vice_labor">🧹 Lớp phó lao động</option>
+              <option value="vice_art">🎭 Lớp phó văn thể mỹ</option>
+              <option value="group_leader">👥 Tổ trưởng</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tổ sinh hoạt</label>
+            <select id="selectStdGroup" class="form-control-custom">
+              <option value="1">Tổ 1</option>
+              <option value="2">Tổ 2</option>
+              <option value="3">Tổ 3</option>
+              <option value="4">Tổ 4</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Số điện thoại</label>
+            <input type="tel" id="inputStdPhone" class="form-control-custom" placeholder="090...">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Email</label>
+            <input type="email" id="inputStdEmail" class="form-control-custom" placeholder="email@gmail.com">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Địa chỉ thường trú</label>
+          <input type="text" id="inputStdAddress" class="form-control-custom" placeholder="Số nhà, đường, phường/xã...">
+        </div>
       </div>
-      <div class="modal-body">
-        <div class="form-section">
-          <h3>👤 Thông tin cá nhân</h3>
-          <div class="form-row">
-            <div class="form-group"><label>Họ và Tên (*)</label><input type="text" id="stdName"></div>
-            <div class="form-group"><label>Ngày sinh</label><input type="date" id="stdDob"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Giới tính</label>
-              <select id="stdGender">
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Dân tộc</label><input type="text" id="stdEthnicity"></div>
-          </div>
-          <div class="form-group"><label>CCCD / Mã định danh</label><input type="text" id="stdCccd"></div>
-        </div>
 
-        <div class="form-section">
-          <h3>📍 Liên hệ & Địa chỉ</h3>
-          <div class="form-row">
-            <div class="form-group"><label>SĐT Liên lạc</label><input type="tel" id="stdPhone"></div>
-            <div class="form-group"><label>Email</label><input type="email" id="stdEmail"></div>
-          </div>
-          <div class="form-group"><label>Địa chỉ thường trú</label><input type="text" id="stdAddress"></div>
-          <div class="form-group"><label>Quê quán</label><input type="text" id="stdHometown"></div>
-        </div>
-
-        <div class="form-section">
-          <h3>👪 Thông tin gia đình</h3>
-          <div class="form-row">
-            <div class="form-group"><label>Họ tên Cha</label><input type="text" id="stdFatherName"></div>
-            <div class="form-group"><label>SĐT Cha</label><input type="tel" id="stdFatherPhone"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Họ tên Mẹ</label><input type="text" id="stdMotherName"></div>
-            <div class="form-group"><label>SĐT Mẹ</label><input type="tel" id="stdMotherPhone"></div>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="save-btn" onclick="saveStudent()">Lưu Hồ Sơ</button>
-          <button class="delete-btn" id="btnDeleteStudent" onclick="deleteStudent()" style="display:none;">Xóa Học Sinh</button>
+      <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <button class="c7-btn c7-btn-danger" id="btnDeleteStdTrigger" style="display: none;" onclick="deleteStudentAction()">Xóa học sinh</button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="c7-btn c7-btn-secondary" onclick="closeStudentModal()">Hủy bỏ</button>
+          <button class="c7-btn c7-btn-primary" onclick="submitStudentForm()">Lưu Hồ Sơ</button>
         </div>
       </div>
     </div>
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7</p>
+    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
   </footer>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Core Scripts -->
   <script src="../script/firebase-config.js"></script>
-  <script>firebase.initializeApp(firebaseConfig);</script>
   <script src="../script/firebase-utils.js"></script>
   <script src="../script/students-list.js"></script>
   <script src="../script/hub.js"></script>
+  <script src="../script/console.js"></script>
   <script src="../script/hs.js"></script>
 </body>
 </html>

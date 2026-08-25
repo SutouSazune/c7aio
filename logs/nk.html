@@ -3,42 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#667eea">
+  <meta name="theme-color" content="#6366f1">
   <title>10C7 AIO - Nhật Ký Hoạt Động</title>
-  <link rel="stylesheet" href="../style/nk.css">
-  <link rel="stylesheet" href="../style/console.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style/hub.css">
+  <link rel="stylesheet" href="../style/nk.css">
 </head>
 <body>
+
   <header class="header">
     <div class="header-content">
-      <a href="../" class="back-btn">←</a>
-      <h1>📜 Nhật Ký Hoạt Động</h1>
-      <p>Theo dõi lịch sử thao tác hệ thống</p>
+      <div class="header-left">
+        <a href="../index.html" class="back-btn">←</a>
+        <div class="header-titles">
+          <h1>📜 Nhật Ký Hoạt Động</h1>
+          <p>Lịch sử các thao tác & thay đổi trên toàn hệ thống</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <!-- Theme toggle injected by hub.js -->
+        <button class="user-badge-btn" onclick="go('index.html')">
+          <span id="userNameDisplay">Học sinh</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <section class="management-section">
-    <div class="table-card">
-      <div class="logs-container table-responsive">
-        <!-- Logs sẽ được render ở đây -->
+  <main class="nk-page-container">
+
+    <section class="stats-top-header">
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800;">Lịch Sử Thao Tác Hệ Thống</h2>
+        <p style="font-size: 0.85rem; color: var(--text-sub);">Ghi lại 150 hành động gần nhất của người dùng</p>
       </div>
-    </div>
-  </section>
+      <div class="search-task-box" style="max-width: 320px;">
+        <span class="search-icon-task">🔍</span>
+        <input type="text" id="logSearchInput" class="search-task-input" placeholder="Lọc người dùng hoặc hành động..." oninput="handleLogSearch(this.value)">
+      </div>
+    </section>
+
+    <section class="nk-table-card">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th style="width: 150px;">Thời gian</th>
+            <th>Người thực hiện</th>
+            <th>Chức vụ</th>
+            <th>Hành động</th>
+            <th>Chi tiết nội dung</th>
+          </tr>
+        </thead>
+        <tbody id="logsTableBody">
+          <!-- Rendered by nk.js -->
+        </tbody>
+      </table>
+    </section>
+
+  </main>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7</p>
+    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
   </footer>
 
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Core Scripts -->
   <script src="../script/firebase-config.js"></script>
-  <script>firebase.initializeApp(firebaseConfig);</script>
   <script src="../script/firebase-utils.js"></script>
   <script src="../script/students-list.js"></script>
+  <script src="../script/hub.js"></script>
   <script src="../script/console.js"></script>
   <script src="../script/nk.js"></script>
 </body>

@@ -3,314 +3,208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#667eea">
-  <title>10C7 AIO - Lịch Học</title>
-  <link rel="stylesheet" href="../style/lich.css">
-  <link rel="stylesheet" href="../style/console.css">
+  <meta name="theme-color" content="#6366f1">
+  <title>10C7 AIO - Thời Khóa Biểu & Lịch Học</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* Toggle Switch CSS */
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 40px;
-      height: 20px;
-      margin-right: 10px;
-    }
-    .switch input { 
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 16px;
-      width: 16px;
-      left: 2px;
-      bottom: 2px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    input:checked + .slider { background-color: #667eea; }
-    input:focus + .slider { box-shadow: 0 0 1px #667eea; }
-    input:checked + .slider:before { transform: translateX(20px); }
-    .mode-toggle-wrapper { display: flex; align-items: center; margin-bottom: 12px; }
-    .toggle-label { font-weight: 600; font-size: 0.9rem; color: #333; cursor: pointer; }
-    
-    /* Class Name Input */
-    .class-name-input {
-      border: none;
-      border-bottom: 2px dashed #667eea;
-      background: transparent;
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: #4a5568;
-      width: 140px;
-      text-align: center;
-      padding: 0 5px;
-      transition: all 0.3s ease;
-    }
-    .class-name-input:focus {
-      outline: none;
-      border-bottom: 2px solid #667eea;
-      background: rgba(255, 255, 255, 0.5);
-    }
-
-    /* Header Class Filter Dropdown */
-    .header-class-filter {
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid #667eea;
-      font-weight: bold;
-      font-size: 1rem;
-      color: #4a5568;
-      padding: 4px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    /* Modal Class Filter */
-    .modal-class-filter {
-      padding: 6px 10px;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      margin-right: 10px;
-      font-size: 0.9rem;
-      color: #4a5568;
-      outline: none;
-      background-color: white;
-    }
-    .modal-class-filter:focus {
-      border-color: #667eea;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style/hub.css">
+  <link rel="stylesheet" href="../style/lich.css">
 </head>
 <body>
+
   <header class="header">
     <div class="header-content">
-      <a href="../" class="back-btn">←</a>
-      <h1>📅 Thời Khoá Biểu</h1>
-      <p>Quản lý lịch học theo tuần</p>
-      <p class="current-week-display">
-        Hiện đang thực hiện TKB 
-        <select id="headerClassFilter" class="header-class-filter" onchange="filterScheduleByHeader()">
-          <option value="">-- Tất cả --</option>
-        </select>: 
-        <span id="currentWeekDisplayText"></span>
-        <select id="currentWeekSelect" class="current-week-select" style="display: none;" onchange="changeWeekFromDropdown()"></select>
-      </p>
+      <div class="header-left">
+        <a href="../index.html" class="back-btn">←</a>
+        <div class="header-titles">
+          <h1>📅 Thời Khóa Biểu Lớp</h1>
+          <p>Lịch học, phòng học & môn học theo tuần</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <!-- Theme toggle injected by hub.js -->
+        <button class="user-badge-btn" onclick="go('index.html')">
+          <span id="userNameDisplay">Học sinh</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- Calendar Section -->
-  <section class="calendar-section">
-    <div class="calendar-header">
-      <button class="month-btn" onclick="prevMonth()">←</button>
-      <h2 id="monthYear">Tháng</h2>
-      <button class="month-btn" onclick="nextMonth()">→</button>
-    </div>
+  <main class="schedule-page-container">
 
-    <div class="weekdays-header">
-      <div class="weekday">CN</div>
-      <div class="weekday">T2</div>
-      <div class="weekday">T3</div>
-      <div class="weekday">T4</div>
-      <div class="weekday">T5</div>
-      <div class="weekday">T6</div>
-      <div class="weekday">T7</div>
-    </div>
-
-    <div class="calendar-grid" id="calendarDays">
-      <!-- Calendar days will be rendered here -->
-    </div>
-  </section>
-
-  <!-- Week Selector -->
-  <section class="week-selector-section">
-    <div class="week-controls">
-      <div class="week-selector" id="weekSelector">
-        <!-- Các nút chọn tuần sẽ được tạo bởi script -->
-      </div>
-      <button class="add-week-btn" onclick="openAddWeekModal()">+ Thêm tuần</button>
-    </div>
-  </section>
-
-  <!-- Schedule Display (Hidden, only shown in modal) -->
-  <section class="schedule-section" style="display: none;">
-    <!-- Schedule Grid -->
-    <div class="schedule-grid" id="scheduleContainer">
-      <!-- Các ngày và lớp sẽ được render ở đây -->
-    </div>
-  </section>
-
-  <!-- Modal: Add/Edit Week -->
-  <div id="addWeekModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Quản Lý Tuần Học</h2>
-        <button class="modal-close" onclick="closeAddWeekModal()">✕</button>
+    <!-- Top Schedule Action Card -->
+    <section class="schedule-header-card">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="current-week-tag" id="currentWeekBanner">🗓️ Đang hiển thị: Tuần 1</span>
+        <button class="c7-btn c7-btn-secondary" onclick="jumpToToday()" style="padding: 6px 14px; font-size: 0.85rem;">
+          📍 Hôm nay
+        </button>
+        <button class="c7-btn c7-btn-secondary" onclick="window.print()" style="padding: 6px 14px; font-size: 0.85rem;">
+          🖨️ In / Xuất PDF
+        </button>
       </div>
 
-      <div class="modal-body">
-        <div class="week-form">
-          <label>Tên lớp:</label>
-          <input type="text" id="weekClassNameInput" list="weekClassNamesList" placeholder="vd: 10C7">
-          <datalist id="weekClassNamesList"></datalist>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;" id="adminScheduleButtons">
+        <button class="c7-btn c7-btn-primary" id="btnAddClassTrigger" style="display: none;" onclick="openAddClassModal()">
+          + Thêm Tiết Học
+        </button>
+        <button class="c7-btn c7-btn-secondary" id="btnManageWeekTrigger" style="display: none;" onclick="openWeekManagementModal()">
+          ⚙️ Quản Lý Tuần
+        </button>
+      </div>
+    </section>
 
-          <label>Tên tuần:</label>
-          <input type="text" id="weekNameInput" placeholder="vd: Tuần 1, Tuần 2...">
+    <!-- Calendar Month Navigator -->
+    <section class="calendar-card">
+      <div class="calendar-top-bar">
+        <button class="month-nav-btn" onclick="prevMonth()">←</button>
+        <h2 id="calendarMonthTitle" style="font-size: 1.25rem; font-weight: 800;">Tháng 8, 2026</h2>
+        <button class="month-nav-btn" onclick="nextMonth()">→</button>
+      </div>
 
-          <label>Thời lượng:</label>
-          <div class="duration-group">
-            <input type="date" id="weekStartDate" placeholder="Từ ngày">
-            <span>đến</span>
-            <div class="duration-option">
-              <label>
-                <input type="radio" name="durationType" value="date" checked> Ngày cụ thể:
-                <input type="date" id="weekEndDate">
-              </label>
-            </div>
-            <div class="duration-option">
-              <label>
-                <input type="radio" name="durationType" value="infinite"> Vô hạn
-              </label>
-            </div>
+      <div class="calendar-weekdays-row">
+        <div>CN</div>
+        <div>T2</div>
+        <div>T3</div>
+        <div>T4</div>
+        <div>T5</div>
+        <div>T6</div>
+        <div>T7</div>
+      </div>
+
+      <div class="calendar-matrix" id="calendarMatrix">
+        <!-- Rendered by lich.js -->
+      </div>
+    </section>
+
+    <!-- Week Selector Bar -->
+    <section>
+      <div class="week-chips-bar" id="weekChipsBar">
+        <!-- Rendered by lich.js -->
+      </div>
+    </section>
+
+    <!-- Weekly Timetable Grid -->
+    <section class="timetable-grid-week" id="timetableGrid">
+      <!-- Rendered by lich.js -->
+    </section>
+
+  </main>
+
+  <!-- Modal: Add / Edit Class -->
+  <div class="c7-dialog-overlay" id="classModalOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 500px; text-align: left;">
+      <h3 id="classModalTitle" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;">➕ Thêm Tiết Học Mới</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Môn học / Tiết (*)</label>
+          <input type="text" id="inputClassName" class="form-control-custom" placeholder="vd: Toán, Ngữ văn, Tiếng Anh...">
+        </div>
+
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phân môn / Ghi chú</label>
+          <input type="text" id="inputClassSubject" class="form-control-custom" placeholder="vd: Đại số, Hình học, Luyện đề...">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Thứ trong tuần</label>
+            <select id="selectClassDay" class="form-control-custom">
+              <option value="monday">Thứ Hai</option>
+              <option value="tuesday">Thứ Ba</option>
+              <option value="wednesday">Thứ Tư</option>
+              <option value="thursday">Thứ Năm</option>
+              <option value="friday">Thứ Sáu</option>
+              <option value="saturday">Thứ Bảy</option>
+              <option value="sunday">Chủ Nhật</option>
+            </select>
           </div>
-
-          <div class="modal-actions">
-            <button class="btn-primary" onclick="saveWeekInfo()">Lưu</button>
-            <button class="btn-danger" onclick="deleteCurrentWeek()">Xoá Tuần</button>
-            <button class="btn-secondary" onclick="closeAddWeekModal()">Hủy</button>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Chọn tiết (1-10)</label>
+            <select id="selectClassPeriod" class="form-control-custom" onchange="autoFillPeriodTime()">
+              <option value="custom">-- Tự nhập giờ --</option>
+              <option value="1">Tiết 1 (07:00 - 07:45)</option>
+              <option value="2">Tiết 2 (07:50 - 08:35)</option>
+              <option value="3">Tiết 3 (08:50 - 09:35)</option>
+              <option value="4">Tiết 4 (09:40 - 10:25)</option>
+              <option value="5">Tiết 5 (10:30 - 11:15)</option>
+              <option value="6">Tiết 6 (13:00 - 13:45)</option>
+              <option value="7">Tiết 7 (13:50 - 14:35)</option>
+              <option value="8">Tiết 8 (14:50 - 15:35)</option>
+              <option value="9">Tiết 9 (15:40 - 16:25)</option>
+              <option value="10">Tiết 10 (16:30 - 17:15)</option>
+            </select>
           </div>
         </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Thời gian</label>
+            <input type="text" id="inputClassTime" class="form-control-custom" placeholder="vd: 07:00 - 07:45">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phòng học</label>
+            <input type="text" id="inputClassRoom" class="form-control-custom" placeholder="vd: P.204, Nhà A">
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="c7-btn c7-btn-secondary" onclick="closeClassModal()">Hủy bỏ</button>
+        <button class="c7-btn c7-btn-primary" onclick="submitClassForm()">Lưu Tiết Học</button>
       </div>
     </div>
   </div>
 
-  <!-- Modals Wrapper for side-by-side display -->
-  <div id="modalsWrapper" class="modals-wrapper" onclick="if(event.target === this) closeScheduleModal()">
-    <!-- Modal: View Schedule -->
-    <div id="scheduleModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 id="modalTitle">Thời Khoá Biểu Tuần</h2>
-          <button class="modal-close" onclick="closeScheduleModal()">✕</button>
+  <!-- Modal: Manage Weeks -->
+  <div class="c7-dialog-overlay" id="weekModalOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 500px; text-align: left;">
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;">⚙️ Quản Lý Tuần Học</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tên tuần</label>
+          <input type="text" id="inputWeekName" class="form-control-custom" placeholder="vd: Tuần 1, Tuần 2, Tuần Ôn Thi...">
         </div>
 
-        <!-- View Mode Selector in Modal -->
-        <div class="view-mode-buttons-modal">
-          <select id="modalClassFilter" class="modal-class-filter" onchange="filterModalScheduleByClass()">
-            <option value="">-- Tất cả lớp --</option>
-          </select>
-          <button class="view-mode-btn active" data-mode="week" onclick="switchModalViewMode('week')">📋 Tuần</button>
-          <button class="view-mode-btn" data-mode="day" onclick="switchModalViewMode('day')">📅 Ngày</button>
-          <button class="view-mode-btn" data-mode="daily" onclick="switchModalViewMode('daily')">📖 Chi Tiết</button>
-        </div>
-
-        <!-- Schedule Content -->
-        <div class="modal-body" id="modalScheduleContainer">
-          <!-- Nội dung lịch sẽ render ở đây -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày bắt đầu</label>
+            <input type="date" id="inputWeekStartDate" class="form-control-custom">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày kết thúc</label>
+            <input type="date" id="inputWeekEndDate" class="form-control-custom">
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Modal: Manage Classes (Filter + Add) -->
-    <div id="manageClassModal" class="modal">
-      <div class="modal-content manage-class-modal">
-        <div class="modal-header">
-          <h2>Quản Lý Lớp Học</h2>
-          <button class="modal-close" onclick="closeManageClassModal()">✕</button>
+      <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <button class="c7-btn c7-btn-danger" onclick="deleteCurrentWeekAction()">Xóa tuần này</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="c7-btn c7-btn-secondary" onclick="closeWeekModal()">Đóng</button>
+          <button class="c7-btn c7-btn-primary" onclick="submitWeekMetadata()">Lưu cấu hình</button>
         </div>
-
-        <div class="modal-body">
-          <!-- Filter Section (Admin only) -->
-          <div id="manageClassFilterSection" class="manage-class-section" style="display: none;">
-            <h3>🔍 Lọc Lớp</h3>
-            <div class="modal-filter">
-              <label for="manageClassFilter">Chọn lớp:</label>
-              <select id="manageClassFilter" onchange="filterByClassInModal()">
-                <option value="">-- Tất cả lớp --</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Add Class Section (Admin only) -->
-          <div id="manageClassAdminSection" class="manage-class-section" style="display: none;">
-            <h3>➕ Thêm Lớp Mới</h3>
-            <div class="input-group-modal">
-              <div class="mode-toggle-wrapper">
-                <label class="switch">
-                  <input type="checkbox" id="usePeriodMode" onchange="togglePeriodMode()">
-                  <span class="slider round"></span>
-                </label>
-                <span class="toggle-label" onclick="document.getElementById('usePeriodMode').click()">Chọn theo tiết (1-10)</span>
-              </div>
-              
-              <input type="text" id="classInputManage" list="manageClassNamesList" placeholder="Tên lớp (vd: Toán, Lý...)">
-              <datalist id="manageClassNamesList"></datalist>
-              <input type="text" id="subjectInputManage" list="manageSubjectsList" placeholder="Môn học (vd: Đại số, Hình học...)">
-              <datalist id="manageSubjectsList"></datalist>
-              
-              <!-- Input theo Tiết -->
-              <div class="period-inputs" id="periodInputGroup" style="display: none;">
-                <label style="align-self: center; font-weight: 500; margin-right: 8px;">Chọn tiết:</label>
-                <select id="startPeriodSelect" class="period-select" style="flex: 1;"></select>
-              </div>
-
-              <!-- Input theo Giờ -->
-              <div class="time-range-inputs" id="timeInputGroup">
-                <input type="time" id="timeInputManage" placeholder="Bắt đầu">
-                <input type="time" id="endTimeInputManage" placeholder="Kết thúc (tuỳ chọn)">
-              </div>
-              <input type="text" id="roomInputManage" list="manageRoomsList" placeholder="Phòng">
-              <datalist id="manageRoomsList"></datalist>
-              <select id="daySelectManage">
-                <option value="monday">Thứ Hai</option>
-                <option value="tuesday">Thứ Ba</option>
-                <option value="wednesday">Thứ Tư</option>
-                <option value="thursday">Thứ Năm</option>
-                <option value="friday">Thứ Sáu</option>
-                <option value="saturday">Thứ Bảy</option>
-                <option value="sunday">Chủ Nhật</option>
-              </select>
-            </div>
-            <button class="add-btn" onclick="addClassFromManageModal()">+ Thêm lớp</button>
-          </div>
-        </div>
-
-        <button class="btn-close-modal" onclick="closeManageClassModal()">Đóng</button>
       </div>
     </div>
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7</p>
+    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  
-  <!-- Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Core Scripts -->
   <script src="../script/firebase-config.js"></script>
   <script src="../script/firebase-utils.js"></script>
   <script src="../script/students-list.js"></script>
+  <script src="../script/hub.js"></script>
   <script src="../script/console.js"></script>
   <script src="../script/lich.js"></script>
 </body>

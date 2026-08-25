@@ -3,100 +3,155 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#667eea">
-  <title>10C7 AIO - Thống Kê</title>
-  <link rel="stylesheet" href="../style/tk.css">
-  <link rel="stylesheet" href="../style/console.css">
+  <meta name="theme-color" content="#6366f1">
+  <title>10C7 AIO - Báo Cáo & Thống Kê Học Tập</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style/hub.css">
+  <link rel="stylesheet" href="../style/tk.css">
 </head>
 <body>
+
   <header class="header">
     <div class="header-content">
-      <a href="../" class="back-btn">←</a>
-      <h1>📊 Thống Kê</h1>
-      <p>Tổng hợp dữ liệu học tập</p>
+      <div class="header-left">
+        <a href="../index.html" class="back-btn">←</a>
+        <div class="header-titles">
+          <h1>📊 Báo Cáo & Thống Kê</h1>
+          <p>Phân tích tỷ lệ hoàn thành nhiệm vụ & tiến độ học tập</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <!-- Theme toggle injected by hub.js -->
+        <button class="user-badge-btn" onclick="go('index.html')">
+          <span id="userNameDisplay">Học sinh</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <section class="stats-overview">
-    <div class="stat-card">
-      <div class="stat-label">📋 Tổng Nhiệm vụ</div>
-      <div class="stat-value" id="totalTask">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">✅ Hoàn thành</div>
-      <div class="stat-value" id="doneTask">0</div>
-      <div class="stat-percent" id="completedPercent">0%</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">🔄 Đang làm</div>
-      <div class="stat-value" id="openTask">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">⏰ Sắp hết hạn</div>
-      <div class="stat-value" id="nearDeadline">0</div>
-    </div>
-  </section>
+  <main class="stats-page-container">
 
-  <!-- Container cho bảng thống kê chi tiết (Admin) -->
-  <div id="statsContainer"></div>
+    <!-- Top Action Card -->
+    <section class="stats-top-header">
+      <div>
+        <h2 id="statsSubjectTitle" style="font-size: 1.3rem; font-weight: 800;">Tiến Độ Cá Nhân</h2>
+        <p style="font-size: 0.85rem; color: var(--text-sub);" id="statsSubtitle">Dữ liệu được đồng bộ trực tiếp</p>
+      </div>
 
-  <section class="charts-section">
-    <div class="chart-container">
-      <h2>📈 Tỉ lệ Hoàn thành</h2>
-      <div class="progress-ring-container">
-        <svg class="progress-ring" width="200" height="200">
-          <circle cx="100" cy="100" r="90" class="progress-ring-base"></circle>
-          <circle cx="100" cy="100" r="90" class="progress-ring-circle" id="progressRing"></circle>
-        </svg>
-        <div class="progress-text">
-          <div class="progress-value" id="progressValue">0%</div>
-          <div class="progress-label">Hoàn thành</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="c7-btn c7-btn-secondary" onclick="exportStatsToCsv()">
+          📥 Xuất Báo Cáo CSV
+        </button>
+        <button class="c7-btn c7-btn-secondary" onclick="window.print()">
+          🖨️ In Báo Cáo
+        </button>
+      </div>
+    </section>
+
+    <!-- Overview 4-Stat Cards -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon-wrapper">
+          <span>📋</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Tổng Nhiệm Vụ</span>
+          <span class="stat-value" id="statTotalCount">0</span>
         </div>
       </div>
-    </div>
 
-    <div class="chart-container">
-      <h2>📅 Nhiệm vụ theo trạng thái</h2>
-      <div class="status-bars">
-        <div class="status-bar-item">
-          <div class="status-label">✅ Hoàn thành</div>
-          <div class="status-bar">
-            <div class="status-fill done" style="width: 0%"></div>
-          </div>
-          <div class="status-count" id="statusDone">0</div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+          <span>✅</span>
         </div>
-        <div class="status-bar-item">
-          <div class="status-label">🔄 Đang làm</div>
-          <div class="status-bar">
-            <div class="status-fill pending" style="width: 0%"></div>
-          </div>
-          <div class="status-count" id="statusPending">0</div>
+        <div class="stat-content">
+          <span class="stat-label">Đã Hoàn Thành</span>
+          <span class="stat-value" id="statDoneCount">0</span>
         </div>
       </div>
-    </div>
-  </section>
 
-  <section class="activity-section">
-    <h2>📌 Hoạt động gần đây</h2>
-    <div class="activity-list" id="activityList">
-      <!-- Hoạt động sẽ được thêm vào đây -->
-    </div>
-  </section>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+          <span>⏳</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Đang Làm / Còn lại</span>
+          <span class="stat-value" id="statPendingCount">0</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrapper" style="background: rgba(99, 102, 241, 0.15); color: var(--primary);">
+          <span>📈</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Tỷ Lệ Hoàn Thành</span>
+          <span class="stat-value" id="statPercentValue">0%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analytics Charts Row -->
+    <section class="analytics-cards-row">
+      <!-- Progress Ring Card -->
+      <div class="analytics-card">
+        <h3 style="font-size: 1.1rem; font-weight: 700;">Tỷ Lệ Tổng Thể</h3>
+        <div class="progress-ring-box">
+          <svg width="180" height="180" viewBox="0 0 180 180">
+            <circle class="progress-ring-bg" cx="90" cy="90" r="75" stroke-width="12" fill="transparent" />
+            <circle class="progress-ring-circle" id="circleProgress" cx="90" cy="90" r="75" stroke-width="12" fill="transparent" stroke-linecap="round" />
+          </svg>
+          <div class="progress-ring-text">
+            <span class="progress-ring-val" id="progressValDisplay">0%</span>
+            <span class="progress-ring-sub">Hoàn thành</span>
+          </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-sub);" id="ringAssessmentText">Đang tính toán...</p>
+      </div>
+
+      <!-- Categories Progress Bars -->
+      <div class="analytics-card" style="align-items: flex-start; text-align: left;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; width: 100%;">Tiến Độ Theo Phân Loại</h3>
+        <div class="category-bars-list" id="categoryBarsList">
+          <!-- Rendered by tk.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin / Class-wide Matrix Table -->
+    <section class="matrix-table-card" id="classMatrixSection">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+        <h3 style="font-size: 1.15rem; font-weight: 800;">📋 Bảng Tiến Độ Toàn Lớp</h3>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="matrixSearchInput" class="form-control-custom" placeholder="Lọc theo tên học sinh..." style="padding: 6px 12px; font-size: 0.85rem; width: 220px;" oninput="filterMatrixStudents(this.value)">
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="matrix-table" id="classMatrixTable">
+          <!-- Rendered by tk.js -->
+        </table>
+      </div>
+    </section>
+
+  </main>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7</p>
+    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
   </footer>
 
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Core Scripts -->
   <script src="../script/firebase-config.js"></script>
-  <script>firebase.initializeApp(firebaseConfig);</script>
   <script src="../script/firebase-utils.js"></script>
   <script src="../script/students-list.js"></script>
+  <script src="../script/hub.js"></script>
   <script src="../script/console.js"></script>
   <script src="../script/tk.js"></script>
 </body>
