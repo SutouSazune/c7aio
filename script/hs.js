@@ -45,21 +45,38 @@ window.addEventListener('load', () => {
   }
 });
 
-function populateRolesSelect() {
-  const select = document.getElementById('selectStdRole');
-  if (!select) return;
-  const currentVal = select.value;
-  select.innerHTML = '';
-  Object.keys(ROLES).forEach(r => {
-    if (r !== 'admin') {
-      const opt = document.createElement('option');
-      opt.value = r;
-      opt.textContent = ROLES[r];
-      select.appendChild(opt);
+function populateRolesSelect(selectedRoles = ['student']) {
+  const container = document.getElementById('rolesCheckboxContainer');
+  if (!container) return;
+
+  const currentSelected = Array.isArray(selectedRoles) ? selectedRoles : [selectedRoles || 'student'];
+
+  let html = '';
+  Object.keys(ROLES).forEach(roleKey => {
+    if (roleKey !== 'admin') {
+      const isChecked = currentSelected.includes(roleKey);
+      const color = ROLE_COLORS[roleKey] || 'var(--primary)';
+      html += `
+        <label class="role-pill-checkbox" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-full); border: 1px solid ${isChecked ? color : 'var(--input-border)'}; background: ${isChecked ? (color + '1a') : 'var(--card-bg)'}; cursor: pointer; user-select: none; font-size: 0.82rem; font-weight: 600; color: var(--text-main); transition: all 0.2s ease;">
+          <input type="checkbox" class="std-role-checkbox" value="${roleKey}" ${isChecked ? 'checked' : ''} onchange="handleRoleCheckboxChange(this, '${color}')" style="accent-color: ${color}; cursor: pointer;">
+          <span>${ROLES[roleKey]}</span>
+        </label>
+      `;
     }
   });
-  if (currentVal && ROLES[currentVal]) {
-    select.value = currentVal;
+
+  container.innerHTML = html;
+}
+
+function handleRoleCheckboxChange(checkbox, color) {
+  const label = checkbox.closest('label');
+  if (!label) return;
+  if (checkbox.checked) {
+    label.style.borderColor = color;
+    label.style.background = color + '1a';
+  } else {
+    label.style.borderColor = 'var(--input-border)';
+    label.style.background = 'var(--card-bg)';
   }
 }
 
@@ -162,14 +179,13 @@ function openAddStudentModal() {
   }
 
   editingStudentId = null;
-  populateRolesSelect();
   document.getElementById('hsModalTitle').textContent = '➕ Thêm Học Sinh Mới';
   document.getElementById('inputStdName').value = '';
   document.getElementById('inputStdDob').value = '';
   document.getElementById('selectStdGender').value = 'Nam';
   const prevInput = document.getElementById('inputStdPreviousClass');
   if (prevInput) prevInput.value = '10C7';
-  document.getElementById('selectStdRole').value = 'student';
+  populateRolesSelect(['student']);
   document.getElementById('selectStdGroup').value = '1';
   document.getElementById('inputStdPhone').value = '';
   document.getElementById('inputStdEmail').value = '';
@@ -189,7 +205,6 @@ function openEditStudentModal(studentId) {
   }
 
   editingStudentId = s.id;
-  populateRolesSelect();
   document.getElementById('hsModalTitle').textContent = '✏️ Chỉnh Sửa Hồ Sơ Học Sinh';
   document.getElementById('inputStdName').value = s.name || '';
   document.getElementById('inputStdDob').value = s.dob || '';
@@ -197,8 +212,8 @@ function openEditStudentModal(studentId) {
   const prevInput = document.getElementById('inputStdPreviousClass');
   if (prevInput) prevInput.value = s.previousClass || '10C7';
 
-  const primaryRole = Array.isArray(s.role) ? (s.role[0] || 'student') : (s.role || 'student');
-  document.getElementById('selectStdRole').value = primaryRole;
+  const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+  populateRolesSelect(roles);
   document.getElementById('selectStdGroup').value = s.group || '1';
   document.getElementById('inputStdPhone').value = s.phone || '';
   document.getElementById('inputStdEmail').value = s.email || '';
@@ -222,7 +237,13 @@ async function submitStudentForm() {
   const dob = document.getElementById('inputStdDob').value.trim();
   const gender = document.getElementById('selectStdGender').value;
   const previousClass = (document.getElementById('inputStdPreviousClass') ? document.getElementById('inputStdPreviousClass').value.trim() : '') || '10C7';
-  const role = document.getElementById('selectStdRole').value;
+  
+  const checkedBoxes = document.querySelectorAll('.std-role-checkbox:checked');
+  let selectedRoles = Array.from(checkedBoxes).map(cb => cb.value);
+  if (selectedRoles.length === 0) {
+    selectedRoles = ['student'];
+  }
+
   const group = parseInt(document.getElementById('selectStdGroup').value) || 1;
   const phone = document.getElementById('inputStdPhone').value.trim();
   const email = document.getElementById('inputStdEmail').value.trim();
@@ -241,7 +262,7 @@ async function submitStudentForm() {
     dob,
     gender,
     previousClass,
-    role: [role],
+    role: selectedRoles,
     group,
     phone,
     email,
@@ -268,7 +289,8 @@ async function submitStudentForm() {
     }
 
     if (typeof logAction === 'function') {
-      logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (Lớp cũ: ${previousClass}, ${ROLES[role] || role})`);
+      const roleText = selectedRoles.map(r => ROLES[r] || r).join(', ');
+      logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (Lớp cũ: ${previousClass}, Chức vụ: ${roleText})`);
     }
 
     showToast(isEdit ? 'Đã cập nhật hồ sơ!' : 'Đã thêm học sinh mới thành công!', 'success');
