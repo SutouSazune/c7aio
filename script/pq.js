@@ -54,14 +54,23 @@ function renderRolesMatrix() {
   const container = document.getElementById('rolesMatrixContainer');
   if (!container) return;
 
-  const roleKeys = Object.keys(ROLES).filter(r => r !== 'admin');
   const permKeys = Object.keys(PERMISSIONS);
+  const roleKeys = Object.keys(ROLES)
+    .filter(r => r !== 'admin')
+    .sort((a, b) => {
+      const permsA = (ROLE_PERMISSIONS_CONFIG[a] || []).length;
+      const permsB = (ROLE_PERMISSIONS_CONFIG[b] || []).length;
+      if (permsB !== permsA) {
+        return permsB - permsA; // Nhiều quyền nhất xếp trên đầu
+      }
+      return (ROLES[a] || a).localeCompare(ROLES[b] || b, 'vi');
+    });
 
   let html = `
     <table class="c7-table">
       <thead>
         <tr>
-          <th style="min-width: 240px; text-align: left; padding: 14px 16px;">Chức vụ & Thành viên đảm nhiệm</th>
+          <th style="min-width: 260px; text-align: left; padding: 14px 16px;">Chức vụ & Thành viên đảm nhiệm</th>
           ${permKeys.map(p => `<th style="min-width: 140px; font-size: 0.85rem; text-align: center; padding: 14px 10px; line-height: 1.4; white-space: normal;">${PERMISSIONS[p]}</th>`).join('')}
         </tr>
       </thead>
@@ -75,6 +84,9 @@ function renderRolesMatrix() {
       return roles.includes(roleKey);
     });
 
+    const permCount = (ROLE_PERMISSIONS_CONFIG[roleKey] || []).length;
+    const permBadge = `<span class="role-perm-badge" style="font-size: 0.72rem; font-weight: 700; background: rgba(99, 102, 241, 0.12); color: var(--primary); padding: 2px 8px; border-radius: 99px; white-space: nowrap;">${permCount}/${permKeys.length} quyền</span>`;
+
     const holdersHtml = holders.length > 0
       ? `<div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
            ${holders.map(h => `<span class="role-holder-chip">👤 ${escapeHtml(h.name)}</span>`).join('')}
@@ -82,7 +94,8 @@ function renderRolesMatrix() {
       : `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">(Chưa có thành viên)</div>`;
 
     const roleControls = `
-      <span style="display: inline-flex; gap: 6px; margin-left: 8px;">
+      <span style="display: inline-flex; gap: 6px; align-items: center;">
+        ${permBadge}
         <button class="btn-action-pill" onclick="openEditRoleModal('${roleKey}')" title="Sửa tên / emoji / màu sắc">✏️ Sửa</button>
         ${isCustom ? `<button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa chức vụ này">🗑️ Xóa</button>` : ''}
       </span>
@@ -265,9 +278,12 @@ async function saveRolesConfig() {
     }
   });
 
+  ROLE_PERMISSIONS_CONFIG = newConfig;
+
   if (typeof saveSharedPermissions === 'function') {
     await saveSharedPermissions(newConfig);
   }
 
-  showToast('Đã lưu bảng phân quyền thành công!', 'success');
+  renderRolesMatrix();
+  showToast('Đã lưu và sắp xếp lại bảng phân quyền thành công!', 'success');
 }
