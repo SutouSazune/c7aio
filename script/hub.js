@@ -1,19 +1,64 @@
 /**
- * C7AIO Hub Master Script
- * Quản lý Navigation, Theme Engine, Toast & Global Dialogs
+ * C7AIO Hub Core Logic & Navigation Controller
+ * Quản lý Dark/Light theme, Dialog modal thống nhất, Toast notification & Cache state
  */
 
-const APP_CONFIG = {
-  version: '3.0.0',
-  title: '10C7 All In One'
-};
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  registerServiceWorker();
+});
+
+// ============= THEME MANAGEMENT =============
+function initTheme() {
+  const savedTheme = localStorage.getItem('c7aio_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  injectThemeToggleButton();
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const target = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', target);
+  localStorage.setItem('c7aio_theme', target);
+  updateThemeIcon(target);
+}
+
+function injectThemeToggleButton() {
+  const headerRight = document.querySelector('.header-right');
+  if (headerRight && !document.getElementById('themeToggleBtn')) {
+    const btn = document.createElement('button');
+    btn.id = 'themeToggleBtn';
+    btn.className = 'theme-toggle-btn';
+    btn.title = 'Chuyển đổi giao diện Sáng / Tối';
+    btn.onclick = toggleTheme;
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    btn.innerHTML = currentTheme === 'dark' ? '🌙' : '☀️';
+    headerRight.prepend(btn);
+  }
+}
+
+function updateThemeIcon(theme) {
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) {
+    btn.innerHTML = theme === 'dark' ? '🌙' : '☀️';
+  }
+}
+
+// ============= SERVICE WORKER =============
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      const swPath = getBasePath() + 'service-worker.js';
+      navigator.serviceWorker.register(swPath).catch(err => {
+        console.log('ServiceWorker registration fallback:', err);
+      });
+    });
+  }
+}
 
 function getBasePath() {
   const path = window.location.pathname;
-  if (path.includes('/c7aio/')) {
-    return path.substring(0, path.indexOf('/c7aio/') + 7);
-  }
-  if (path.includes('/nhiemvu/') || path.includes('/lich/') || path.includes('/thongbao/') || 
+  if (path.includes('/nhiemvu/') || path.includes('/lich/') || path.includes('/thongbao/') ||
       path.includes('/thongke/') || path.includes('/hoso/') || path.includes('/perm/') || path.includes('/logs/')) {
     return '../';
   }
@@ -21,77 +66,21 @@ function getBasePath() {
 }
 
 function buildUrl(relativePath) {
-  const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
-  const isSubFolder = window.location.pathname.includes('/nhiemvu/') || 
-                      window.location.pathname.includes('/lich/') || 
-                      window.location.pathname.includes('/thongbao/') || 
-                      window.location.pathname.includes('/thongke/') || 
-                      window.location.pathname.includes('/hoso/') || 
-                      window.location.pathname.includes('/perm/') || 
-                      window.location.pathname.includes('/logs/');
-  
-  if (isSubFolder) {
-    if (cleanPath.startsWith('index.html') || cleanPath.startsWith('login.html')) {
-      return '../' + cleanPath;
-    }
-    return '../' + cleanPath;
-  }
-  return './' + cleanPath;
+  return getBasePath() + relativePath;
 }
 
-function go(target) {
-  window.location.href = buildUrl(target);
+function go(page) {
+  window.location.href = buildUrl(page);
 }
 
-// ==================== THEME ENGINE ====================
-const ThemeEngine = {
-  init() {
-    const saved = localStorage.getItem('c7aio_theme') || 'light';
-    this.setTheme(saved);
-    this.injectThemeToggle();
-  },
-
-  setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('c7aio_theme', theme);
-    const btn = document.getElementById('globalThemeToggleBtn');
-    if (btn) {
-      btn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
-      btn.title = theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
-    }
-  },
-
-  toggle() {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-    this.setTheme(next);
-  },
-
-  injectThemeToggle() {
-    const headerRight = document.querySelector('.header-right');
-    if (headerRight && !document.getElementById('globalThemeToggleBtn')) {
-      const btn = document.createElement('button');
-      btn.id = 'globalThemeToggleBtn';
-      btn.className = 'theme-toggle-btn';
-      const current = localStorage.getItem('c7aio_theme') || 'light';
-      btn.innerHTML = current === 'dark' ? '☀️' : '🌙';
-      btn.onclick = () => this.toggle();
-      headerRight.insertBefore(btn, headerRight.firstChild);
-    }
-  }
-};
-
-// ==================== TOAST SYSTEM ====================
-function showToast(message, type = 'info', duration = 3200) {
+// ============= TOAST SYSTEM =============
+function showToast(message, type = 'info', duration = 3500) {
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');
     container.id = 'toast-container';
     document.body.appendChild(container);
   }
-
-  const toast = document.createElement('div');
-  toast.className = `toast-card ${type}`;
 
   const icons = {
     success: '✅',
@@ -100,8 +89,10 @@ function showToast(message, type = 'info', duration = 3200) {
     info: 'ℹ️'
   };
 
+  const toast = document.createElement('div');
+  toast.className = `toast-card ${type}`;
   toast.innerHTML = `
-    <span style="font-size: 1.2rem;">${icons[type] || 'ℹ️'}</span>
+    <span>${icons[type] || '🔔'}</span>
     <span>${message}</span>
   `;
 
@@ -110,162 +101,177 @@ function showToast(message, type = 'info', duration = 3200) {
   setTimeout(() => {
     toast.classList.add('hiding');
     setTimeout(() => {
-      if (toast.parentElement) toast.parentElement.removeChild(toast);
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
     }, 300);
   }, duration);
 }
 
-// ==================== GLOBAL DIALOGS ====================
+// ============= DIALOG MODAL SYSTEM =============
 function showDialog(title, message, icon = 'ℹ️') {
-  const existing = document.getElementById('globalDialogOverlay');
-  if (existing) existing.remove();
-
   const overlay = document.createElement('div');
-  overlay.id = 'globalDialogOverlay';
   overlay.className = 'c7-dialog-overlay';
-
   overlay.innerHTML = `
     <div class="c7-dialog-box">
-      <span class="c7-dialog-icon">${icon}</span>
-      <h3 class="c7-dialog-title">${title}</h3>
-      <p class="c7-dialog-message">${message}</p>
-      <div class="c7-dialog-actions">
-        <button class="c7-btn c7-btn-primary" onclick="document.getElementById('globalDialogOverlay').remove()">Đóng</button>
-      </div>
+      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">${icon}</div>
+      <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${title}</h3>
+      <p style="color: var(--text-sub); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">${message}</p>
+      <button class="c7-btn c7-btn-primary" style="width: 100%;" id="dialogCloseBtn">Đã hiểu</button>
     </div>
   `;
 
   document.body.appendChild(overlay);
+  document.getElementById('dialogCloseBtn').onclick = () => {
+    document.body.removeChild(overlay);
+  };
 }
 
-function showConfirm(title, message, onConfirm, onCancel) {
-  const existing = document.getElementById('globalConfirmOverlay');
-  if (existing) existing.remove();
-
+function showConfirm(title, message, onConfirm, onCancel = null) {
   const overlay = document.createElement('div');
-  overlay.id = 'globalConfirmOverlay';
   overlay.className = 'c7-dialog-overlay';
-
   overlay.innerHTML = `
     <div class="c7-dialog-box">
-      <span class="c7-dialog-icon">❓</span>
-      <h3 class="c7-dialog-title">${title}</h3>
-      <p class="c7-dialog-message">${message}</p>
-      <div class="c7-dialog-actions">
-        <button class="c7-btn c7-btn-secondary" id="btnConfirmCancel">Hủy</button>
-        <button class="c7-btn c7-btn-primary" id="btnConfirmOk">Xác nhận</button>
+      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">❓</div>
+      <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${title}</h3>
+      <p style="color: var(--text-sub); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">${message}</p>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="c7-btn c7-btn-secondary" id="confirmCancelBtn">Hủy</button>
+        <button class="c7-btn c7-btn-primary" id="confirmOkBtn">Xác nhận</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(overlay);
 
-  document.getElementById('btnConfirmCancel').onclick = () => {
-    overlay.remove();
-    if (typeof onCancel === 'function') onCancel();
+  document.getElementById('confirmCancelBtn').onclick = () => {
+    document.body.removeChild(overlay);
+    if (onCancel) onCancel();
   };
 
-  document.getElementById('btnConfirmOk').onclick = () => {
-    overlay.remove();
-    if (typeof onConfirm === 'function') onConfirm();
+  document.getElementById('confirmOkBtn').onclick = () => {
+    document.body.removeChild(overlay);
+    if (onConfirm) onConfirm();
   };
 }
 
-// ==================== DASHBOARD HELPERS ====================
+// ============= DASHBOARD WIDGET HELPERS =============
 function updateWelcomeMessage() {
   const user = getCurrentUser();
   if (!user) return;
 
   const welcomeName = document.getElementById('welcomeName');
+  const welcomeMsg = document.getElementById('welcomeMessage');
   if (welcomeName) welcomeName.textContent = user.name;
 
-  const welcomeMsg = document.getElementById('welcomeMessage');
-  if (welcomeMsg) {
-    const hour = new Date().getHours();
-    let greeting = "Chúc bạn một ngày học tập nhiều hứng khởi!";
-    if (hour < 12) greeting = "Chào buổi sáng! Hãy kiểm tra các nhiệm vụ cần nộp hôm nay nhé.";
-    else if (hour < 18) greeting = "Chào buổi chiều! Cùng chuẩn bị bài vở thật tốt nào.";
-    else greeting = "Chào buổi tối! Đừng quên ôn lại kiến thức trước khi đi ngủ nhé.";
-    welcomeMsg.textContent = greeting;
-  }
+  const hour = new Date().getHours();
+  let timeGreeting = "Chúc bạn một ngày học tập nhiều hứng khởi!";
+  if (hour < 11) timeGreeting = "Buổi sáng năng lượng và học tốt nhé!";
+  else if (hour < 14) timeGreeting = "Buổi trưa vui vẻ và nạp đầy năng lượng!";
+  else if (hour < 18) timeGreeting = "Buổi chiều học tập hiệu quả!";
+  else timeGreeting = "Buổi tối an lành và hoàn thành tốt bài tập nhé!";
 
-  updateProfileWidget(user);
-}
+  if (welcomeMsg) welcomeMsg.textContent = timeGreeting;
 
-function updateProfileWidget(user) {
-  const widget = document.getElementById('userProfileWidget');
-  if (!widget || !user) return;
+  // Render User Profile Mini Widget
+  const profileWidget = document.getElementById('userProfileWidget');
+  if (profileWidget) {
+    const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+    const roleBadges = roles.map(r => `
+      <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}">
+        ${ROLES[r] || r}
+      </span>
+    `).join(' ');
 
-  const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
-  const roleBadges = roles.map(r => `
-    <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}">
-      ${ROLES[r] || r}
-    </span>
-  `).join(' ');
-
-  const tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
-  const myTasks = tasks.filter(t => !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(user.id));
-  const completed = myTasks.filter(t => t.completions && t.completions[user.id]).length;
-  const rate = myTasks.length > 0 ? Math.round((completed / myTasks.length) * 100) : 100;
-
-  widget.innerHTML = `
-    <div class="profile-card-inner">
-      <div class="profile-avatar" style="background: ${getAvatarGradient(user.name)}">
-        ${getInitials(user.name)}
-      </div>
-      <div class="profile-info">
-        <div class="profile-name">${user.name}</div>
-        <div class="profile-roles">${roleBadges}</div>
-        <div class="profile-progress-bar-wrap">
-          <div class="profile-progress-label">
-            <span>Tiến độ hoàn thành nhiệm vụ: <strong>${completed}/${myTasks.length}</strong> (${rate}%)</span>
+    profileWidget.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div class="user-avatar-mini" style="width: 48px; height: 48px; font-size: 1.1rem; background: ${getAvatarGradient(user.name)}">
+            ${getInitials(user.name)}
           </div>
-          <div class="profile-progress-track">
-            <div class="profile-progress-fill" style="width: ${rate}%"></div>
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 800;">${escapeHtml(user.name)}</h3>
+            <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+              ${roleBadges}
+              <span class="user-role-pill" style="background: var(--bg-surface); color: var(--text-sub); border: 1px solid var(--input-border);">
+                Tổ ${user.group || 1}
+              </span>
+            </div>
           </div>
         </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="c7-btn c7-btn-secondary" onclick="handleProfileClick()">👤 Chi tiết hồ sơ</button>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
 }
 
 function checkAdminButtons() {
+  const user = getCurrentUser();
+  if (!user) return;
+
   const btnStudents = document.getElementById('btnNavStudents');
   const btnRoles = document.getElementById('btnNavRoles');
   const btnLogs = document.getElementById('btnNavLogs');
 
-  if (btnStudents && checkPermission('manage_students')) btnStudents.style.display = 'flex';
-  if (btnRoles && checkPermission('manage_roles')) btnRoles.style.display = 'flex';
-  if (btnLogs && checkPermission('view_logs')) btnLogs.style.display = 'flex';
+  if (btnStudents && (isAdmin() || checkPermission('manage_students'))) btnStudents.style.display = 'flex';
+  if (btnRoles && (isAdmin() || checkPermission('manage_roles'))) btnRoles.style.display = 'flex';
+  if (btnLogs && (isAdmin() || checkPermission('view_logs'))) btnLogs.style.display = 'flex';
+}
+
+function updateOnlineStatus() {
+  const el = document.getElementById('onlineStatus');
+  if (!el) return;
+
+  function update() {
+    if (navigator.onLine) {
+      el.innerHTML = isRealtimeConnected() ? '🟢 Trực tuyến & Realtime Cloud' : '🟡 Trực tuyến (Bộ nhớ đệm)';
+      el.style.color = '#10b981';
+    } else {
+      el.innerHTML = '🔴 Ngoại tuyến (Offline Cache)';
+      el.style.color = '#ef4444';
+    }
+  }
+
+  window.addEventListener('online', update);
+  window.addEventListener('offline', update);
+  update();
 }
 
 function loadStats() {
-  const currentUser = getCurrentUser();
-  if (!currentUser) return;
-
   const tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
-  const notifications = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  const notifs = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  const schedules = JSON.parse(localStorage.getItem('c7aio_schedules_cache')) || {};
+  const user = getCurrentUser();
 
-  updateUIStats(tasks, currentUser);
-  updateRecentTasks(tasks, currentUser);
-  updateNotificationReminders(notifications, currentUser);
-  updateDashboardScheduleWidget();
-}
+  if (!user) return;
 
-function updateUIStats(tasks, user) {
-  const relevantTasks = tasks.filter(t => !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(user.id));
-  const total = relevantTasks.length;
-  const done = relevantTasks.filter(t => t.completions && t.completions[user.id]).length;
-  const open = total - done;
+  // Filter tasks assigned to user
+  const myTasks = tasks.filter(t => {
+    if (isAdmin()) return true;
+    if (!t.assignedStudents || t.assignedStudents.length === 0) return true;
+    return t.assignedStudents.includes(user.id);
+  });
+
+  const total = myTasks.length;
+  let done = 0;
+  let open = 0;
+  let nearDeadline = 0;
 
   const now = new Date();
   const threeDaysLater = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
-  const near = relevantTasks.filter(t => {
-    if (t.completions && t.completions[user.id]) return false;
-    if (!t.deadline) return false;
-    const d = new Date(t.deadline);
-    return d <= threeDaysLater;
-  }).length;
+
+  myTasks.forEach(t => {
+    const isDone = t.completions && t.completions[user.id];
+    if (isDone) {
+      done++;
+    } else {
+      open++;
+      if (t.deadline) {
+        const d = new Date(t.deadline);
+        if (d <= threeDaysLater) nearDeadline++;
+      }
+    }
+  });
 
   const totalEl = document.getElementById('totalTask');
   const openEl = document.getElementById('openTask');
@@ -275,94 +281,80 @@ function updateUIStats(tasks, user) {
   if (totalEl) totalEl.textContent = total;
   if (openEl) openEl.textContent = open;
   if (doneEl) doneEl.textContent = done;
-  if (nearEl) nearEl.textContent = near;
+  if (nearEl) nearEl.textContent = nearDeadline;
+
+  // Recent Tasks
+  renderDashboardTasks(myTasks, user);
+
+  // Notification Ticker & Badge
+  renderDashboardNotifs(notifs, user);
+
+  // Today Schedule
+  renderTodaySchedule(schedules);
 }
 
-function updateRecentTasks(tasks, user) {
-  const listEl = document.getElementById('recentTasks');
-  const emptyEl = document.getElementById('emptyState');
-  if (!listEl) return;
+function renderDashboardTasks(myTasks, user) {
+  const container = document.getElementById('recentTasks');
+  const empty = document.getElementById('emptyState');
+  if (!container) return;
 
-  const relevantTasks = tasks.filter(t => !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(user.id));
-  const pending = relevantTasks.filter(t => !(t.completions && t.completions[user.id]));
+  const pending = myTasks.filter(t => !(t.completions && t.completions[user.id])).slice(0, 5);
 
-  pending.sort((a, b) => {
-    if (!a.deadline) return 1;
-    if (!b.deadline) return -1;
-    return new Date(a.deadline) - new Date(b.deadline);
-  });
-
-  const top3 = pending.slice(0, 4);
-
-  if (top3.length === 0) {
-    listEl.innerHTML = '';
-    if (emptyEl) emptyEl.style.display = 'block';
+  if (pending.length === 0) {
+    container.innerHTML = '';
+    if (empty) empty.style.display = 'flex';
     return;
   }
 
-  if (emptyEl) emptyEl.style.display = 'none';
+  if (empty) empty.style.display = 'none';
 
-  listEl.innerHTML = top3.map(t => {
-    const deadlineStr = t.deadline ? new Date(t.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn';
-    const isOverdue = t.deadline && new Date(t.deadline) < new Date();
-    const badgeClass = isOverdue ? 'overdue' : (t.priority === 'Khẩn cấp' ? 'urgent' : 'soon');
-    const badgeText = isOverdue ? 'Quá hạn' : (t.deadline ? `Hạn: ${deadlineStr}` : 'Đang mở');
-
-    return `
-      <li class="recent-item" onclick="go('nhiemvu/nv.html')">
-        <div class="recent-item-info">
-          <span class="recent-item-title">${escapeHtml(t.name)}</span>
-          <span class="recent-item-tag">📁 ${escapeHtml(t.category || 'Học tập')}</span>
-        </div>
-        <span class="recent-item-badge ${badgeClass}">${badgeText}</span>
-      </li>
-    `;
-  }).join('');
+  container.innerHTML = pending.map(t => `
+    <li class="recent-item" onclick="go('nhiemvu/nv.html')">
+      <div style="flex: 1;">
+        <strong style="display: block; color: var(--text-main); font-size: 0.95rem;">${escapeHtml(t.name)}</strong>
+        <small style="color: var(--text-sub);">⏰ Hạn: ${t.deadline ? new Date(t.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}</small>
+      </div>
+      <span class="task-badge" style="background: var(--primary-light); color: var(--primary);">${escapeHtml(t.category || 'Bài tập')}</span>
+    </li>
+  `).join('');
 }
 
-function updateNotificationReminders(notifications, user) {
-  const unread = notifications.filter(n => !(n.completions && n.completions[user.id]));
-  const badge = document.getElementById('notifBadge');
+function renderDashboardNotifs(notifs, user) {
   const ticker = document.getElementById('notifTicker');
   const tickerText = document.getElementById('notifTickerText');
+  const badge = document.getElementById('notifBadge');
 
+  if (!ticker || !tickerText) return;
+
+  const unread = notifs.filter(n => !(n.completions && n.completions[user.id]));
   if (badge) {
     if (unread.length > 0) {
       badge.textContent = unread.length;
-      badge.style.display = 'inline-block';
+      badge.style.display = 'block';
     } else {
       badge.style.display = 'none';
     }
   }
 
-  if (ticker && tickerText) {
-    if (notifications.length > 0) {
-      const topNotif = notifications[0];
-      tickerText.textContent = topNotif.message || 'Có thông báo mới từ ban cán sự';
-      ticker.style.display = 'flex';
-      ticker.onclick = () => go('thongbao/tb.html');
-    } else {
-      ticker.style.display = 'none';
-    }
+  if (notifs.length > 0) {
+    const latest = notifs[0];
+    tickerText.textContent = latest.message;
+    ticker.style.display = 'flex';
+    ticker.onclick = () => go('thongbao/tb.html');
+  } else {
+    ticker.style.display = 'none';
   }
 }
 
-function updateDashboardScheduleWidget() {
+function renderTodaySchedule(schedules) {
   const container = document.getElementById('todayScheduleWidget');
   if (!container) return;
 
-  const schedules = JSON.parse(localStorage.getItem('c7aio_schedules_cache')) || {};
-  const today = new Date();
   const daysMap = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const todayDay = daysMap[today.getDay()];
+  const todayKey = daysMap[new Date().getDay()];
 
-  const weekKeys = Object.keys(schedules);
-  let todayClasses = [];
-
-  if (weekKeys.length > 0) {
-    const currentWeekSchedule = schedules[weekKeys[0]] || {};
-    todayClasses = currentWeekSchedule[todayDay] || [];
-  }
+  const week1 = schedules['week-1'] || {};
+  const todayClasses = week1[todayKey] || [];
 
   if (todayClasses.length === 0) {
     container.innerHTML = `
@@ -371,55 +363,35 @@ function updateDashboardScheduleWidget() {
         <a href="lich/lich.html" class="widget-link">Xem tuần →</a>
       </div>
       <div class="empty-widget">
-        <span>☀️</span>
-        <p>Hôm nay không có tiết học nào trong thời khóa biểu!</p>
+        <span>🏖️</span>
+        <p>Hôm nay không có tiết học nào. Nghỉ ngơi nhé!</p>
       </div>
     `;
     return;
   }
-
-  const itemsHtml = todayClasses.map(c => {
-    const color = getSubjectColor(c.name || c.subject);
-    return `
-      <div class="today-class-card" style="border-left-color: ${color}">
-        <div class="today-class-time">${c.time || ''}</div>
-        <div class="today-class-details">
-          <div class="today-class-name">${escapeHtml(c.name)}</div>
-          ${c.subject ? `<div class="today-class-sub">${escapeHtml(c.subject)}</div>` : ''}
-        </div>
-        <div class="today-class-room">📍 ${escapeHtml(c.room || 'P.204')}</div>
-      </div>
-    `;
-  }).join('');
 
   container.innerHTML = `
     <div class="widget-header">
       <h3>📅 Tiết học hôm nay (${todayClasses.length} tiết)</h3>
       <a href="lich/lich.html" class="widget-link">Xem tuần →</a>
     </div>
-    <div class="today-classes-list">
-      ${itemsHtml}
-    </div>
+    <ul class="recent-list">
+      ${todayClasses.map(c => `
+        <li class="recent-item">
+          <div style="flex: 1;">
+            <strong style="color: var(--text-main); font-size: 0.95rem;">${escapeHtml(c.name)}</strong>
+            <small style="display: block; color: var(--text-sub);">⏰ ${escapeHtml(c.time || '')} | 📍 ${escapeHtml(c.room || 'Phòng học')}</small>
+          </div>
+          <span class="task-badge" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">${escapeHtml(c.subject || 'Tiết')}</span>
+        </li>
+      `).join('')}
+    </ul>
   `;
 }
 
-function getSubjectColor(subjName) {
-  const s = (subjName || '').toLowerCase();
-  if (s.includes('toán')) return '#3b82f6';
-  if (s.includes('văn')) return '#ec4899';
-  if (s.includes('anh')) return '#8b5cf6';
-  if (s.includes('lí') || s.includes('vật lý')) return '#06b6d4';
-  if (s.includes('hóa')) return '#10b981';
-  if (s.includes('sinh')) return '#84cc16';
-  if (s.includes('sử') || s.includes('địa')) return '#f59e0b';
-  if (s.includes('tin')) return '#6366f1';
-  if (s.includes('chào cờ') || s.includes('sinh hoạt')) return '#ef4444';
-  return '#64748b';
-}
-
-function escapeHtml(text) {
-  if (!text) return '';
-  return String(text)
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -427,20 +399,18 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-function updateOnlineStatus() {
-  const el = document.getElementById('onlineStatus');
-  if (!el) return;
-  if (navigator.onLine) {
-    el.textContent = '🟢 Trực tuyến';
-    el.style.color = '#10b981';
-  } else {
-    el.textContent = '🟠 Ngoại tuyến (Đang dùng dữ liệu đã lưu)';
-    el.style.color = '#f59e0b';
-  }
+function getSubjectColor(subject) {
+  const s = (subject || '').toLowerCase();
+  if (s.includes('toán')) return '#6366f1';
+  if (s.includes('văn')) return '#ec4899';
+  if (s.includes('anh')) return '#3b82f6';
+  if (s.includes('lí') || s.includes('vật lý')) return '#8b5cf6';
+  if (s.includes('hóa')) return '#10b981';
+  if (s.includes('sinh')) return '#84cc16';
+  if (s.includes('sử')) return '#f59e0b';
+  if (s.includes('địa')) return '#06b6d4';
+  if (s.includes('tin')) return '#0ea5e9';
+  if (s.includes('thể dục')) return '#f97316';
+  if (s.includes('gdqp')) return '#14b8a6';
+  return '#64748b';
 }
-
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-window.addEventListener('DOMContentLoaded', () => {
-  ThemeEngine.init();
-});

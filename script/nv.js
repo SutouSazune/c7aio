@@ -82,14 +82,12 @@ function handleTaskSearch(val) {
 function getFilteredTasks() {
   const isAdm = isAdmin();
   
-  // 1. Phân loại theo quyền người dùng
   let list = tasks.filter(t => {
     if (isAdm) return true;
     if (!t.assignedStudents || t.assignedStudents.length === 0) return true;
     return t.assignedStudents.includes(currentUser.id);
   });
 
-  // 2. Lọc theo trạng thái tab
   const now = new Date();
   const threeDaysLater = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
 
@@ -105,7 +103,6 @@ function getFilteredTasks() {
     });
   }
 
-  // 3. Tìm kiếm từ khóa
   if (searchQuery) {
     list = list.filter(t => 
       t.name.toLowerCase().includes(searchQuery) ||
@@ -134,8 +131,6 @@ function renderTasks() {
     `;
     return;
   }
-
-  const isAdm = isAdmin();
 
   container.innerHTML = list.map(t => {
     const isCompleted = t.completions && t.completions[currentUser.id];
@@ -178,12 +173,12 @@ function renderTasks() {
           ` : ''}
 
           <div class="task-actions-row">
-            <button class="btn-task-action" onclick="toggleTaskCheck('${t.id}')">
-              ${isCompleted ? '↩️ Đánh dấu làm lại' : '✅ Đã nộp / Hoàn thành'}
+            <button class="btn-action-pill" onclick="toggleTaskCheck('${t.id}')">
+              ${isCompleted ? '↩️ Làm lại' : '✅ Đã nộp'}
             </button>
             ${checkPermission('manage_tasks') ? `
-              <button class="btn-task-action" onclick="editTask('${t.id}')">✏️ Sửa</button>
-              <button class="btn-task-action delete" onclick="deleteTaskAction('${t.id}')">🗑️ Xóa</button>
+              <button class="btn-action-pill" onclick="editTask('${t.id}')">✏️ Sửa</button>
+              <button class="btn-action-pill danger" onclick="deleteTaskAction('${t.id}')">🗑️ Xóa</button>
             ` : ''}
           </div>
         </div>
@@ -248,7 +243,6 @@ function editTask(taskId) {
     quillEditor.root.innerHTML = task.description || '';
   }
 
-  // Set assigned checkboxes
   const assigned = task.assignedStudents || [];
   document.querySelectorAll('.student-assign-check').forEach(cb => {
     cb.checked = assigned.length === 0 || assigned.includes(parseInt(cb.value));
