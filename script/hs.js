@@ -1,312 +1,332 @@
+/**
+ * C7AIO Student Profiles Management Controller
+ * Quản lý hồ sơ học sinh, Nhập / Xuất file CSV, Tìm kiếm, Phân quyền & Đồng bộ
+ */
+
 let editingStudentId = null;
-let isStudentsDataSynced = false; // Cờ để chặn lưu dữ liệu khi chưa đồng bộ
+let searchQuery = '';
 
 window.addEventListener('load', () => {
-  if (!isAdmin()) {
-    // Dùng alert ở đây là ok vì chưa load xong UI, nhưng tốt nhất là redirect luôn
-    window.location.href = '../index.html';
+  const user = getCurrentUser();
+  if (!user) {
+    window.location.href = buildUrl('login.html');
     return;
   }
 
-  // --- FALLBACK: Đảm bảo Animation & Toast luôn hoạt động dù thiếu hub.js ---
-  if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
-  
-  if (!document.getElementById('fallback-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'fallback-animation-style';
-    style.innerHTML = `
-      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
-      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    `;
-    document.head.appendChild(style);
-  }
-  
-  // Nếu chưa có dữ liệu, hiển thị Skeleton Loading
-  if (!STUDENTS || STUDENTS.length === 0) {
-    renderSkeletonTable();
-  } else {
-    // Hiển thị dữ liệu cache ngay lập tức
-    renderStudentsTable(STUDENTS);
+  const nameEl = document.getElementById('userNameDisplay');
+  if (nameEl) nameEl.textContent = user.name;
+
+  if (!checkPermission('manage_students')) {
+    showToast('Chế độ chỉ xem thông tin danh bạ', 'info');
   }
 
-  // Kết nối Firebase để lấy dữ liệu realtime
-  onSharedStudentsChanged((data) => {
-    STUDENTS = data || []; // Cập nhật biến toàn cục
-    isStudentsDataSynced = true; // Đánh dấu đã nhận dữ liệu từ server
-    renderStudentsTable(STUDENTS);
-  });
+  renderStudentsTable();
+
+  // Lắng nghe Realtime
+  if (typeof onSharedStudentsChanged === 'function') {
+    onSharedStudentsChanged((data) => {
+      if (data && data.length > 0) {
+        STUDENTS = data;
+        renderStudentsTable();
+      }
+    });
+  }
 });
 
-// Helper: Debounce function (Tránh lag khi gõ tìm kiếm)
-function debounce(func, wait) {
-  let timeout;
-  return function(...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
+function handleStudentSearch(val) {
+  searchQuery = (val || '').toLowerCase().trim();
+  renderStudentsTable();
 }
 
-// Override searchStudents với debounce
-const originalSearch = searchStudents;
-searchStudents = debounce(originalSearch, 300);
+function getFilteredStudents() {
+  if (!searchQuery) return STUDENTS;
+  return STUDENTS.filter(s => {
+    const matchName = (s.name || '').toLowerCase().includes(searchQuery);
+    const matchPhone = (s.phone || '').includes(searchQuery);
+    const matchEmail = (s.email || '').toLowerCase().includes(searchQuery);
+    return matchName || matchPhone || matchEmail;
+  });
+}
 
-// Hàm render Skeleton (Hiệu ứng chờ)
-function renderSkeletonTable() {
-  const tbody = document.getElementById('studentsTableBody');
-  let html = '';
-  // Tạo 5 dòng skeleton giả lập
-  for (let i = 0; i < 5; i++) {
-    html += `
+function renderStudentsTable() {
+  const tbody = document.getElementById('hsStudentsTableBody');
+  if (!tbody) return;
+
+  const list = getFilteredStudents();
+
+  if (list.length === 0) {
+    tbody.innerHTML = `
       <tr>
-        <td><div class="skeleton" style="height: 20px; width: 30px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 150px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 100px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 80px;"></div></td>
-        <td><div class="skeleton" style="height: 20px; width: 50px;"></div></td>
-        <td><div class="skeleton" style="height: 40px; width: 120px;"></div></td>
-        <td><div class="skeleton" style="height: 30px; width: 60px;"></div></td>
+        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          Không tìm thấy học sinh nào phù hợp.
+        </td>
       </tr>
     `;
+    return;
   }
-  tbody.innerHTML = html;
-}
 
-function renderStudentsTable(data = STUDENTS) {
-  const tbody = document.getElementById('studentsTableBody');
-  
-  const rows = data.map((s, index) => {
-    // Xử lý hiển thị nhiều role
+  const canEdit = checkPermission('manage_students');
+
+  tbody.innerHTML = list.map((s, idx) => {
     const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
-    const roleBadges = roles.map(r => 
-      `<span style="display:inline-block; background: #eee; padding: 2px 8px; border-radius: 10px; font-size: 0.85rem; margin: 2px;">${ROLES[r] || 'Thành viên'}</span>`
-    ).join('');
+    const roleBadges = roles.map(r => `
+      <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}; font-size: 0.75rem;">
+        ${ROLES[r] || r}
+      </span>
+    `).join(' ');
+
+    const phoneLink = s.phone ? `<a href="tel:${s.phone}" class="hs-quick-btn">📞 ${s.phone}</a>` : '';
+    const emailLink = s.email ? `<a href="mailto:${s.email}" class="hs-quick-btn">✉️ Email</a>` : '';
 
     return `
-    <tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.04}s; opacity: 0; transform: translateY(20px);">
-      <td>${index + 1}</td>
-      <td style="font-weight: 600;">${s.name}</td>
-      <td>${roleBadges}</td>
-      <td>${formatDate(s.dob)}</td>
-      <td>${s.gender || '-'}</td>
-      <td>
-        ${s.phone ? `📞 ${s.phone}<br>` : ''}
-        ${s.email ? `✉️ ${s.email}` : ''}
-      </td>
-      <td>
-        <button class="edit-btn" onclick="openStudentModal(${s.id})">✏️ Sửa</button>
-      </td>
-    </tr>
+      <tr class="hs-student-row">
+        <td>${idx + 1}</td>
+        <td>
+          <div class="hs-avatar-cell">
+            <div class="hs-avatar-bubble" style="background: ${getAvatarGradient(s.name)}">
+              ${getInitials(s.name)}
+            </div>
+            <strong>${escapeHtml(s.name)}</strong>
+          </div>
+        </td>
+        <td>${roleBadges}</td>
+        <td>${formatDateVn(s.dob)}</td>
+        <td>${s.gender || 'Nam'}</td>
+        <td>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            ${phoneLink}
+            ${emailLink}
+          </div>
+        </td>
+        <td>Tổ ${s.group || 1}</td>
+        <td>
+          <div style="display: flex; gap: 6px;">
+            ${canEdit ? `
+              <button class="btn-task-action" onclick="openEditStudentModal(${s.id})">✏️ Sửa</button>
+            ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Xem</span>'}
+          </div>
+        </td>
+      </tr>
     `;
   }).join('');
-
-  // Inject keyframes nếu chưa có
-  if (!document.getElementById('row-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'row-animation-style';
-    style.innerHTML = `
-    `;
-    document.head.appendChild(style);
-  }
-
-  tbody.innerHTML = rows;
 }
 
-function searchStudents() { // Hàm gốc, sẽ được debounce ở trên
-  const term = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = STUDENTS.filter(s => 
-    s.name.toLowerCase().includes(term) || 
-    (s.phone && s.phone.includes(term)) ||
-    (s.email && s.email.toLowerCase().includes(term))
-  );
-  renderStudentsTable(filtered);
+function formatDateVn(dob) {
+  if (!dob) return '-';
+  if (dob.includes('-')) {
+    const [y, m, d] = dob.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  return dob;
 }
 
-function openStudentModal(id = null) {
-  const modal = document.getElementById('studentModal');
-  const title = document.getElementById('modalTitle');
-  const btnDelete = document.getElementById('btnDeleteStudent');
-  
-  // Inject Role Select if missing
-  if (!document.getElementById('roleSelect')) {
-    injectSelect2ToModal();
-  }
-    
-  updateSelect2Options();
-
-  // Khởi tạo/Refresh Select2 ngay tại đây để đảm bảo nó nhận diện được các options vừa thêm
-  $('#roleSelect').select2({
-    placeholder: 'Chọn chức vụ...',
-    allowClear: true
-  });
-  
-  editingStudentId = id;
-
-  if (id) {
-    title.textContent = '✏️ Chỉnh Sửa Hồ Sơ';
-    btnDelete.style.display = 'block';
-    const s = STUDENTS.find(st => st.id === id);
-    if (s) fillForm(s);
-  } else {
-    title.textContent = '➕ Thêm Học Sinh Mới';
-    btnDelete.style.display = 'none';
-    clearForm();
+// ============= MODAL ACTIONS =============
+function openAddStudentModal() {
+  if (!checkPermission('manage_students')) {
+    showToast('Bạn không có quyền thêm học sinh!', 'error');
+    return;
   }
 
-  // ROOT FIX: Xử lý scroll modal
-  if (window.innerWidth < 768) {
-    modal.style.alignItems = 'flex-start';
-    modal.style.overflowY = 'auto';
-    modal.style.paddingTop = '10px';
-  }
-  document.body.style.overflow = 'hidden';
-  modal.style.display = 'flex';
+  editingStudentId = null;
+  document.getElementById('hsModalTitle').textContent = '➕ Thêm Học Sinh Mới';
+  document.getElementById('inputStdName').value = '';
+  document.getElementById('inputStdDob').value = '';
+  document.getElementById('selectStdGender').value = 'Nam';
+  document.getElementById('selectStdRole').value = 'student';
+  document.getElementById('selectStdGroup').value = '1';
+  document.getElementById('inputStdPhone').value = '';
+  document.getElementById('inputStdEmail').value = '';
+  document.getElementById('inputStdAddress').value = '';
+  document.getElementById('btnDeleteStdTrigger').style.display = 'none';
+
+  document.getElementById('hsStudentModalOverlay').style.display = 'flex';
+}
+
+function openEditStudentModal(studentId) {
+  const s = STUDENTS.find(std => std.id === studentId);
+  if (!s) return;
+
+  editingStudentId = studentId;
+  document.getElementById('hsModalTitle').textContent = '✏️ Chỉnh Sửa Hồ Sơ Học Sinh';
+  document.getElementById('inputStdName').value = s.name || '';
+  document.getElementById('inputStdDob').value = s.dob || '';
+  document.getElementById('selectStdGender').value = s.gender || 'Nam';
+
+  const primaryRole = Array.isArray(s.role) ? (s.role[0] || 'student') : (s.role || 'student');
+  document.getElementById('selectStdRole').value = primaryRole;
+  document.getElementById('selectStdGroup').value = s.group || '1';
+  document.getElementById('inputStdPhone').value = s.phone || '';
+  document.getElementById('inputStdEmail').value = s.email || '';
+  document.getElementById('inputStdAddress').value = s.address || '';
+  document.getElementById('btnDeleteStdTrigger').style.display = 'inline-block';
+
+  document.getElementById('hsStudentModalOverlay').style.display = 'flex';
 }
 
 function closeStudentModal() {
-  document.getElementById('studentModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
+  document.getElementById('hsStudentModalOverlay').style.display = 'none';
+  editingStudentId = null;
 }
 
-function injectSelect2ToModal() {
-  const formBody = document.querySelector('#studentModal .modal-body');
-  const roleDiv = document.createElement('div');
-  roleDiv.className = 'form-group';
-  roleDiv.style.marginBottom = '15px';
-  roleDiv.innerHTML = `
-    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Chức vụ (*)</label>
-    <select id="roleSelect" multiple="multiple" style="width: 100%;">
-    </select>
-  `;
-  // Chèn vào đầu form
-  formBody.insertBefore(roleDiv, formBody.firstChild);
+async function submitStudentForm() {
+  if (!checkPermission('manage_students')) return;
+
+  const name = document.getElementById('inputStdName').value.trim();
+  const dob = document.getElementById('inputStdDob').value.trim();
+  const gender = document.getElementById('selectStdGender').value;
+  const role = document.getElementById('selectStdRole').value;
+  const group = parseInt(document.getElementById('selectStdGroup').value) || 1;
+  const phone = document.getElementById('inputStdPhone').value.trim();
+  const email = document.getElementById('inputStdEmail').value.trim();
+  const address = document.getElementById('inputStdAddress').value.trim();
+
+  if (!name || !dob) {
+    showToast('Vui lòng nhập họ tên và ngày sinh của học sinh!', 'warning');
+    return;
+  }
+
+  const isEdit = !!editingStudentId;
+  const studentData = {
+    id: isEdit ? editingStudentId : Date.now(),
+    name,
+    dob,
+    gender,
+    role: [role],
+    group,
+    phone,
+    email,
+    address
+  };
+
+  let updatedList = [...STUDENTS];
+  if (isEdit) {
+    const idx = updatedList.findIndex(s => s.id === editingStudentId);
+    if (idx !== -1) updatedList[idx] = studentData;
+  } else {
+    updatedList.push(studentData);
+  }
+
+  STUDENTS = updatedList;
+  if (typeof saveSharedStudents === 'function') {
+    await saveSharedStudents(STUDENTS);
+  }
+
+  if (typeof logAction === 'function') {
+    logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (${ROLES[role] || role})`);
+  }
+
+  showToast(isEdit ? 'Đã cập nhật hồ sơ!' : 'Đã thêm học sinh mới thành công!', 'success');
+  closeStudentModal();
+  renderStudentsTable();
 }
 
-function updateSelect2Options() {
-  const select = document.getElementById('roleSelect');
-  if (!select) return;
+async function deleteStudentAction() {
+  if (!editingStudentId || !checkPermission('manage_students')) return;
 
-  // Tạo các option cho select
-  select.innerHTML = '';
-  Object.keys(ROLES).forEach(key => {
-    const option = document.createElement('option');
-    option.value = key;
-    option.text = ROLES[key];
-    select.appendChild(option);
+  const s = STUDENTS.find(std => std.id === editingStudentId);
+  showConfirm('Xác nhận xóa', `Bạn có chắc muốn xóa hồ sơ học sinh ${s ? s.name : ''}?`, async () => {
+    STUDENTS = STUDENTS.filter(std => std.id !== editingStudentId);
+    if (typeof saveSharedStudents === 'function') {
+      await saveSharedStudents(STUDENTS);
+    }
+    if (typeof logAction === 'function') {
+      logAction('Xóa học sinh', `Đã xóa: ${s ? s.name : editingStudentId}`);
+    }
+    showToast('Đã xóa hồ sơ học sinh!', 'success');
+    closeStudentModal();
+    renderStudentsTable();
   });
 }
 
-function fillForm(s) {
-  // Fill Roles
-  const select = document.getElementById('roleSelect');
-  const userRoles = Array.isArray(s.role) ? s.role : [s.role || 'student']; 
-  
-  $(select).val(userRoles).trigger('change');
+// ============= CSV EXPORT / IMPORT =============
+function exportStudentsCsv() {
+  if (STUDENTS.length === 0) {
+    showToast('Danh sách học sinh trống!', 'warning');
+    return;
+  }
 
-  // Fill other fields
-  document.getElementById('stdName').value = s.name || '';
-  document.getElementById('stdDob').value = s.dob || '';
-  document.getElementById('stdGender').value = s.gender || 'Nam';
-  document.getElementById('stdEthnicity').value = s.ethnicity || 'Kinh';
-  document.getElementById('stdCccd').value = s.cccd || '';
-  document.getElementById('stdPhone').value = s.phone || '';
-  document.getElementById('stdEmail').value = s.email || '';
-  document.getElementById('stdAddress').value = s.address || '';
-  document.getElementById('stdHometown').value = s.hometown || '';
-  document.getElementById('stdFatherName').value = s.fatherName || '';
-  document.getElementById('stdFatherPhone').value = s.fatherPhone || '';
-  document.getElementById('stdMotherName').value = s.motherName || '';
-  document.getElementById('stdMotherPhone').value = s.motherPhone || '';
+  let csv = '\uFEFF';
+  csv += 'STT,Họ và tên,Ngày sinh,Giới tính,Chức vụ,Tổ,Số điện thoại,Email,Địa chỉ\n';
+
+  STUDENTS.forEach((s, idx) => {
+    const roleStr = (Array.isArray(s.role) ? s.role : [s.role || 'student']).join(';');
+    csv += `"${idx + 1}","${s.name.replace(/"/g, '""')}","${s.dob || ''}","${s.gender || 'Nam'}","${roleStr}","${s.group || 1}","${s.phone || ''}","${s.email || ''}","${(s.address || '').replace(/"/g, '""')}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Danh_Sach_Hoc_Sinh_10C7_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Đã xuất danh sách học sinh ra CSV!', 'success');
 }
 
-function clearForm() {
-  document.querySelectorAll('input').forEach(i => i.value = '');
-  document.getElementById('stdGender').value = 'Nam';  
-
-  // Reset select2
-  $('#roleSelect').val(null).trigger('change');
-  document.getElementById('stdEthnicity').value = 'Kinh';
+function triggerImportCsv() {
+  if (!checkPermission('manage_students')) {
+    showToast('Bạn không có quyền nhập dữ liệu!', 'error');
+    return;
+  }
+  document.getElementById('csvFileInput').click();
 }
 
-function saveStudent() {
-  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
-  if (!isStudentsDataSynced) {
-    showToast('⏳ Đang đồng bộ dữ liệu, vui lòng đợi...', 'info');
-    return;
-  }
+function handleCsvFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  const name = document.getElementById('stdName').value.trim();
-  if (!name) {
-    showToast('Vui lòng nhập họ tên!', 'error');
-    return;
-  }
+  const reader = new FileReader();
+  reader.onload = async (event) => {
+    const content = event.target.result;
+    try {
+      if (file.name.endsWith('.json')) {
+        const parsed = JSON.parse(content);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          STUDENTS = parsed;
+          if (typeof saveSharedStudents === 'function') await saveSharedStudents(STUDENTS);
+          showToast(`Đã nhập ${parsed.length} học sinh thành công!`, 'success');
+          renderStudentsTable();
+          return;
+        }
+      }
 
-  // FIX SYNC: Client-side Guard
-  if (!STUDENTS || STUDENTS.length === 0) {
-    console.warn('⚠️ Client Guard: Chặn lưu danh sách học sinh rỗng.');
-    return;
-  }
+      // Parse CSV
+      const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length <= 1) {
+        showToast('File CSV không có dữ liệu!', 'warning');
+        return;
+      }
 
-  // Get selected roles
-  let selectedRoles = $('#roleSelect').val();
-  if (!selectedRoles || selectedRoles.length === 0) {
-    selectedRoles = ['student'];
-  }
+      const newStudents = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+        if (cols.length >= 2 && cols[1]) {
+          newStudents.push({
+            id: Date.now() + i,
+            name: cols[1],
+            dob: cols[2] || '2008-01-01',
+            gender: cols[3] || 'Nam',
+            role: cols[4] ? cols[4].split(';') : ['student'],
+            group: parseInt(cols[5]) || 1,
+            phone: cols[6] || '',
+            email: cols[7] || '',
+            address: cols[8] || ''
+          });
+        }
+      }
 
-  const studentData = {
-    id: editingStudentId || Date.now(),
-    name: name,
-    role: selectedRoles, // Lưu mảng role
-    dob: document.getElementById('stdDob').value,
-    gender: document.getElementById('stdGender').value,
-    ethnicity: document.getElementById('stdEthnicity').value,
-    cccd: document.getElementById('stdCccd').value,
-    phone: document.getElementById('stdPhone').value,
-    email: document.getElementById('stdEmail').value,
-    address: document.getElementById('stdAddress').value,
-    hometown: document.getElementById('stdHometown').value,
-    fatherName: document.getElementById('stdFatherName').value,
-    fatherPhone: document.getElementById('stdFatherPhone').value,
-    motherName: document.getElementById('stdMotherName').value,
-    motherPhone: document.getElementById('stdMotherPhone').value,
+      if (newStudents.length > 0) {
+        STUDENTS = newStudents;
+        if (typeof saveSharedStudents === 'function') await saveSharedStudents(STUDENTS);
+        showToast(`Đã nhập ${newStudents.length} học sinh từ CSV thành công!`, 'success');
+        renderStudentsTable();
+      }
+    } catch (err) {
+      console.error('CSV parse error', err);
+      showToast('Lỗi khi đọc file CSV/JSON!', 'error');
+    }
   };
-
-  if (editingStudentId) {
-    const index = STUDENTS.findIndex(s => s.id === editingStudentId);
-    if (index !== -1) STUDENTS[index] = studentData;
-  } else {
-    STUDENTS.push(studentData);
-  }
-
-  // Lưu lên Firebase thay vì localStorage
-  saveSharedStudents(STUDENTS);
-  const roleNames = selectedRoles.map(r => ROLES[r]).join(', ');
-  logAction(editingStudentId ? 'Sửa hồ sơ' : 'Thêm học sinh', `Học sinh: ${name} - Chức vụ: ${roleNames}`);
-  showToast(editingStudentId ? 'Đã cập nhật hồ sơ!' : 'Đã thêm học sinh mới!', 'success');
-  // renderStudentsTable(); // Không cần gọi thủ công vì onSharedStudentsChanged sẽ tự chạy
-  closeStudentModal();
-}
-
-function deleteStudent() {
-  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
-  if (!isStudentsDataSynced) {
-    showToast('⏳ Đang đồng bộ dữ liệu...', 'info');
-    return;
-  }
-
-  if (!editingStudentId) return;
-
-  if (confirm('Bạn có chắc chắn muốn xóa hồ sơ học sinh này? Hành động này không thể hoàn tác!')) {
-    const s = STUDENTS.find(st => st.id === editingStudentId);
-    logAction('Xóa học sinh', `Đã xóa hồ sơ của: ${s ? s.name : 'Unknown'}`);
-    STUDENTS = STUDENTS.filter(s => s.id !== editingStudentId);
-    saveSharedStudents(STUDENTS);
-    showToast('Đã xóa học sinh thành công', 'success');
-    closeStudentModal();
-  }
-}
-
-function formatDate(dateString) {
-  if (!dateString) return '';
-  const [y, m, d] = dateString.split('-');
-  return `${d}/${m}/${y}`;
+  reader.readAsText(file);
+  e.target.value = '';
 }

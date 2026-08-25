@@ -1,69 +1,71 @@
+/**
+ * C7AIO Activity Logs Controller
+ */
+
 let systemLogs = [];
+let logSearchQuery = '';
 
 window.addEventListener('load', () => {
-  // Kiểm tra quyền truy cập
-  if (!checkPermission('view_logs')) {
-    alert('Bạn không có quyền truy cập trang này!');
-    window.location.href = '../index.html';
+  const user = getCurrentUser();
+  if (!user || !checkPermission('view_logs')) {
+    showToast('Bạn không có quyền xem nhật ký hoạt động!', 'error');
+    setTimeout(() => {
+      window.location.href = buildUrl('index.html');
+    }, 800);
     return;
   }
 
-  // --- FALLBACK ---
-  if (!document.getElementById('fallback-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'fallback-animation-style';
-    style.innerHTML = `
-      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
-      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    `;
-    document.head.appendChild(style);
-  }
+  const nameEl = document.getElementById('userNameDisplay');
+  if (nameEl) nameEl.textContent = user.name;
 
-  // Lắng nghe Logs từ Firebase
-  onSharedLogsChanged((data) => {
-    systemLogs = data;
-    renderLogsTable();
-  });
+  if (typeof onSharedLogsChanged === 'function') {
+    onSharedLogsChanged((logs) => {
+      systemLogs = logs || [];
+      renderLogs();
+    });
+  }
 });
 
-function renderLogsTable() {
-  const container = document.querySelector('.logs-container');
-  if (!container) return;
+function handleLogSearch(query) {
+  logSearchQuery = (query || '').toLowerCase().trim();
+  renderLogs();
+}
 
-  if (systemLogs.length === 0) {
-    container.innerHTML = '<p style="text-align:center; padding: 20px; color: #888;">Chưa có nhật ký hoạt động nào.</p>';
+function renderLogs() {
+  const tbody = document.getElementById('logsTableBody');
+  if (!tbody) return;
+
+  const filtered = systemLogs.filter(l => {
+    if (!logSearchQuery) return true;
+    return (l.user || '').toLowerCase().includes(logSearchQuery) ||
+           (l.action || '').toLowerCase().includes(logSearchQuery) ||
+           (l.detail || '').toLowerCase().includes(logSearchQuery) ||
+           (l.role || '').toLowerCase().includes(logSearchQuery);
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+          Không có nhật ký hoạt động nào.
+        </td>
+      </tr>
+    `;
     return;
   }
 
-  let html = `
-    <table class="modern-table" style="width: 100%;">
-      <thead>
-        <tr>
-          <th>Thời gian</th>
-          <th>Người thực hiện</th>
-          <th>Chức vụ</th>
-          <th>Hành động</th>
-          <th>Chi tiết</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
+  tbody.innerHTML = filtered.map(log => {
+    const d = new Date(log.timestamp);
+    const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 
-  systemLogs.forEach((log, index) => {
-    const date = new Date(log.timestamp);
-    const timeStr = `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')} ${date.getDate()}/${date.getMonth()+1}`;
-    
-    html += `
-      <tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);">
-        <td style="white-space: nowrap; color: #666;">${timeStr}</td>
-        <td style="font-weight: 600;">${log.user}</td>
-        <td>${log.role}</td>
-        <td style="color: #2980b9; font-weight: 500;">${log.action}</td>
-        <td style="color: #555;">${log.detail}</td>
+    return `
+      <tr>
+        <td style="color: var(--text-sub); white-space: nowrap; font-size: 0.85rem;">🕒 ${timeStr}</td>
+        <td><strong>${escapeHtml(log.user || 'Unknown')}</strong></td>
+        <td><span class="user-role-pill" style="background: #6366f1; font-size: 0.75rem;">${escapeHtml(log.role || 'Khách')}</span></td>
+        <td style="color: var(--primary); font-weight: 700;">${escapeHtml(log.action || '')}</td>
+        <td style="color: var(--text-sub); font-size: 0.85rem;">${escapeHtml(log.detail || '')}</td>
       </tr>
     `;
-  });
-
-  html += `</tbody></table>`;
-  container.innerHTML = html;
+  }).join('');
 }

@@ -1,90 +1,90 @@
-let currentStudents = [];
-let isPermissionsDataSynced = false; // Cờ để chặn lưu dữ liệu khi chưa đồng bộ
+/**
+ * C7AIO Role Permissions Matrix Controller
+ */
+
+let currentStudents = STUDENTS || [];
 
 window.addEventListener('load', () => {
-  // Kiểm tra quyền truy cập
-  if (!checkPermission('manage_roles')) {
-    alert('Bạn không có quyền truy cập trang này!');
-    window.location.href = '../index.html';
+  const user = getCurrentUser();
+  if (!user || !checkPermission('manage_roles')) {
+    showToast('Bạn không có quyền truy cập trang phân quyền!', 'error');
+    setTimeout(() => {
+      window.location.href = buildUrl('index.html');
+    }, 800);
     return;
   }
 
-  // --- FALLBACK ---
-  if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
-  if (!document.getElementById('fallback-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'fallback-animation-style';
-    style.innerHTML = `
-      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
-      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    `;
-    document.head.appendChild(style);
+  const nameEl = document.getElementById('userNameDisplay');
+  if (nameEl) nameEl.textContent = user.name;
+
+  renderRolesMatrix();
+
+  if (typeof onSharedPermissionsChanged === 'function') {
+    onSharedPermissionsChanged((data) => {
+      if (data) {
+        ROLE_PERMISSIONS_CONFIG = data;
+        renderRolesMatrix();
+      }
+    });
   }
 
-  // Lắng nghe thay đổi quyền hạn từ Firebase
-  onSharedPermissionsChanged((data) => {
-    if (data) ROLE_PERMISSIONS_CONFIG = data;
-    isPermissionsDataSynced = true; // Đánh dấu đã nhận dữ liệu từ server
-    renderRolesMatrix();
-  });
-
-  // Lắng nghe danh sách học sinh để hiển thị thành viên
-  onSharedStudentsChanged((data) => {
-    currentStudents = data || [];
-    renderRolesMatrix();
-  });
-
-  // Render lần đầu
-  renderRolesMatrix();
+  if (typeof onSharedStudentsChanged === 'function') {
+    onSharedStudentsChanged((data) => {
+      if (data && data.length > 0) {
+        currentStudents = data;
+        renderRolesMatrix();
+      }
+    });
+  }
 });
 
 function renderRolesMatrix() {
-  const container = document.querySelector('.roles-matrix-container');
+  const container = document.getElementById('rolesMatrixContainer');
   if (!container) return;
 
+  const roleKeys = Object.keys(ROLES).filter(r => r !== 'admin');
+  const permKeys = Object.keys(PERMISSIONS);
+
   let html = `
-    <table class="modern-table" style="width: 100%;">
+    <table class="matrix-table">
       <thead>
         <tr>
-          <th>Chức vụ / Quyền hạn</th>
-          ${Object.keys(PERMISSIONS).map(p => `<th style="font-size: 0.8rem;">${PERMISSIONS[p]}</th>`).join('')}
+          <th>Chức vụ & Thành viên nắm giữ</th>
+          ${permKeys.map(p => `<th style="font-size: 0.8rem; max-width: 140px;">${PERMISSIONS[p]}</th>`).join('')}
         </tr>
       </thead>
       <tbody>
   `;
 
-  Object.keys(ROLES).forEach((roleKey, index) => {
-    if (roleKey === 'admin') return; // Skip Admin (always full perms)
-    
-    // Lọc danh sách thành viên thuộc role này
-    const members = currentStudents.filter(s => {
+  roleKeys.forEach(roleKey => {
+    const holders = currentStudents.filter(s => {
       const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
       return roles.includes(roleKey);
     });
 
-    const membersHtml = members.length > 0 
-      ? `<div style="margin-top: 5px; font-size: 0.8rem; color: #666;">
-           ${members.map(m => `<div>👤 ${m.name}</div>`).join('')}
-         </div>`
-      : `<div style="margin-top: 5px; font-size: 0.8rem; color: #999; font-style: italic;">(Trống)</div>`;
+    const holdersHtml = holders.length > 0
+      ? `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-sub);">${holders.map(h => `<div>👤 ${escapeHtml(h.name)}</div>`).join('')}</div>`
+      : `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">(Chưa có thành viên)</div>`;
 
-    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; opacity: 0; transform: translateY(20px);">
-      <td style="vertical-align: top;">
-        <div style="font-weight: bold; color: #2c3e50;">${ROLES[roleKey]}</div>
-        ${membersHtml}
-      </td>`;
-    
-    Object.keys(PERMISSIONS).forEach(permKey => {
+    html += `
+      <tr>
+        <td style="vertical-align: top;">
+          <div style="font-weight: 800; color: ${ROLE_COLORS[roleKey] || 'var(--primary)'}; font-size: 0.95rem;">
+            ${ROLES[roleKey]}
+          </div>
+          ${holdersHtml}
+        </td>
+    `;
+
+    permKeys.forEach(permKey => {
       const hasPerm = (ROLE_PERMISSIONS_CONFIG[roleKey] || []).includes(permKey);
       html += `
         <td style="text-align: center;">
-          <input type="checkbox" class="perm-checkbox" 
-            data-role="${roleKey}" data-perm="${permKey}" 
-            ${hasPerm ? 'checked' : ''}>
+          <input type="checkbox" class="perm-checkbox-custom perm-box" data-role="${roleKey}" data-perm="${permKey}" ${hasPerm ? 'checked' : ''}>
         </td>
       `;
     });
-    
+
     html += `</tr>`;
   });
 
@@ -92,30 +92,25 @@ function renderRolesMatrix() {
   container.innerHTML = html;
 }
 
-function saveRolesConfig() {
-  // FIX SYNC: Chặn lưu nếu chưa đồng bộ lần đầu
-  if (!isPermissionsDataSynced) {
-    showToast('⏳ Đang đồng bộ dữ liệu, vui lòng đợi...', 'info');
-    return;
-  }
-  
-  // FIX SYNC: Client-side Guard
-  // Kiểm tra nếu config rỗng bất thường (Admin luôn phải có quyền)
-  if (!ROLE_PERMISSIONS_CONFIG || !ROLE_PERMISSIONS_CONFIG['admin'] || ROLE_PERMISSIONS_CONFIG['admin'].length === 0) {
-    console.warn('⚠️ Client Guard: Chặn lưu cấu hình phân quyền lỗi/rỗng.');
-    return;
-  }
+async function saveRolesConfig() {
+  if (!checkPermission('manage_roles')) return;
 
-  if (!confirm('Lưu thay đổi phân quyền?')) return;
   const newConfig = { ...ROLE_PERMISSIONS_CONFIG };
-  Object.keys(ROLES).forEach(role => {
-    if (role !== 'admin') newConfig[role] = [];
+  Object.keys(ROLES).forEach(r => {
+    if (r !== 'admin') newConfig[r] = [];
   });
-  document.querySelectorAll('.perm-checkbox:checked').forEach(cb => {
+
+  document.querySelectorAll('.perm-box:checked').forEach(cb => {
     const role = cb.dataset.role;
     const perm = cb.dataset.perm;
-    if (newConfig[role]) newConfig[role].push(perm);
+    if (newConfig[role]) {
+      newConfig[role].push(perm);
+    }
   });
-  saveSharedPermissions(newConfig);
-  showToast('Đã cập nhật phân quyền!', 'success');
+
+  if (typeof saveSharedPermissions === 'function') {
+    await saveSharedPermissions(newConfig);
+  }
+
+  showToast('Đã lưu bảng phân quyền thành công!', 'success');
 }

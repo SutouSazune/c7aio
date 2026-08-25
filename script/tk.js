@@ -1,274 +1,289 @@
+/**
+ * C7AIO Statistics & Analytics Controller
+ * Báo cáo tiến độ, Biểu đồ vòng, Phân loại nhiệm vụ, Ma trận toàn lớp & Xuất CSV
+ */
+
 let currentUser = null;
-let tasks = [];
-let events = [];
-let notifications = [];
+let tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
+let matrixSearchFilter = '';
 
 window.addEventListener('load', () => {
   currentUser = getCurrentUser();
-
-  // Nếu không phải Admin, chuyển hướng
-  if (!isAdmin()) {
-    document.body.innerHTML = `
-      <div style="text-align: center; padding: 40px; color: #666;">
-        <p style="font-size: 48px;">🔒</p>
-        <h2>Chỉ Admin mới xem được thống kê</h2>
-        <p><a href="index.html">← Quay lại</a></p>
-      </div>
-    `;
+  if (!currentUser) {
+    window.location.href = buildUrl('login.html');
     return;
   }
 
-  // --- FALLBACK ---
-  if (!document.getElementById('fallback-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'fallback-animation-style';
-    style.innerHTML = `
-      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
-      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-      /* Đảm bảo bảng hiện ra kể cả khi animation lỗi */
-      tr { opacity: 1 !important; transform: none !important; animation: none !important; }
-      /* Ghi đè lại animation nếu trình duyệt hỗ trợ tốt */
-      @supports (animation: fadeInUp) {
-        tr { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
-      }
-      
-      /* Stats Table Styles */
-      .completion-table td {
-        padding: 12px !important;
-        border-radius: 8px;
-      }
-    `;
-    document.head.appendChild(style);
+  const nameEl = document.getElementById('userNameDisplay');
+  if (nameEl) nameEl.textContent = currentUser.name;
+
+  updateHeaders();
+  renderAllStats();
+
+  // Lắng nghe Realtime
+  if (typeof onSharedTasksChanged === 'function') {
+    onSharedTasksChanged((data) => {
+      tasks = data || [];
+      renderAllStats();
+    });
   }
 
-  // Show Skeleton ban đầu
-  renderSkeletonDashboard();
-
-  setupRealtimeListeners();
+  if (typeof onSharedStudentsChanged === 'function') {
+    onSharedStudentsChanged((data) => {
+      if (data && data.length > 0) {
+        STUDENTS = data;
+        renderAllStats();
+      }
+    });
+  }
 });
 
-function renderSkeletonDashboard() {
-  const container = document.getElementById('statsContainer');
-  // Skeleton cho 3 bảng
-  let html = '<div class="dashboard-grid">';
-  for (let i = 0; i < 3; i++) {
-    html += `
-      <div class="dashboard-section">
-        <div class="skeleton" style="width: 150px; height: 30px; margin-bottom: 20px;"></div>
-        <div class="skeleton" style="width: 100%; height: 200px; border-radius: 12px;"></div>
+function updateHeaders() {
+  const title = document.getElementById('statsSubjectTitle');
+  const sub = document.getElementById('statsSubtitle');
+  if (isAdmin()) {
+    if (title) title.textContent = 'Tổng Quan Học Tập Toàn Lớp';
+    if (sub) sub.textContent = `Thống kê cho ${STUDENTS.length} học sinh • Quyền Quản trị viên`;
+  } else {
+    if (title) title.textContent = `Tiến Độ Học Tập: ${currentUser.name}`;
+    if (sub) sub.textContent = `Cập nhật theo các nhiệm vụ được giao cho bạn`;
+    
+    // Hide class-wide matrix section for regular students
+    const matrixSec = document.getElementById('classMatrixSection');
+    if (matrixSec) matrixSec.style.display = 'none';
+  }
+}
+
+function renderAllStats() {
+  renderOverviewCards();
+  renderProgressRing();
+  renderCategoryBars();
+  if (isAdmin()) {
+    renderClassMatrix();
+  }
+}
+
+// ============= OVERVIEW & RING =============
+function renderOverviewCards() {
+  const isAdm = isAdmin();
+  const relevantTasks = isAdm
+    ? tasks
+    : tasks.filter(t => !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(currentUser.id));
+
+  const total = relevantTasks.length;
+  let done = 0;
+
+  if (isAdm) {
+    // Với Admin: task hoàn thành nếu toàn bộ học sinh được giao đã check-in
+    done = relevantTasks.filter(t => {
+      const assigned = t.assignedStudents && t.assignedStudents.length > 0 ? t.assignedStudents : STUDENTS.map(s => s.id);
+      const completions = t.completions || {};
+      return assigned.every(sId => completions[sId]);
+    }).length;
+  } else {
+    done = relevantTasks.filter(t => t.completions && t.completions[currentUser.id]).length;
+  }
+
+  const pending = Math.max(0, total - done);
+  const percent = total > 0 ? Math.round((done / total) * 100) : 100;
+
+  document.getElementById('statTotalCount').textContent = total;
+  document.getElementById('statDoneCount').textContent = done;
+  document.getElementById('statPendingCount').textContent = pending;
+  document.getElementById('statPercentValue').textContent = `${percent}%`;
+}
+
+function renderProgressRing() {
+  const isAdm = isAdmin();
+  const relevantTasks = isAdm
+    ? tasks
+    : tasks.filter(t => !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(currentUser.id));
+
+  const total = relevantTasks.length;
+  const done = isAdm
+    ? relevantTasks.filter(t => {
+        const assigned = t.assignedStudents && t.assignedStudents.length > 0 ? t.assignedStudents : STUDENTS.map(s => s.id);
+        const completions = t.completions || {};
+        return assigned.every(sId => completions[sId]);
+      }).length
+    : relevantTasks.filter(t => t.completions && t.completions[currentUser.id]).length;
+
+  const percent = total > 0 ? Math.round((done / total) * 100) : 100;
+
+  document.getElementById('progressValDisplay').textContent = `${percent}%`;
+
+  const circle = document.getElementById('circleProgress');
+  if (circle) {
+    const radius = 75;
+    const circumference = 2 * Math.PI * radius;
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    const offset = circumference - (percent / 100) * circumference;
+    circle.style.strokeDashoffset = offset;
+  }
+
+  const assessmentEl = document.getElementById('ringAssessmentText');
+  if (assessmentEl) {
+    if (percent >= 80) {
+      assessmentEl.textContent = '🌟 Xuất sắc! Tiến độ học tập rất tốt.';
+      assessmentEl.style.color = '#10b981';
+    } else if (percent >= 50) {
+      assessmentEl.textContent = '👍 Khá tốt! Cần hoàn thành các bài tập còn lại.';
+      assessmentEl.style.color = '#f59e0b';
+    } else {
+      assessmentEl.textContent = '⚠️ Cần chú ý! Có nhiều nhiệm vụ chưa nộp.';
+      assessmentEl.style.color = '#ef4444';
+    }
+  }
+}
+
+// ============= CATEGORY PROGRESS BARS =============
+function renderCategoryBars() {
+  const container = document.getElementById('categoryBarsList');
+  if (!container) return;
+
+  const categories = ['Bài tập', 'Học tập', 'Lao động', 'Đoàn / Đội', 'Quỹ lớp', 'Khác'];
+  const catColors = {
+    'Bài tập': 'linear-gradient(90deg, #3b82f6, #6366f1)',
+    'Học tập': 'linear-gradient(90deg, #8b5cf6, #ec4899)',
+    'Lao động': 'linear-gradient(90deg, #10b981, #06b6d4)',
+    'Đoàn / Đội': 'linear-gradient(90deg, #f59e0b, #ef4444)',
+    'Quỹ lớp': 'linear-gradient(90deg, #14b8a6, #10b981)',
+    'Khác': 'linear-gradient(90deg, #64748b, #94a3b8)'
+  };
+
+  const isAdm = isAdmin();
+  const relevantTasks = isAdm
+    ? tasks
+    : tasks.filter(t => !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(currentUser.id));
+
+  container.innerHTML = categories.map(cat => {
+    const catTasks = relevantTasks.filter(t => (t.category || 'Bài tập') === cat);
+    if (catTasks.length === 0) return '';
+
+    const catTotal = catTasks.length;
+    const catDone = isAdm
+      ? catTasks.filter(t => {
+          const assigned = t.assignedStudents && t.assignedStudents.length > 0 ? t.assignedStudents : STUDENTS.map(s => s.id);
+          return assigned.every(sId => t.completions && t.completions[sId]);
+        }).length
+      : catTasks.filter(t => t.completions && t.completions[currentUser.id]).length;
+
+    const rate = Math.round((catDone / catTotal) * 100);
+
+    return `
+      <div class="cat-bar-row">
+        <div class="cat-bar-header">
+          <span>${cat}</span>
+          <span><strong>${catDone}/${catTotal}</strong> (${rate}%)</span>
+        </div>
+        <div class="cat-bar-track">
+          <div class="cat-bar-fill" style="width: ${rate}%; background: ${catColors[cat] || '#6366f1'};"></div>
+        </div>
       </div>
     `;
-  }
-  html += '</div>';
-  container.innerHTML = html;
+  }).join('');
 }
 
-function setupRealtimeListeners() {
-  // 1. Lắng nghe danh sách học sinh (để render cột bảng đúng)
-  onSharedStudentsChanged((data) => {
-    if (data) STUDENTS = data;
-    renderDashboard();
-  });
-
-  // 2. Lắng nghe Nhiệm vụ
-  onSharedTasksChanged((data) => {
-    tasks = data;
-    renderDashboard();
-  });
-
-  // 3. Lắng nghe Thông báo
-  onSharedNotificationsChanged((data) => {
-    notifications = data;
-    renderDashboard();
-  });
-  
-  // Events tạm thời chưa có sync shared, giữ nguyên hoặc bỏ qua
+// ============= CLASS MATRIX (ADMIN) =============
+function filterMatrixStudents(query) {
+  matrixSearchFilter = (query || '').toLowerCase().trim();
+  renderClassMatrix();
 }
 
-function renderDashboard() {
-  // Update overview cards
-  updateStatsOverview();
-  
-  const container = document.getElementById('statsContainer');
-  
-  let html = '<div class="dashboard-grid">';
+function renderClassMatrix() {
+  const table = document.getElementById('classMatrixTable');
+  if (!table) return;
 
-  // Task Statistics
-  html += renderTaskStats();
-  // Event Statistics
-  html += renderEventStats();
-  // Notification Statistics
-  html += renderNotificationStats();
+  const displayStudents = STUDENTS.filter(s => s.name.toLowerCase().includes(matrixSearchFilter));
 
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function updateStatsOverview() {
-  // Calculate task stats
-  const totalTasks = tasks.length;
-  let completedTasks = 0;
-  let pendingTasks = 0;
-
-  tasks.forEach(task => {
-    const completions = task.completions || {};
-    const completedCount = Object.values(completions).filter(v => v).length;
-    if (completedCount === STUDENTS.length) {
-      completedTasks++;
-    } else if (completedCount > 0) {
-      pendingTasks++;
-    }
-  });
-
-  const completedPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const urgentTasks = pendingTasks; // Simple calculation
-
-  // Update cards
-  document.getElementById('totalTask').textContent = totalTasks;
-  document.getElementById('doneTask').textContent = completedTasks;
-  document.getElementById('completedPercent').textContent = completedPercent + '%';
-  document.getElementById('openTask').textContent = pendingTasks;
-  document.getElementById('nearDeadline').textContent = urgentTasks;
-
-  // Update status bars (Chart section)
-  document.getElementById('statusDone').textContent = completedTasks;
-  document.getElementById('statusPending').textContent = pendingTasks;
-  
-  const donePercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-  const pendingPercent = totalTasks > 0 ? (pendingTasks / totalTasks) * 100 : 0;
-  
-  const doneBar = document.querySelector('.status-fill.done');
-  const pendingBar = document.querySelector('.status-fill.pending');
-  
-  if (doneBar) doneBar.style.width = `${donePercent}%`;
-  if (pendingBar) pendingBar.style.width = `${pendingPercent}%`;
-
-  // Update progress ring
-  const circumference = 2 * Math.PI * 90;
-  const strokeDashoffset = circumference - (completedPercent / 100) * circumference;
-  const progressRing = document.getElementById('progressRing');
-  if (progressRing) {
-    progressRing.style.strokeDashoffset = strokeDashoffset;
-  }
-  
-  // Update progress text
-  const progressValue = document.getElementById('progressValue');
-  if (progressValue) {
-    progressValue.textContent = `${completedPercent}%`;
-  }
-}
-
-function renderTaskStats() {
-  let html = '<div class="dashboard-section"><h2>📋 Nhiệm vụ</h2>';
-  
   if (tasks.length === 0) {
-    html += '<p style="color: #999;">Chưa có nhiệm vụ nào</p>';
-    html += '</div>';
-    return html;
+    table.innerHTML = '<tr><td style="text-align:center; padding: 20px; color: var(--text-muted);">Chưa có nhiệm vụ nào trong hệ thống.</td></tr>';
+    return;
   }
 
-  html += '<table class="completion-table" style="width:100%; table-layout:fixed;"><thead><tr><th>Tên nhiệm vụ</th>';
-  
-  STUDENTS.forEach(student => {
-    html += `<th>${student.name.split(' ').pop()}</th>`;
+  // Header row
+  let headerHtml = '<thead><tr><th>Học sinh</th>';
+  tasks.forEach(t => {
+    headerHtml += `<th title="${escapeHtml(t.name)}">${escapeHtml(t.name.length > 16 ? t.name.substring(0, 16) + '...' : t.name)}</th>`;
   });
-  
-  html += '<th>Hoàn thành</th></tr></thead><tbody>';
+  headerHtml += '<th>Tỷ lệ</th></tr></thead>';
 
-  tasks.forEach((task, index) => {
-    const completions = task.completions || {};
-    const completedCount = Object.values(completions).filter(v => v).length;
-    
-    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);"><td>${task.name}</td>`;
-    
-    STUDENTS.forEach(student => {
-      const isCompleted = completions[student.id];
-      html += `<td class="${isCompleted ? 'completed' : ''}">${isCompleted ? '✅' : '❌'}</td>`;
-    });
-    
-    html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
-  });
-  html += '</tbody></table></div>';
-  return html;
-}
+  // Body rows
+  let bodyHtml = '<tbody>';
+  displayStudents.forEach(s => {
+    let completedCount = 0;
+    let assignedCount = 0;
 
-function renderEventStats() {
-  let html = '<div class="dashboard-section"><h2>📅 Sự kiện</h2>';
-  
-  const allEvents = [];
-  if (events && typeof events === 'object') {
-    Object.keys(events).forEach(dateKey => {
-      if (Array.isArray(events[dateKey])) {
-        events[dateKey].forEach(event => {
-          allEvents.push({ ...event, date: dateKey });
-        });
+    let cells = '';
+    tasks.forEach(t => {
+      const isAssigned = !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(s.id);
+      if (isAssigned) {
+        assignedCount++;
+        const isDone = t.completions && t.completions[s.id];
+        if (isDone) completedCount++;
+        cells += `<td>${isDone ? '✅' : '⭕'}</td>`;
+      } else {
+        cells += `<td style="color: var(--text-muted); font-size: 0.8rem;">-</td>`;
       }
     });
-  }
 
-  if (allEvents.length === 0) {
-    html += '<p style="color: #999;">Chưa có sự kiện nào</p>';
-    html += '</div>';
-    return html;
-  }
+    const rate = assignedCount > 0 ? Math.round((completedCount / assignedCount) * 100) : 100;
+    const rateBadge = rate >= 80
+      ? `<span class="task-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">${rate}%</span>`
+      : `<span class="task-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">${rate}%</span>`;
 
-  html += '<table class="completion-table" style="width:100%; table-layout:fixed;"><thead><tr><th>Sự kiện</th>';
-
-  STUDENTS.forEach(student => {
-    html += `<th>${student.name.split(' ').pop()}</th>`;
+    bodyHtml += `
+      <tr>
+        <td><strong>${escapeHtml(s.name)}</strong></td>
+        ${cells}
+        <td>${rateBadge}</td>
+      </tr>
+    `;
   });
+  bodyHtml += '</tbody>';
 
-  html += '<th>Hoàn thành</th></tr></thead><tbody>';
-
-  allEvents.forEach((event, index) => {
-    const completions = event.completions || {};
-    const completedCount = Object.values(completions).filter(v => v).length;
-    
-    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);"><td>${event.name} (${event.date})</td>`;
-    
-    STUDENTS.forEach(student => {
-      const isCompleted = completions[student.id];
-      html += `<td class="${isCompleted ? 'completed' : ''}">${isCompleted ? '✅' : '❌'}</td>`;
-    });
-    
-    html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
-  });
-
-  html += '</tbody></table></div>';
-  return html;
+  table.innerHTML = headerHtml + bodyHtml;
 }
 
-function renderNotificationStats() {
-  let html = '<div class="dashboard-section"><h2>🔔 Thông báo</h2>';
-  
-  if (notifications.length === 0) {
-    html += '<p style="color: #999;">Chưa có thông báo nào</p>';
-    html += '</div>';
-    return html;
+// ============= EXPORT CSV =============
+function exportStatsToCsv() {
+  if (tasks.length === 0 || STUDENTS.length === 0) {
+    showToast('Không có dữ liệu để xuất!', 'warning');
+    return;
   }
 
-  html += '<table class="completion-table" style="width:100%; table-layout:fixed;"><thead><tr><th>Thông báo</th>';
-  
-  STUDENTS.forEach(student => {
-    html += `<th>${student.name.split(' ').pop()}</th>`;
-  });
-  
-  html += '<th>Đã xem</th></tr></thead><tbody>';
+  let csvContent = '\uFEFF'; // UTF-8 BOM
+  csvContent += 'Học sinh,' + tasks.map(t => `"${t.name.replace(/"/g, '""')}"`).join(',') + ',Tỷ lệ hoàn thành\n';
 
-  notifications.forEach((notif, index) => {
-    const completions = notif.completions || {};
-    const completedCount = Object.values(completions).filter(v => v).length;
-    
-    html += `<tr style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.03}s; opacity: 0; transform: translateY(20px);"><td>${notif.message}</td>`;
-    
-    STUDENTS.forEach(student => {
-      const isCompleted = completions[student.id];
-      html += `<td class="${isCompleted ? 'completed' : ''}">${isCompleted ? '✅' : '❌'}</td>`;
+  STUDENTS.forEach(s => {
+    let done = 0;
+    let total = 0;
+    const row = [s.name];
+
+    tasks.forEach(t => {
+      const isAssigned = !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(s.id);
+      if (isAssigned) {
+        total++;
+        const isDone = t.completions && t.completions[s.id];
+        if (isDone) done++;
+        row.push(isDone ? 'Đã hoàn thành' : 'Chưa hoàn thành');
+      } else {
+        row.push('Không giao');
+      }
     });
-    
-    html += `<td>${completedCount}/${STUDENTS.length}</td></tr>`;
+
+    const rate = total > 0 ? Math.round((done / total) * 100) + '%' : '100%';
+    row.push(rate);
+    csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
   });
 
-  html += '</tbody></table></div>';
-  return html;
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Bao_Cao_Tien_Do_10C7_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Đã xuất báo cáo CSV thành công!', 'success');
 }
