@@ -1,375 +1,196 @@
-/**
- * C7AIO Firebase Realtime Database Handlers & Utilities
- * Hỗ trợ đồng bộ dữ liệu Realtime Database an toàn, chống ghi đè rỗng
- */
+// C7AIO Firebase Realtime Database CRUD & Sync Utilities
+// Tự động đồng bộ giữa Cloud Database và LocalStorage Cache
 
 const DB_PATHS = {
-  STUDENTS: 'shared/students',
-  TASKS: 'shared/tasks',
-  NOTIFICATIONS: 'shared/notifications',
-  SCHEDULES: 'shared/schedules',
-  WEEK_METADATA: 'shared/weekMetadata',
-  INPUT_HISTORY: 'shared/inputHistory',
-  PERMISSIONS: 'shared/permissions',
-  LOGS: 'shared/logs'
+  TASKS: 'class_data/tasks',
+  SCHEDULES: 'class_data/schedules',
+  NOTIFICATIONS: 'class_data/notifications',
+  WEEK_METADATA: 'class_data/week_metadata',
+  STUDENTS: 'class_data/students',
+  PERMISSIONS: 'class_data/permissions',
+  LOGS: 'class_data/logs'
 };
 
-function getDbRef(path) {
-  if (typeof database !== 'undefined' && database) {
-    return database.ref(path);
-  }
-  return null;
-}
-
-// ==================== STUDENTS ====================
-async function saveSharedStudents(studentsList) {
-  if (!studentsList || !studentsList.length) return false;
-  localStorage.setItem('c7aio_students_cache', JSON.stringify(studentsList));
-
-  const ref = getDbRef(DB_PATHS.STUDENTS);
-  if (ref) {
-    try {
-      await ref.set(studentsList);
-      return true;
-    } catch (e) {
-      console.error('Error saving students to Firebase:', e);
-    }
-  }
-  return false;
-}
-
-function onSharedStudentsChanged(callback) {
-  const cached = localStorage.getItem('c7aio_students_cache');
-  if (cached) {
-    try { callback(JSON.parse(cached)); } catch(e) {}
-  }
-
-  const ref = getDbRef(DB_PATHS.STUDENTS);
-  if (ref) {
-    ref.on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val && Array.isArray(val) && val.length > 0) {
-        localStorage.setItem('c7aio_students_cache', JSON.stringify(val));
-        callback(val);
+/**
+ * Đăng ký lắng nghe thay đổi dữ liệu Realtime
+ */
+function listenToPath(path, callback, localStorageKey) {
+  const db = getDatabaseRef();
+  if (!db) {
+    if (localStorageKey) {
+      const cached = localStorage.getItem(localStorageKey);
+      if (cached) {
+        try { callback(JSON.parse(cached)); } catch (e) {}
       }
-    });
+    }
+    return () => {};
   }
+
+  const ref = db.ref(path);
+  const listener = ref.on('value', (snapshot) => {
+    const val = snapshot.val();
+    if (val !== null) {
+      if (localStorageKey) {
+        localStorage.setItem(localStorageKey, JSON.stringify(val));
+      }
+      callback(val);
+    }
+  }, (error) => {
+    console.warn(`Lỗi lắng nghe đường dẫn ${path}:`, error);
+    if (localStorageKey) {
+      const cached = localStorage.getItem(localStorageKey);
+      if (cached) {
+        try { callback(JSON.parse(cached)); } catch (e) {}
+      }
+    }
+  });
+
+  return () => ref.off('value', listener);
 }
 
-// ==================== TASKS ====================
-async function saveSharedTask(task) {
-  if (!task || !task.id) return false;
-  
-  let currentTasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
-  const idx = currentTasks.findIndex(t => String(t.id) === String(task.id));
-  if (idx !== -1) {
-    currentTasks[idx] = task;
-  } else {
-    currentTasks.push(task);
+/**
+ * Lưu dữ liệu lên Realtime Database và cập nhật LocalStorage
+ */
+async function saveToPath(path, data, localStorageKey) {
+  if (localStorageKey) {
+    localStorage.setItem(localStorageKey, JSON.stringify(data));
   }
-  localStorage.setItem('c7aio_tasks_cache', JSON.stringify(currentTasks));
 
-  const ref = getDbRef(`${DB_PATHS.TASKS}/${task.id}`);
-  if (ref) {
+  const db = getDatabaseRef();
+  if (db) {
     try {
-      await ref.set(task);
+      await db.ref(path).set(data);
       return true;
     } catch (e) {
-      console.error('Error saving task to Firebase:', e);
+      console.warn(`Không thể ghi dữ liệu lên ${path}:`, e);
+      return false;
     }
   }
-  return false;
+  return true;
+}
+
+// Tasks sync
+function onSharedTasksChanged(callback) {
+  return listenToPath(DB_PATHS.TASKS, (val) => {
+    const arr = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+    callback(arr);
+  }, 'c7aio_tasks_cache');
+}
+
+async function saveSharedTask(task) {
+  const tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
+  const idx = tasks.findIndex(t => String(t.id) === String(task.id));
+  if (idx >= 0) tasks[idx] = task;
+  else tasks.unshift(task);
+  return saveToPath(DB_PATHS.TASKS, tasks, 'c7aio_tasks_cache');
 }
 
 async function deleteSharedTask(taskId) {
-  let currentTasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
-  currentTasks = currentTasks.filter(t => String(t.id) !== String(taskId));
-  localStorage.setItem('c7aio_tasks_cache', JSON.stringify(currentTasks));
+  const tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
+  const updated = tasks.filter(t => String(t.id) !== String(taskId));
+  return saveToPath(DB_PATHS.TASKS, updated, 'c7aio_tasks_cache');
+}
 
-  const ref = getDbRef(`${DB_PATHS.TASKS}/${taskId}`);
-  if (ref) {
-    try {
-      await ref.remove();
-      return true;
-    } catch (e) {
-      console.error('Error deleting task in Firebase:', e);
-    }
+async function updateSharedTaskCompletion(taskId, completions) {
+  const tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
+  const task = tasks.find(t => String(t.id) === String(taskId));
+  if (task) {
+    task.completions = completions;
+    return saveToPath(DB_PATHS.TASKS, tasks, 'c7aio_tasks_cache');
   }
   return false;
 }
 
-async function updateSharedTaskCompletion(taskId, completionsObj) {
-  let currentTasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
-  const target = currentTasks.find(t => String(t.id) === String(taskId));
-  if (target) {
-    target.completions = completionsObj;
-    localStorage.setItem('c7aio_tasks_cache', JSON.stringify(currentTasks));
-  }
-
-  const ref = getDbRef(`${DB_PATHS.TASKS}/${taskId}/completions`);
-  if (ref) {
-    try {
-      await ref.set(completionsObj);
-      return true;
-    } catch (e) {
-      console.error('Error updating task completions in Firebase:', e);
-    }
-  }
-  return false;
+// Schedules sync
+function onSharedSchedulesChanged(callback) {
+  return listenToPath(DB_PATHS.SCHEDULES, callback, 'c7aio_schedules_cache');
 }
 
-function onSharedTasksChanged(callback) {
-  const cached = localStorage.getItem('c7aio_tasks_cache');
-  if (cached) {
-    try { callback(JSON.parse(cached)); } catch(e) {}
-  }
-
-  const ref = getDbRef(DB_PATHS.TASKS);
-  if (ref) {
-    ref.on('value', (snapshot) => {
-      const val = snapshot.val();
-      let taskList = [];
-      if (val) {
-        if (Array.isArray(val)) {
-          taskList = val.filter(Boolean);
-        } else if (typeof val === 'object') {
-          taskList = Object.values(val);
-        }
-      }
-      localStorage.setItem('c7aio_tasks_cache', JSON.stringify(taskList));
-      callback(taskList);
-    });
-  }
+async function saveSharedSchedules(schedules) {
+  return saveToPath(DB_PATHS.SCHEDULES, schedules, 'c7aio_schedules_cache');
 }
 
-// ==================== NOTIFICATIONS ====================
+// Notifications sync
+function onSharedNotificationsChanged(callback) {
+  return listenToPath(DB_PATHS.NOTIFICATIONS, (val) => {
+    const arr = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+    callback(arr);
+  }, 'c7aio_notifications_cache');
+}
+
 async function saveSharedNotification(notif) {
-  if (!notif || !notif.id) return false;
-
-  let currentList = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
-  const idx = currentList.findIndex(n => String(n.id) === String(notif.id));
-  if (idx !== -1) {
-    currentList[idx] = notif;
-  } else {
-    currentList.unshift(notif);
-  }
-  localStorage.setItem('c7aio_notifications_cache', JSON.stringify(currentList));
-
-  const ref = getDbRef(`${DB_PATHS.NOTIFICATIONS}/${notif.id}`);
-  if (ref) {
-    try {
-      await ref.set(notif);
-      return true;
-    } catch (e) {
-      console.error('Error saving notification to Firebase:', e);
-    }
-  }
-  return false;
+  const notifs = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  const idx = notifs.findIndex(n => String(n.id) === String(notif.id));
+  if (idx >= 0) notifs[idx] = notif;
+  else notifs.unshift(notif);
+  return saveToPath(DB_PATHS.NOTIFICATIONS, notifs, 'c7aio_notifications_cache');
 }
 
 async function deleteSharedNotification(notifId) {
-  let currentList = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
-  currentList = currentList.filter(n => String(n.id) !== String(notifId));
-  localStorage.setItem('c7aio_notifications_cache', JSON.stringify(currentList));
+  const notifs = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  const updated = notifs.filter(n => String(n.id) !== String(notifId));
+  return saveToPath(DB_PATHS.NOTIFICATIONS, updated, 'c7aio_notifications_cache');
+}
 
-  const ref = getDbRef(`${DB_PATHS.NOTIFICATIONS}/${notifId}`);
-  if (ref) {
-    try {
-      await ref.remove();
-      return true;
-    } catch (e) {
-      console.error('Error deleting notification in Firebase:', e);
-    }
+async function updateSharedNotificationCompletion(notifId, completions) {
+  const notifs = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  const notif = notifs.find(n => String(n.id) === String(notifId));
+  if (notif) {
+    notif.completions = completions;
+    return saveToPath(DB_PATHS.NOTIFICATIONS, notifs, 'c7aio_notifications_cache');
   }
   return false;
 }
 
-async function updateSharedNotificationCompletion(notifId, completionsObj) {
-  let currentList = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
-  const target = currentList.find(n => String(n.id) === String(notifId));
-  if (target) {
-    target.completions = completionsObj;
-    localStorage.setItem('c7aio_notifications_cache', JSON.stringify(currentList));
-  }
-
-  const ref = getDbRef(`${DB_PATHS.NOTIFICATIONS}/${notifId}/completions`);
-  if (ref) {
-    try {
-      await ref.set(completionsObj);
-      return true;
-    } catch (e) {
-      console.error('Error updating notification completions in Firebase:', e);
-    }
-  }
-  return false;
-}
-
-function onSharedNotificationsChanged(callback) {
-  const cached = localStorage.getItem('c7aio_notifications_cache');
-  if (cached) {
-    try { callback(JSON.parse(cached)); } catch(e) {}
-  }
-
-  const ref = getDbRef(DB_PATHS.NOTIFICATIONS);
-  if (ref) {
-    ref.on('value', (snapshot) => {
-      const val = snapshot.val();
-      let notifList = [];
-      if (val) {
-        if (Array.isArray(val)) {
-          notifList = val.filter(Boolean);
-        } else if (typeof val === 'object') {
-          notifList = Object.values(val);
-        }
-      }
-      notifList.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return (new Date(b.createdAt || 0)) - (new Date(a.createdAt || 0));
-      });
-      localStorage.setItem('c7aio_notifications_cache', JSON.stringify(notifList));
-      callback(notifList);
-    });
-  }
-}
-
-// ==================== SCHEDULES & WEEKS ====================
-async function saveSharedSchedules(schedulesData) {
-  if (!schedulesData) return false;
-  localStorage.setItem('c7aio_schedules_cache', JSON.stringify(schedulesData));
-
-  const ref = getDbRef(DB_PATHS.SCHEDULES);
-  if (ref) {
-    try {
-      await ref.set(schedulesData);
-      return true;
-    } catch (e) {
-      console.error('Error saving schedules in Firebase:', e);
-    }
-  }
-  return false;
-}
-
-function onSharedSchedulesChanged(callback) {
-  const cached = localStorage.getItem('c7aio_schedules_cache');
-  if (cached) {
-    try { callback(JSON.parse(cached)); } catch(e) {}
-  }
-
-  const ref = getDbRef(DB_PATHS.SCHEDULES);
-  if (ref) {
-    ref.on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        localStorage.setItem('c7aio_schedules_cache', JSON.stringify(val));
-        callback(val);
-      }
-    });
-  }
-}
-
-async function saveSharedWeekMetadata(metaData) {
-  if (!metaData) return false;
-  localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(metaData));
-
-  const ref = getDbRef(DB_PATHS.WEEK_METADATA);
-  if (ref) {
-    try {
-      await ref.set(metaData);
-      return true;
-    } catch (e) {
-      console.error('Error saving week metadata in Firebase:', e);
-    }
-  }
-  return false;
-}
-
+// Week metadata sync
 function onSharedWeekMetadataChanged(callback) {
-  const cached = localStorage.getItem('c7aio_weekMetadata_cache');
-  if (cached) {
-    try { callback(JSON.parse(cached)); } catch(e) {}
-  }
-
-  const ref = getDbRef(DB_PATHS.WEEK_METADATA);
-  if (ref) {
-    ref.on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(val));
-        callback(val);
-      }
-    });
-  }
+  return listenToPath(DB_PATHS.WEEK_METADATA, callback, 'c7aio_weekMetadata_cache');
 }
 
-// ==================== PERMISSIONS & ROLES ====================
-async function saveSharedPermissions(permConfig) {
-  if (!permConfig) return false;
-  localStorage.setItem('c7aio_permissions_cache', JSON.stringify(permConfig));
-
-  const ref = getDbRef(DB_PATHS.PERMISSIONS);
-  if (ref) {
-    try {
-      await ref.set(permConfig);
-      return true;
-    } catch (e) {
-      console.error('Error saving permissions in Firebase:', e);
-    }
-  }
-  return false;
+async function saveSharedWeekMetadata(metadata) {
+  return saveToPath(DB_PATHS.WEEK_METADATA, metadata, 'c7aio_weekMetadata_cache');
 }
 
+// Students profile sync
+function onSharedStudentsChanged(callback) {
+  return listenToPath(DB_PATHS.STUDENTS, callback, 'c7aio_students_cache');
+}
+
+async function saveSharedStudents(studentsList) {
+  return saveToPath(DB_PATHS.STUDENTS, studentsList, 'c7aio_students_cache');
+}
+
+// Permissions sync
 function onSharedPermissionsChanged(callback) {
-  const cached = localStorage.getItem('c7aio_permissions_cache');
-  if (cached) {
-    try { callback(JSON.parse(cached)); } catch(e) {}
-  }
-
-  const ref = getDbRef(DB_PATHS.PERMISSIONS);
-  if (ref) {
-    ref.on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        localStorage.setItem('c7aio_permissions_cache', JSON.stringify(val));
-        callback(val);
-      }
-    });
-  }
+  return listenToPath(DB_PATHS.PERMISSIONS, callback, 'c7aio_permissions_cache');
 }
 
-// ==================== SYSTEM LOGS ====================
-async function logAction(action, detail = '') {
-  const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { name: 'Khách', role: ['guest'] };
-  const logItem = {
+async function saveSharedPermissions(permConfig) {
+  return saveToPath(DB_PATHS.PERMISSIONS, permConfig, 'c7aio_permissions_cache');
+}
+
+// System activity logs sync
+function onSharedLogsChanged(callback) {
+  return listenToPath(DB_PATHS.LOGS, (val) => {
+    const arr = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+    callback(arr);
+  }, 'c7aio_logs_cache');
+}
+
+async function logAction(action, detail) {
+  const user = getCurrentUser() || { name: 'Ẩn danh', role: 'guest' };
+  const roleText = Array.isArray(user.role) ? user.role.join(', ') : (user.role || 'guest');
+  const newLog = {
     id: Date.now(),
     timestamp: new Date().toISOString(),
-    user: currentUser.name || 'Học sinh',
-    role: Array.isArray(currentUser.role) ? currentUser.role.join(', ') : (currentUser.role || 'student'),
+    user: user.name,
+    role: roleText,
     action: action,
     detail: detail
   };
 
-  const ref = getDbRef(DB_PATHS.LOGS);
-  if (ref) {
-    try {
-      await ref.push(logItem);
-    } catch (e) {
-      console.error('Error logging to Firebase:', e);
-    }
-  }
-}
-
-function onSharedLogsChanged(callback) {
-  const ref = getDbRef(DB_PATHS.LOGS);
-  if (ref) {
-    ref.limitToLast(150).on('value', (snapshot) => {
-      const val = snapshot.val();
-      let logsList = [];
-      if (val) {
-        logsList = Object.values(val);
-        logsList.sort((a, b) => (new Date(b.timestamp || 0)) - (new Date(a.timestamp || 0)));
-      }
-      callback(logsList);
-    });
-  }
+  const logs = JSON.parse(localStorage.getItem('c7aio_logs_cache')) || [];
+  logs.unshift(newLog);
+  if (logs.length > 150) logs.pop(); // Giới hạn 150 bản ghi
+  return saveToPath(DB_PATHS.LOGS, logs, 'c7aio_logs_cache');
 }

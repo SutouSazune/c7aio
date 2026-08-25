@@ -1,32 +1,39 @@
-// Firebase Configuration for C7AIO (Compat mode)
-// Shared Realtime Database for all students & managers
+// C7AIO Firebase Configuration & Shared State Management
+// Firebase 9 Compat Architecture
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDummyKeyForC7AIOAppDevelopment2026",
-  authDomain: "c7aio-26d04.firebaseapp.com",
-  databaseURL: "https://c7aio-26d04-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "c7aio-26d04",
-  storageBucket: "c7aio-26d04.appspot.com",
-  messagingSenderId: "109876543210",
-  appId: "1:109876543210:web:abcdef1234567890"
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDummyKeyForC7AIO-ConfigSafe",
+  authDomain: "c7aio-hub.firebaseapp.com",
+  databaseURL: "https://c7aio-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "c7aio-hub",
+  storageBucket: "c7aio-hub.appspot.com",
+  messagingSenderId: "1029384756",
+  appId: "1:1029384756:web:abcdef123456"
 };
 
-// Initialize Firebase once
-let app;
-let database;
-let auth;
+let isFirebaseInitialized = false;
+let databaseRef = null;
 
 try {
   if (typeof firebase !== 'undefined') {
-    if (!firebase.apps || !firebase.apps.length) {
-      app = firebase.initializeApp(firebaseConfig);
-    } else {
-      app = firebase.app();
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
     }
-    database = firebase.database();
-    auth = firebase.auth();
-    console.log('🔥 Firebase Initialized Successfully');
+    databaseRef = firebase.database();
+    isFirebaseInitialized = true;
+    console.log('🔥 [Firebase] Khởi tạo thành công Firebase Database');
+  } else {
+    console.warn('⚠️ [Firebase] Thư viện SDK chưa được nạp, hệ thống sẽ chạy ở chế độ Local Storage');
   }
-} catch (e) {
-  console.warn('⚠️ Firebase init warning (running in offline/local fallback):', e);
+} catch (error) {
+  console.warn('⚠️ [Firebase] Khởi tạo thất bại, tự động chuyển sang Offline LocalStorage Fallback', error);
+  isFirebaseInitialized = false;
+}
+
+function getDatabaseRef() {
+  return (isFirebaseInitialized && databaseRef) ? databaseRef : null;
+}
+
+function isRealtimeConnected() {
+  return isFirebaseInitialized && databaseRef !== null;
 }
