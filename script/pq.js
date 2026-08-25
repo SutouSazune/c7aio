@@ -49,8 +49,8 @@ function renderRolesMatrix() {
     <table class="c7-table">
       <thead>
         <tr>
-          <th style="min-width: 220px;">Chức vụ & Thành viên đảm nhiệm</th>
-          ${permKeys.map(p => `<th style="font-size: 0.85rem; text-align: center; max-width: 140px;">${PERMISSIONS[p]}</th>`).join('')}
+          <th style="min-width: 240px; text-align: left; padding: 14px 16px;">Chức vụ & Thành viên đảm nhiệm</th>
+          ${permKeys.map(p => `<th style="min-width: 140px; font-size: 0.85rem; text-align: center; padding: 14px 10px; line-height: 1.4; white-space: normal;">${PERMISSIONS[p]}</th>`).join('')}
         </tr>
       </thead>
       <tbody>
@@ -98,21 +98,36 @@ async function saveRolesConfig() {
   if (!checkPermission('manage_roles')) return;
 
   const newConfig = { ...ROLE_PERMISSIONS_CONFIG };
-  Object.keys(ROLES).forEach(r => {
-    if (r !== 'admin') newConfig[r] = [];
+  const checkboxes = document.querySelectorAll('.perm-box');
+
+  // Reset all
+  Object.keys(newConfig).forEach(role => {
+    newConfig[role] = [];
   });
 
-  document.querySelectorAll('.perm-box:checked').forEach(cb => {
-    const role = cb.dataset.role;
-    const perm = cb.dataset.perm;
-    if (newConfig[role]) {
-      newConfig[role].push(perm);
+  checkboxes.forEach(cb => {
+    if (cb.checked) {
+      const role = cb.getAttribute('data-role');
+      const perm = cb.getAttribute('data-perm');
+      if (role && perm) {
+        if (!newConfig[role]) newConfig[role] = [];
+        if (!newConfig[role].includes(perm)) {
+          newConfig[role].push(perm);
+        }
+      }
     }
   });
 
-  if (typeof saveSharedPermissions === 'function') {
-    await saveSharedPermissions(newConfig);
+  try {
+    if (typeof updateSharedPermissions === 'function') {
+      await updateSharedPermissions(newConfig);
+      showToast('Đã lưu cấu hình phân quyền lên hệ thống!', 'success');
+      logActivity('Phân quyền', 'Cập nhật ma trận quyền hạn cho các ban cán sự');
+    } else {
+      ROLE_PERMISSIONS_CONFIG = newConfig;
+      showToast('Đã lưu cục bộ (Chưa kết nối Cloud)!', 'warning');
+    }
+  } catch (err) {
+    showToast('Lỗi khi lưu cấu hình: ' + err.message, 'error');
   }
-
-  showToast('Đã lưu bảng phân quyền thành công!', 'success');
 }

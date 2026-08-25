@@ -41,31 +41,42 @@
 .roles-matrix-container {
   overflow-x: auto;
   width: 100%;
+  border-radius: var(--radius-md);
 }
 
 .roles-matrix-container table {
-  min-width: 900px;
+  min-width: 1050px;
   width: 100%;
+  border-collapse: collapse;
 }
 
 .roles-matrix-container th {
-  padding: 14px 16px;
-  white-space: nowrap;
-  font-size: 0.88rem;
+  padding: 14px 12px;
+  font-size: 0.86rem;
   font-weight: 700;
   color: var(--text-sub);
   background: var(--bg-surface);
   text-align: center;
+  vertical-align: middle;
+  line-height: 1.4;
+  white-space: normal;
+  border-bottom: 2px solid var(--input-border);
 }
 
 .roles-matrix-container th:first-child {
   text-align: left;
-  min-width: 260px;
+  min-width: 250px;
+  padding-left: 16px;
 }
 
 .roles-matrix-container td {
-  padding: 14px 16px;
+  padding: 14px 12px;
   border-bottom: 1px solid var(--input-border);
+  vertical-align: middle;
+}
+
+.roles-matrix-container tr:hover td {
+  background: rgba(99, 102, 241, 0.04);
 }
 
 .perm-checkbox-custom {
@@ -94,8 +105,9 @@
   background: var(--bg-surface);
   border: 1px solid var(--input-border);
   border-radius: var(--radius-full);
-  padding: 2px 8px;
-  font-size: 0.75rem;
+  padding: 3px 10px;
+  font-size: 0.78rem;
   color: var(--text-sub);
+  font-weight: 500;
   margin-top: 2px;
 }
