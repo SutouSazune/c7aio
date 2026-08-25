@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.12-multi-roles';
+const CACHE_NAME = 'c7aio-v3.3.13-student-multi-roles';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
