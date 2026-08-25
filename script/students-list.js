@@ -1,112 +1,143 @@
-// Danh sách 46 Học sinh lớp 10C7 (Năm học 2025 - 2026)
-const STUDENTS = [
-  { id: 1, name: "Đoàn Trần Đức Anh", dob: "2010-02-14", gender: "Nam", group: 1, role: ["student"], phone: "", email: "" },
-  { id: 2, name: "Nguyễn Anh Bi", dob: "2010-05-12", gender: "Nam", group: 1, role: ["student"], phone: "0901234567", email: "" },
-  { id: 3, name: "Lê Thành Công", dob: "2010-09-25", gender: "Nam", group: 1, role: ["student"], phone: "0941081242", email: "" },
-  { id: 4, name: "Lê Quang Dũng", dob: "2010-04-18", gender: "Nam", group: 1, role: ["vice_study"], phone: "0835492657", email: "" },
-  { id: 5, name: "Nguyễn Duy Dũng", dob: "2010-10-18", gender: "Nam", group: 1, role: ["student"], phone: "0918734847", email: "" },
-  { id: 6, name: "Thổ Gia Hiếu", dob: "2010-04-03", gender: "Nam", group: 1, role: ["student"], phone: "0931293847", email: "" },
-  { id: 7, name: "Nguyễn Viết Hoàng", dob: "2010-07-19", gender: "Nam", group: 1, role: ["student"], phone: "0933758245", email: "" },
-  { id: 8, name: "Lê Đại Hùng", dob: "2010-10-15", gender: "Nam", group: 1, role: ["student"], phone: "0898492842", email: "" },
-  { id: 9, name: "Hoàng Ngọc Hương", dob: "2010-04-14", gender: "Nữ", group: 1, role: ["vice_culture"], phone: "0987654321", email: "" },
-  { id: 10, name: "Phạm Quang Huy", dob: "2010-03-22", gender: "Nam", group: 1, role: ["student"], phone: "0912375819", email: "" },
-  { id: 11, name: "Nguyễn Lê Khánh Huyền", dob: "2010-01-27", gender: "Nữ", group: 1, role: ["secretary"], phone: "0918294812", email: "" },
-  { id: 12, name: "Phạm Hoàng Khôi", dob: "2010-11-12", gender: "Nam", group: 1, role: ["student"], phone: "0891283748", email: "" },
-  { id: 13, name: "Nguyễn Đoàn Thiên Kim", dob: "2010-08-17", gender: "Nữ", group: 1, role: ["student"], phone: "0898492812", email: "" },
-  { id: 14, name: "Đào Khánh Linh", dob: "2010-07-18", gender: "Nữ", group: 1, role: ["student"], phone: "0912384751", email: "" },
-  { id: 15, name: "Dương Khánh Linh", dob: "2010-10-07", gender: "Nữ", group: 1, role: ["student"], phone: "0891827364", email: "" },
-  { id: 16, name: "Trần Ngọc Khánh Linh", dob: "2010-03-09", gender: "Nữ", group: 1, role: ["student"], phone: "0912384729", email: "" },
-  { id: 17, name: "Lê Kim Long", dob: "2010-11-18", gender: "Nam", group: 1, role: ["vice_subject", "group_leader"], phone: "0918273645", email: "" },
-  { id: 18, name: "Bùi Quốc Minh", dob: "2010-03-22", gender: "Nam", group: 1, role: ["vice_subject"], phone: "0989876543", email: "" },
-  { id: 19, name: "Trần Nguyễn Trà My", dob: "2010-02-18", gender: "Nữ", group: 1, role: ["group_leader"], phone: "0988887777", email: "" },
-  { id: 20, name: "Phạm Khánh Ngân", dob: "2010-12-14", gender: "Nữ", group: 1, role: ["vice_subject"], phone: "0977776666", email: "" },
-  { id: 21, name: "Phạm Kim Ngân", dob: "2010-02-10", gender: "Nữ", group: 1, role: ["student"], phone: "0937482910", email: "" },
-  { id: 22, name: "Trần Ngọc Kim Ngân", dob: "2010-09-08", gender: "Nữ", group: 1, role: ["student"], phone: "0918273649", email: "" },
-  { id: 23, name: "Lê Bảo Ngọc", dob: "2010-09-28", gender: "Nữ", group: 1, role: ["treasurer"], phone: "0966665555", email: "" },
-  { id: 24, name: "Nguyễn Thị Yến Ngọc", dob: "2010-05-15", gender: "Nữ", group: 1, role: ["student"], phone: "0912349876", email: "" },
-  { id: 25, name: "Trương Minh Nguyên", dob: "2010-12-02", gender: "Nam", group: 1, role: ["student"], phone: "0981928374", email: "" },
-  { id: 26, name: "Vũ Khôi Nguyên", dob: "2010-11-22", gender: "Nam", group: 1, role: ["student"], phone: "0912384756", email: "" },
-  { id: 27, name: "Huỳnh Hiếu Nhã", dob: "2010-07-13", gender: "Nữ", group: 1, role: ["group_leader"], phone: "0955554444", email: "" },
-  { id: 28, name: "Dương Thanh Nhàn", dob: "2010-10-01", gender: "Nữ", group: 1, role: ["student"], phone: "0987651234", email: "" },
-  { id: 29, name: "Nguyễn Lê Trọng Nhân", dob: "2010-09-03", gender: "Nam", group: 1, role: ["student"], phone: "0918273948", email: "" },
-  { id: 30, name: "Nguyễn Đình Tuấn Nhật", dob: "2010-12-19", gender: "Nam", group: 1, role: ["student"], phone: "0987654320", email: "" },
-  { id: 31, name: "Nguyễn Ngọc Yến Nhi", dob: "2010-05-02", gender: "Nữ", group: 1, role: ["group_leader"], phone: "0944443333", email: "" },
-  { id: 32, name: "Đinh Minh Phát", dob: "2010-10-02", gender: "Nam", group: 1, role: ["vice_labor"], phone: "0933332222", email: "" },
-  { id: 33, name: "Trịnh Minh Phúc", dob: "2010-03-01", gender: "Nam", group: 1, role: ["student"], phone: "0981273948", email: "" },
-  { id: 34, name: "Nguyễn Đắc Minh Quân", dob: "2010-06-14", gender: "Nam", group: 1, role: ["student"], phone: "0918273640", email: "" },
-  { id: 35, name: "Nguyễn Mai Quyên", dob: "2010-07-09", gender: "Nữ", group: 1, role: ["student"], phone: "0987123654", email: "" },
-  { id: 36, name: "Việt Vũ Thành", dob: "2010-04-18", gender: "Nam", group: 1, role: ["student"], phone: "0912384750", email: "" },
-  { id: 37, name: "Lê Ngọc Anh Thư", dob: "2010-04-22", gender: "Nữ", group: 1, role: ["monitor"], phone: "0922221111", email: "" },
-  { id: 38, name: "Nguyễn Thủy Trâm", dob: "2010-11-19", gender: "Nữ", group: 1, role: ["student"], phone: "0987654311", email: "" },
-  { id: 39, name: "Huỳnh Bảo Trân", dob: "2010-12-22", gender: "Nữ", group: 1, role: ["student"], phone: "0912384711", email: "" },
-  { id: 40, name: "Lê Khánh Trang", dob: "2010-07-23", gender: "Nữ", group: 1, role: ["student"], phone: "0987123411", email: "" },
-  { id: 41, name: "Phạm Minh Trang", dob: "2010-06-10", gender: "Nữ", group: 1, role: ["student"], phone: "0918273611", email: "" },
-  { id: 42, name: "Nguyễn Phú Trọng", dob: "2010-02-25", gender: "Nam", group: 1, role: ["student"], phone: "0987651122", email: "" },
-  { id: 43, name: "Nguyễn Minh Trường", dob: "2010-02-15", gender: "Nam", group: 1, role: ["student"], phone: "0918271122", email: "" },
-  { id: 44, name: "Đoàn Ngọc Thanh Vy", dob: "2010-10-10", gender: "Nữ", group: 1, role: ["student"], phone: "0981122334", email: "" },
-  { id: 45, name: "Nguyễn Thủy Vy", dob: "2010-01-19", gender: "Nữ", group: 1, role: ["student"], phone: "0911223344", email: "" },
-  { id: 46, name: "Trịnh Thị Như Ý", dob: "2010-01-27", gender: "Nữ", group: 1, role: ["student"], phone: "0987112233", email: "" }
+// C7AIO Students & Permissions Management Module
+// Danh sách học sinh, xác thực đăng nhập, phân quyền hệ thống
+
+const CURRENT_CLASS_VERSION = '11C7_2026_2027';
+
+const DEFAULT_STUDENTS = [
+  { id: 1, name: "Đoàn Trần Đức Anh", role: ["student"], dob: "2010-07-24", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 2, name: "Nguyễn Ngọc Thiên Ân", role: ["student"], dob: "2010-01-16", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C9", note: "" },
+  { id: 3, name: "Nguyễn Anh Bi", role: ["student"], dob: "2010-11-14", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 4, name: "Lê Thành Công", role: ["student"], dob: "2010-08-25", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 5, name: "Lê Quang Dũng", role: ["student"], dob: "2010-04-09", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 6, name: "Nguyễn Duy Dũng", role: ["student"], dob: "2010-07-19", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 7, name: "Thổ Gia Hiếu", role: ["student"], dob: "2010-09-27", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 8, name: "Nguyễn Viết Hoàng", role: ["student"], dob: "2010-01-12", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 9, name: "Lê Đại Hùng", role: ["student"], dob: "2010-10-19", gender: "Nam", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 10, name: "Hoàng Ngọc Hương", role: ["student"], dob: "2010-04-24", gender: "Nữ", phone: "", email: "", group: 1, previousClass: "10C7", note: "" },
+  { id: 11, name: "Phạm Quang Huy", role: ["student"], dob: "2010-03-20", gender: "Nam", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 12, name: "Phạm Hoàng Khôi", role: ["student"], dob: "2010-10-27", gender: "Nam", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 13, name: "Nguyễn Đoàn Thiên Kim", role: ["student"], dob: "2010-12-13", gender: "Nữ", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 14, name: "Đào Khánh Linh", role: ["student"], dob: "2010-01-16", gender: "Nữ", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 15, name: "Dương Khánh Linh", role: ["student"], dob: "2010-11-02", gender: "Nữ", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 16, name: "Lê Kim Long", role: ["student"], dob: "2010-08-26", gender: "Nam", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 17, name: "Bùi Quốc Minh", role: ["student"], dob: "2010-05-22", gender: "Nam", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 18, name: "Trần Nguyễn Trà My", role: ["student"], dob: "2010-02-18", gender: "Nữ", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 19, name: "Trần Ngọc Kim Ngân", role: ["student"], dob: "2010-09-08", gender: "Nữ", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 20, name: "Lê Bảo Ngọc", role: ["student"], dob: "2010-05-26", gender: "Nữ", phone: "", email: "", group: 2, previousClass: "10C7", note: "" },
+  { id: 21, name: "Trương Minh Nguyên", role: ["student"], dob: "2010-01-20", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 22, name: "Vũ Khôi Nguyên", role: ["student"], dob: "2010-07-25", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 23, name: "Huỳnh Hiếu Nhã", role: ["student"], dob: "2010-08-22", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 24, name: "Dương Thanh Nhàn", role: ["student"], dob: "2010-10-31", gender: "Nữ", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 25, name: "Nguyễn Lê Trọng Nhân", role: ["student"], dob: "2010-03-26", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 26, name: "Nguyễn Đình Tuấn Nhật", role: ["student"], dob: "2010-09-17", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 27, name: "Nguyễn Ngọc Yến Nhi", role: ["student"], dob: "2010-03-30", gender: "Nữ", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 28, name: "Đinh Minh Phát", role: ["student"], dob: "2010-09-01", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 29, name: "Trịnh Minh Phúc", role: ["student"], dob: "2010-01-04", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 30, name: "Nguyễn Đắc Minh Quân", role: ["student"], dob: "2010-11-24", gender: "Nam", phone: "", email: "", group: 3, previousClass: "10C7", note: "" },
+  { id: 31, name: "Nguyễn Mai Quyên", role: ["student"], dob: "2010-04-08", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 32, name: "Việt Vũ Thành", role: ["student"], dob: "2010-10-09", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 33, name: "Lê Ngọc Anh Thư", role: ["student"], dob: "2010-04-26", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 34, name: "Nguyễn Thùy Trâm", role: ["student"], dob: "2010-03-16", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 35, name: "Huỳnh Bảo Trân", role: ["student"], dob: "2010-11-22", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 36, name: "Lê Khánh Trang", role: ["student"], dob: "2010-06-23", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 37, name: "Nguyễn Phú Trọng", role: ["student"], dob: "2010-06-25", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 38, name: "Nguyễn Minh Trường", role: ["student"], dob: "2010-02-15", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 39, name: "Đoàn Ngọc Thanh Vy", role: ["student"], dob: "2010-10-02", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 40, name: "Trần Thảo Vy", role: ["student"], dob: "2010-09-29", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C9", note: "" },
+  { id: 41, name: "Trịnh Thị Như Ý", role: ["student"], dob: "2010-01-27", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" }
 ];
 
-// Danh mục chức vụ chuẩn
+let storedVersion = (typeof localStorage !== 'undefined') ? localStorage.getItem('c7aio_class_version') : null;
+let STUDENTS = DEFAULT_STUDENTS;
+if (typeof localStorage !== 'undefined') {
+  if (storedVersion === CURRENT_CLASS_VERSION) {
+    const cached = localStorage.getItem('c7aio_students_cache');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) STUDENTS = parsed;
+      } catch (e) {
+        STUDENTS = DEFAULT_STUDENTS;
+      }
+    }
+  } else {
+    localStorage.setItem('c7aio_class_version', CURRENT_CLASS_VERSION);
+    localStorage.setItem('c7aio_students_cache', JSON.stringify(DEFAULT_STUDENTS));
+  }
+}
+
+// Cấu hình danh mục chức vụ
 const ROLES = {
-  admin: '👑 Quản trị viên (Admin)',
-  monitor: '⭐ Lớp trưởng',
-  secretary: '🔥 Bí thư chi đoàn',
-  vice_study: '📚 Lớp phó học tập',
-  vice_labor: '🧹 Lớp phó lao động',
-  vice_culture: '🎭 Lớp phó văn thể mỹ',
-  vice_subject: '📝 Lớp phó bộ môn',
-  treasurer: '💰 Thủ quỹ',
-  group_leader: '👥 Tổ trưởng',
-  student: '👤 Học sinh'
+  'admin': '👨‍💼 Quản trị viên (Admin)',
+  'monitor': '⭐️ Lớp trưởng',
+  'secretary': '🔥 Bí thư chi đoàn',
+  'vice_study': '📚 Lớp phó học tập',
+  'vice_labor': '🧹 Lớp phó lao động',
+  'vice_art': '🎭 Lớp phó văn thể mỹ',
+  'vice_subject': '📝 Lớp phó bộ môn',
+  'treasurer': '💰 Thủ quỹ',
+  'group_leader': '👥 Tổ trưởng',
+  'student': '👤 Học sinh'
 };
 
-// Màu sắc nhận diện chức vụ (Figma Theme)
 const ROLE_COLORS = {
-  admin: '#ef4444',
-  monitor: '#f59e0b',
-  secretary: '#ec4899',
-  vice_study: '#3b82f6',
-  vice_labor: '#10b981',
-  vice_culture: '#8b5cf6',
-  vice_subject: '#06b6d4',
-  treasurer: '#d97706',
-  group_leader: '#6366f1',
-  student: '#64748b'
+  'admin': '#ef4444',
+  'monitor': '#f59e0b',
+  'secretary': '#ec4899',
+  'vice_study': '#3b82f6',
+  'vice_labor': '#10b981',
+  'vice_art': '#8b5cf6',
+  'vice_subject': '#06b6d4',
+  'treasurer': '#14b8a6',
+  'group_leader': '#6366f1',
+  'student': '#64748b'
 };
 
-// Danh mục quyền hạn trong hệ thống
+// Cấu hình các quyền hạn trong hệ thống
 const PERMISSIONS = {
-  manage_students: 'Quản lý Hồ sơ học sinh',
-  manage_tasks: 'Giao & Quản lý nhiệm vụ',
-  manage_schedule: 'Quản lý Thời khóa biểu',
-  manage_notifs: 'Đăng & Quản lý thông báo',
-  manage_roles: 'Điều hành Phân quyền',
-  view_logs: 'Xem Nhật ký hoạt động'
+  'manage_students': 'Quản lý Hồ sơ học sinh',
+  'manage_tasks': 'Giao & Quản lý nhiệm vụ',
+  'manage_schedule': 'Quản lý Thời khóa biểu',
+  'manage_notifications': 'Đăng & Quản lý thông báo',
+  'manage_roles': 'Điều hành Phân quyền',
+  'view_logs': 'Xem Nhật ký hoạt động'
 };
 
 // Cấu hình phân quyền mặc định
 let ROLE_PERMISSIONS_CONFIG = {
-  monitor: ['manage_tasks', 'manage_schedule', 'manage_notifs', 'view_logs'],
-  secretary: ['manage_tasks', 'manage_schedule', 'manage_notifs', 'view_logs'],
-  vice_study: ['manage_tasks', 'manage_schedule', 'manage_notifs'],
-  vice_labor: ['manage_tasks'],
-  vice_culture: ['manage_tasks'],
-  vice_subject: ['manage_tasks'],
-  treasurer: [],
-  group_leader: ['manage_tasks'],
-  student: []
+  'admin': Object.keys(PERMISSIONS),
+  'monitor': ['manage_tasks', 'manage_schedule', 'manage_notifications', 'manage_students', 'view_logs'],
+  'secretary': ['manage_tasks', 'manage_notifications'],
+  'vice_study': ['manage_tasks', 'manage_schedule', 'manage_notifications'],
+  'vice_labor': ['manage_tasks'],
+  'vice_art': ['manage_tasks'],
+  'vice_subject': ['manage_tasks'],
+  'treasurer': ['manage_tasks', 'manage_notifications'],
+  'group_leader': ['manage_tasks'],
+  'student': []
 };
 
-// Hệ thống xác thực đăng nhập
-function loginUser(nameOrAdmin, secret) {
-  const cleanName = (nameOrAdmin || '').trim().toLowerCase();
-  const cleanSecret = (secret || '').trim().toLowerCase();
+// Load quyền hạn từ cache nếu có
+const cachedPerms = localStorage.getItem('c7aio_permissions_cache');
+if (cachedPerms) {
+  try {
+    ROLE_PERMISSIONS_CONFIG = JSON.parse(cachedPerms);
+  } catch (e) {
+    console.error('Lỗi parse permissions cache', e);
+  }
+}
+
+/**
+ * Xử lý đăng nhập
+ */
+function loginUser(name, secret) {
+  if (!name || !secret) return null;
+  const cleanName = name.trim().toLowerCase();
+  const cleanSecret = secret.trim().toLowerCase();
 
   // 1. Kiểm tra Admin
-  if (cleanName === 'admin' || cleanName === 'quản trị viên' || cleanName === 'quan tri vien') {
-    const validCodes = ['10c7', 'admin', 'admin10c7', 'admin123'];
+  if (cleanName === 'admin' || cleanName === 'quản trị viên' || cleanName.includes('admin')) {
+    const validCodes = ['11c7', '10c7', 'admin', 'admin11c7', 'admin10c7', 'admin123'];
     if (validCodes.includes(cleanSecret)) {
       const adminObj = {
         id: 0,
@@ -140,7 +171,9 @@ function loginUser(nameOrAdmin, secret) {
       group: student.group || 1,
       gender: student.gender || 'Nam',
       phone: student.phone || '',
-      email: student.email || ''
+      email: student.email || '',
+      previousClass: student.previousClass || '10C7',
+      note: student.note || ''
     };
     setCurrentUser(userObj);
     return userObj;
