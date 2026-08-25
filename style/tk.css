@@ -15,9 +15,10 @@
 .stats-top-header {
   background: var(--card-bg);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: var(--glass-border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem 2rem;
+  padding: 1.2rem 1.6rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -41,6 +42,7 @@
 .analytics-card {
   background: var(--card-bg);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.8rem;
@@ -133,41 +135,10 @@
 .matrix-table-card {
   background: var(--card-bg);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
   overflow-x: auto;
-}
-
-.matrix-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.matrix-table th, .matrix-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--input-border);
-  text-align: center;
-}
-
-.matrix-table th:first-child, .matrix-table td:first-child {
-  text-align: left;
-  font-weight: 700;
-  position: sticky;
-  left: 0;
-  background: var(--bg-surface);
-  z-index: 2;
-}
-
-.matrix-table th {
-  background: var(--bg-surface);
-  font-weight: 700;
-  color: var(--text-sub);
-  white-space: nowrap;
-}
-
-.matrix-table tr:hover td {
-  background: rgba(99, 102, 241, 0.05);
 }

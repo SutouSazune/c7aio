@@ -1,5 +1,6 @@
 /**
  * C7AIO Permissions (Phân Quyền) Stylesheet
+ * High-end Figma aesthetics, Matrix Table & Role Management
  */
 
 .pq-page-container {
@@ -11,9 +12,25 @@
   gap: 1.5rem;
 }
 
+.pq-top-header {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
 .pq-table-card {
   background: var(--card-bg);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
@@ -22,8 +39,33 @@
 }
 
 .perm-checkbox-custom {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
   accent-color: var(--primary);
+  border-radius: 4px;
+  transition: transform 0.2s ease;
+}
+
+.perm-checkbox-custom:hover {
+  transform: scale(1.2);
+}
+
+.role-title-tag {
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.role-holder-chip {
+  display: inline-block;
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-top: 2px;
 }
