@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>11C7 AIO - Quản Lý Hồ Sơ Học Sinh</title>
+  <title>10C7 AIO - Quản Lý Hồ Sơ Học Sinh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,12 +17,12 @@
     <div class="header-content">
       <div class="header-left">
         <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
-        <div classheader-titles">
+        <div class="header-titles">
           <div class="header-title-row">
             <span class="header-icon">👨‍🎓</span>
             <span class="header-title-text">Hồ Sơ Học Sinh</span>
           </div>
-          <p>Danh bạ & thông tin chi tiết thành viên lớp 11C7 (Năm học 2026-2027)</p>
+          <p>Danh sách thông tin & liên lạc thành viên 10C7</p>
         </div>
       </div>
       <div class="header-right">
@@ -36,23 +36,23 @@
 
   <main class="hs-page-container">
 
-    <!-- Top Action & Search Bar -->
-    <section class="hs-top-bar">
+    <!-- Top Action Bar -->
+    <section class="hs-action-bar">
       <div class="c7-search-box">
         <span class="c7-search-icon">🔍</span>
-        <input type="text" id="hsSearchInput" class="c7-search-input" placeholder="Tìm kiếm theo tên, SĐT, Email, Lớp cũ..." oninput="handleStudentSearch(this.value)">
+        <input type="text" id="hsSearchInput" class="c7-search-input" placeholder="Tìm kiếm theo tên, SĐT, Email...">
       </div>
 
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <div class="hs-btn-group">
         <button class="c7-btn c7-btn-secondary" onclick="exportStudentsCsv()">
-          📤 Xuất CSV
+          📥 Xuất CSV
         </button>
         <button class="c7-btn c7-btn-secondary" onclick="triggerImportCsv()">
-          📥 Nhập CSV
+          📤 Nhập CSV
         </button>
-        <input type="file" id="csvFileInput" accept=".csv, .json" style="display: none;" onchange="handleCsvFile(event)">
-        <button class="c7-btn c7-btn-primary" onclick="openAddStudentModal()">
-          <span>+</span> Thêm Học Sinh
+        <input type="file" id="hsCsvFileInput" accept=".csv" style="display: none;" onchange="handleCsvImport(event)">
+        <button class="c7-btn c7-btn-primary" id="btnOpenAddStudent" onclick="openAddStudentModal()">
+          ➕ Thêm Học Sinh
         </button>
       </div>
     </section>
@@ -146,9 +146,15 @@
           </div>
         </div>
 
-        <div>
-          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Địa chỉ thường trú</label>
-          <input type="text" id="inputStdAddress" class="form-control-custom" placeholder="Số nhà, đường, phường/xã...">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Số CCCD / Mã định danh</label>
+            <input type="text" id="inputStdCccd" class="form-control-custom" placeholder="12 chữ số...">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Địa chỉ thường trú</label>
+            <input type="text" id="inputStdAddress" class="form-control-custom" placeholder="Số nhà, đường, phường/xã...">
+          </div>
         </div>
       </div>
 
@@ -163,7 +169,7 @@
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
