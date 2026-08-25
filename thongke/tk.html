@@ -16,9 +16,12 @@
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <a href="../index.html" class="back-btn">←</a>
+        <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
         <div class="header-titles">
-          <h1>📊 Báo Cáo & Thống Kê</h1>
+          <div class="header-title-row">
+            <span class="header-icon">📊</span>
+            <span class="header-title-text">Báo Cáo & Thống Kê</span>
+          </div>
           <p>Phân tích tỷ lệ hoàn thành nhiệm vụ & tiến độ học tập</p>
         </div>
       </div>
@@ -36,7 +39,7 @@
     <!-- Top Action Card -->
     <section class="stats-top-header">
       <div>
-        <h2 id="statsSubjectTitle" style="font-size: 1.3rem; font-weight: 800;">Tiến Độ Cá Nhân</h2>
+        <h2 id="statsSubjectTitle" style="font-size: 1.25rem; font-weight: 800;">Tiến Độ Cá Nhân</h2>
         <p style="font-size: 0.85rem; color: var(--text-sub);" id="statsSubtitle">Dữ liệu được đồng bộ trực tiếp</p>
       </div>
 
@@ -124,13 +127,14 @@
     <section class="matrix-table-card" id="classMatrixSection">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
         <h3 style="font-size: 1.15rem; font-weight: 800;">📋 Bảng Tiến Độ Toàn Lớp</h3>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="matrixSearchInput" class="form-control-custom" placeholder="Lọc theo tên học sinh..." style="padding: 6px 12px; font-size: 0.85rem; width: 220px;" oninput="filterMatrixStudents(this.value)">
+        <div class="c7-search-box" style="max-width: 260px;">
+          <span class="c7-search-icon">🔍</span>
+          <input type="text" id="matrixSearchInput" class="c7-search-input" placeholder="Lọc theo tên học sinh..." oninput="filterMatrixStudents(this.value)">
         </div>
       </div>
 
       <div style="overflow-x: auto;">
-        <table class="matrix-table" id="classMatrixTable">
+        <table class="c7-table" id="classMatrixTable">
           <!-- Rendered by tk.js -->
         </table>
       </div>

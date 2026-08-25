@@ -19,9 +19,12 @@
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <a href="../index.html" class="back-btn">←</a>
+        <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
         <div class="header-titles">
-          <h1>📋 Quản Lý Nhiệm Vụ</h1>
+          <div class="header-title-row">
+            <span class="header-icon">📋</span>
+            <span class="header-title-text">Quản Lý Nhiệm Vụ</span>
+          </div>
           <p>Danh sách bài tập, hạn nộp & check-in tiến độ</p>
         </div>
       </div>
@@ -38,9 +41,9 @@
 
     <!-- Top Action & Filter Bar -->
     <section class="task-controls-bar">
-      <div class="search-task-box">
-        <span class="search-icon-task">🔍</span>
-        <input type="text" id="taskSearchInput" class="search-task-input" placeholder="Tìm kiếm nhiệm vụ, môn học, phân loại..." oninput="handleTaskSearch(this.value)">
+      <div class="c7-search-box">
+        <span class="c7-search-icon">🔍</span>
+        <input type="text" id="taskSearchInput" class="c7-search-input" placeholder="Tìm kiếm nhiệm vụ, môn học, phân loại..." oninput="handleTaskSearch(this.value)">
       </div>
 
       <div class="filter-pills">
@@ -51,7 +54,7 @@
       </div>
 
       <div id="adminTaskBtnArea" style="display: none;">
-        <button class="btn-add-task" onclick="openTaskModal()">
+        <button class="c7-btn c7-btn-primary" onclick="openTaskModal()">
           <span>+</span> Giao Nhiệm Vụ
         </button>
       </div>
@@ -68,7 +71,7 @@
   <div class="modal-overlay-task" id="taskModalOverlay">
     <div class="modal-box-task">
       <div class="modal-header-task">
-        <h2 id="modalTaskTitle">➕ Giao Nhiệm Vụ Mới</h2>
+        <h2 id="modalTaskTitle" style="font-size: 1.25rem; font-weight: 800;">➕ Giao Nhiệm Vụ Mới</h2>
         <button class="modal-close-task" onclick="closeTaskModal()">✕</button>
       </div>
 
@@ -116,7 +119,7 @@
         <!-- Right: Assignees Selection -->
         <div class="student-selector-panel">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Giao cho học sinh <span id="assignCountLabel">(40/40)</span></label>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Giao cho học sinh <span id="assignCountLabel">(10/10)</span></label>
           </div>
 
           <div class="group-quick-buttons">

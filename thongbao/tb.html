@@ -18,9 +18,12 @@
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <a href="../index.html" class="back-btn">←</a>
+        <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
         <div class="header-titles">
-          <h1>🔔 Bảng Tin & Thông Báo</h1>
+          <div class="header-title-row">
+            <span class="header-icon">🔔</span>
+            <span class="header-title-text">Bảng Tin & Thông Báo</span>
+          </div>
           <p>Tin tức, lịch kiểm tra & thông báo quan trọng</p>
         </div>
       </div>
@@ -37,9 +40,9 @@
 
     <!-- Top Controls Bar -->
     <section class="notif-top-bar">
-      <div class="search-task-box">
-        <span class="search-icon-task">🔍</span>
-        <input type="text" id="notifSearchInput" class="search-task-input" placeholder="Tìm kiếm thông báo..." oninput="handleNotifSearch(this.value)">
+      <div class="c7-search-box">
+        <span class="c7-search-icon">🔍</span>
+        <input type="text" id="notifSearchInput" class="c7-search-input" placeholder="Tìm kiếm thông báo..." oninput="handleNotifSearch(this.value)">
       </div>
 
       <div class="filter-pills">
@@ -51,7 +54,7 @@
       </div>
 
       <div id="adminNotifBtnArea" style="display: none;">
-        <button class="btn-add-task" onclick="openNotifModal()">
+        <button class="c7-btn c7-btn-primary" onclick="openNotifModal()">
           <span>+</span> Đăng Thông Báo
         </button>
       </div>
@@ -67,9 +70,9 @@
   <!-- Modal: Create / Edit Notification -->
   <div class="c7-dialog-overlay" id="notifModalOverlay" style="display: none;">
     <div class="c7-dialog-box" style="max-width: 650px; text-align: left;">
-      <h3 id="notifModalTitle" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;">📢 Đăng Thông Báo Mới</h3>
+      <h3 id="notifModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">📢 Đăng Thông Báo Mới</h3>
       
-      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
         <div>
           <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tiêu đề thông báo (*)</label>
           <input type="text" id="inputNotifTitle" class="form-control-custom" placeholder="vd: Thông báo nộp bài thu hoạch GDQP...">
@@ -87,7 +90,7 @@
           </div>
           <div style="display: flex; align-items: center; gap: 8px; padding-top: 24px;">
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
-              <input type="checkbox" id="checkNotifPin" style="width: 18px; height: 18px;">
+              <input type="checkbox" id="checkNotifPin" style="width: 18px; height: 18px; accent-color: var(--primary);">
               <span>📌 Ghim lên đầu</span>
             </label>
           </div>
