@@ -1,31 +1,29 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>11C7 AIO - Quản Lý Nhiệm Vụ & Bài Tập</title>
+  <title>10C7 AIO - Quản Lý Nhiệm Vụ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Quill Snow CSS -->
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css?v=3.3.0" rel="stylesheet">
-  <link rel="stylesheet" href="../style/hub.css?v=3.3.0">
-  <link rel="stylesheet" href="../style/nv.css?v=3.3.0">
+  <link rel="stylesheet" href="../style/hub.css?v=3.3.2">
+  <link rel="stylesheet" href="../style/nv.css?v=3.3.2">
 </head>
 <body>
 
-  <!-- Top Navigation Header -->
   <header class="header">
     <div class="header-content">
       <div class="header-left">
         <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
         <div class="header-titles">
           <div class="header-title-row">
-            <span class="header-icon">📋</span>
-            <span class="header-title-text">Quản Lý Nhiệm Vụ</span>
+            <span class="header-icon">📌</span>
+            <span class="header-title-text">Nhiệm Vụ Lớp Học</span>
           </div>
-          <p>Danh sách bài tập, hạn nộp & check-in tiến độ</p>
+          <p>Giao việc, báo cáo tiến độ & check-in hoàn thành</p>
         </div>
       </div>
       <div class="header-right">
@@ -37,116 +35,90 @@
     </div>
   </header>
 
-  <main class="tasks-container">
+  <main class="nv-page-container">
 
     <!-- Top Action & Filter Bar -->
-    <section class="task-controls-bar">
-      <div class="c7-search-box">
-        <span class="c7-search-icon">🔍</span>
-        <input type="text" id="taskSearchInput" class="c7-search-input" placeholder="Tìm kiếm nhiệm vụ, môn học, phân loại..." oninput="handleTaskSearch(this.value)">
+    <section class="nv-action-bar">
+      <div class="nv-filter-group">
+        <button class="nv-filter-chip active" data-filter="all" onclick="filterTasks('all', this)">Tất cả</button>
+        <button class="nv-filter-chip" data-filter="pending" onclick="filterTasks('pending', this)">Đang làm</button>
+        <button class="nv-filter-chip" data-filter="completed" onclick="filterTasks('completed', this)">Đã xong</button>
+        <button class="nv-filter-chip" data-filter="mine" onclick="filterTasks('mine', this)">Việc của tôi</button>
       </div>
-
-      <div class="filter-pills">
-        <button class="filter-pill-btn active" data-filter="all" onclick="setTaskFilter('all')">Tất cả</button>
-        <button class="filter-pill-btn" data-filter="pending" onclick="setTaskFilter('pending')">⏳ Đang làm</button>
-        <button class="filter-pill-btn" data-filter="completed" onclick="setTaskFilter('completed')">✅ Đã hoàn thành</button>
-        <button class="filter-pill-btn" data-filter="urgent" onclick="setTaskFilter('urgent')">🔥 Gấp / Sắp hết hạn</button>
-      </div>
-
-      <div id="adminTaskBtnArea" style="display: none;">
-        <button class="c7-btn c7-btn-primary" onclick="openTaskModal()">
-          <span>+</span> Giao Nhiệm Vụ
+      <div>
+        <button class="c7-btn c7-btn-primary" id="btnOpenAddTask" onclick="openAddTaskModal()">
+          ➕ Giao Nhiệm Vụ
         </button>
       </div>
     </section>
 
-    <!-- Task List Area -->
-    <section class="task-list-wrap" id="taskListContainer">
-      <!-- Tasks rendered dynamically by nv.js -->
+    <!-- Tasks Grid List -->
+    <section class="nv-tasks-grid" id="tasksContainer">
+      <!-- Rendered by nv.js -->
     </section>
 
   </main>
 
   <!-- Modal: Add / Edit Task -->
-  <div class="modal-overlay-task" id="taskModalOverlay">
-    <div class="modal-box-task">
-      <div class="modal-header-task">
-        <h2 id="modalTaskTitle" style="font-size: 1.25rem; font-weight: 800;">➕ Giao Nhiệm Vụ Mới</h2>
-        <button class="modal-close-task" onclick="closeTaskModal()">✕</button>
-      </div>
+  <div class="c7-dialog-overlay" id="taskModalOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 540px; text-align: left;">
+      <h3 id="taskModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">➕ Giao Nhiệm Vụ Mới</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tiêu đề nhiệm vụ (*)</label>
+          <input type="text" id="inputTaskTitle" class="form-control-custom" placeholder="vd: Trực nhật tổ 1 thứ 2, Chuẩn bị bài thuyết trình...">
+        </div>
 
-      <div class="modal-body-task-split">
-        <!-- Left: Task Metadata -->
-        <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Mô tả chi tiết / Yêu cầu</label>
+          <textarea id="inputTaskDesc" class="form-control-custom" rows="3" placeholder="Ghi chú các công việc cần làm..."></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tên nhiệm vụ / Bài tập (*)</label>
-            <input type="text" id="inputTaskName" class="form-control-custom" placeholder="vd: Hoàn thành đề cương Toán 10 Chương 1...">
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Giao cho</label>
+            <select id="selectTaskAssigneeType" class="form-control-custom" onchange="handleAssigneeTypeChange()">
+              <option value="all">Toàn lớp</option>
+              <option value="group">Theo Tổ (1, 2, 3, 4)</option>
+              <option value="student">Cá nhân học sinh</option>
+            </select>
           </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-              <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phân loại</label>
-              <select id="inputTaskCategory" class="form-control-custom">
-                <option value="Bài tập">📚 Bài tập về nhà</option>
-                <option value="Học tập">📖 Học tập / Ôn thi</option>
-                <option value="Lao động">🧹 Lao động / Vệ sinh</option>
-                <option value="Đoàn / Đội">🚩 Hoạt động Đoàn - Đội</option>
-                <option value="Quỹ lớp">💰 Đóng góp / Quỹ lớp</option>
-                <option value="Khác">📌 Khác</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Mức độ ưu tiên</label>
-              <select id="inputTaskPriority" class="form-control-custom">
-                <option value="Bình thường">Bình thường</option>
-                <option value="Khẩn cấp">🔥 Khẩn cấp</option>
-                <option value="Thấp">Thấp</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Hạn nộp</label>
-            <input type="datetime-local" id="inputTaskDeadline" class="form-control-custom">
-          </div>
-
-          <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Chi tiết & Hướng dẫn</label>
-            <div id="task-editor-container" style="height: 140px; background: var(--bg-surface);"></div>
+          <div id="assigneeDetailWrap">
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Chi tiết người nhận</label>
+            <select id="selectTaskAssigneeValue" class="form-control-custom">
+              <option value="all">Toàn lớp (Tất cả)</option>
+            </select>
           </div>
         </div>
 
-        <!-- Right: Assignees Selection -->
-        <div class="student-selector-panel">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Giao cho học sinh <span id="assignCountLabel">(10/10)</span></label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Hạn chót (* YYYY-MM-DD)</label>
+            <input type="date" id="inputTaskDeadline" class="form-control-custom">
           </div>
-
-          <div class="group-quick-buttons">
-            <button class="btn-group-pick" type="button" onclick="selectAllStudents()">Tất cả</button>
-            <button class="btn-group-pick" type="button" onclick="selectGroup(1)">Tổ 1</button>
-            <button class="btn-group-pick" type="button" onclick="selectGroup(2)">Tổ 2</button>
-            <button class="btn-group-pick" type="button" onclick="selectGroup(3)">Tổ 3</button>
-            <button class="btn-group-pick" type="button" onclick="selectGroup(4)">Tổ 4</button>
-            <button class="btn-group-pick" type="button" onclick="selectCadres()">Ban cán sự</button>
-            <button class="btn-group-pick" type="button" onclick="deselectAllStudents()">Bỏ chọn</button>
-          </div>
-
-          <div class="student-checkbox-list" id="studentCheckboxList">
-            <!-- Checkbox list rendered by nv.js -->
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Mức độ ưu tiên</label>
+            <select id="selectTaskPriority" class="form-control-custom">
+              <option value="normal">Bình thường</option>
+              <option value="urgent">⚡ Khẩn cấp / Quan trọng</option>
+            </select>
           </div>
         </div>
       </div>
 
-      <div style="padding: 1rem 1.6rem; border-top: 1px solid var(--input-border); display: flex; justify-content: flex-end; gap: 12px;">
-        <button class="c7-btn c7-btn-secondary" onclick="closeTaskModal()">Hủy bỏ</button>
-        <button class="c7-btn c7-btn-primary" onclick="saveTaskForm()">Lưu Nhiệm Vụ</button>
+      <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <button class="c7-btn c7-btn-danger" id="btnDeleteTaskTrigger" style="display: none;" onclick="deleteTaskAction()">Xóa nhiệm vụ</button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="c7-btn c7-btn-secondary" onclick="closeTaskModal()">Hủy bỏ</button>
+          <button class="c7-btn c7-btn-primary" onclick="submitTaskAction()">Lưu Nhiệm Vụ</button>
+        </div>
       </div>
     </div>
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
@@ -155,13 +127,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js?v=3.3.0"></script>
-  <script src="../script/firebase-utils.js?v=3.3.0"></script>
-  <script src="../script/students-list.js?v=3.3.0"></script>
-  <script src="../script/hub.js?v=3.3.0"></script>
-  <script src="../script/console.js?v=3.3.0"></script>
-  <!-- Quill JS -->
-  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-  <script src="../script/nv.js?v=3.3.0"></script>
+  <script src="../script/firebase-config.js?v=3.3.2"></script>
+  <script src="../script/firebase-utils.js?v=3.3.2"></script>
+  <script src="../script/students-list.js?v=3.3.2"></script>
+  <script src="../script/hub.js?v=3.3.2"></script>
+  <script src="../script/console.js?v=3.3.2"></script>
+  <script src="../script/nv.js?v=3.3.2"></script>
 </body>
 </html>
