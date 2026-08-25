@@ -38,7 +38,7 @@ const DEFAULT_STUDENTS = [
   { id: 32, name: "Việt Vũ Thành", role: ["student"], dob: "2010-10-09", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 33, name: "Lê Ngọc Anh Thư", role: ["student"], dob: "2010-04-26", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 34, name: "Nguyễn Thùy Trâm", role: ["student"], dob: "2010-03-16", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
-  { id: 35, name: "Huỳnh Bảo Trân", role: ["student"], dob: "2010-11-22", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 35, name: "Huỳnh配合Trân" ? "Huỳnh Bảo Trân" : "Huỳnh Bảo Trân", role: ["student"], dob: "2010-11-22", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 36, name: "Lê Khánh Trang", role: ["student"], dob: "2010-06-23", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 37, name: "Nguyễn Phú Trọng", role: ["student"], dob: "2010-06-25", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 38, name: "Nguyễn Minh Trường", role: ["student"], dob: "2010-02-15", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
@@ -66,8 +66,8 @@ if (typeof localStorage !== 'undefined') {
   }
 }
 
-// Cấu hình danh mục chức vụ
-const ROLES = {
+// Cấu hình danh mục chức vụ (Mặc định + Tùy chỉnh)
+const DEFAULT_ROLES = {
   'admin': '👨‍💼 Quản trị viên (Admin)',
   'monitor': '⭐️ Lớp trưởng',
   'secretary': '🔥 Bí thư chi đoàn',
@@ -80,7 +80,7 @@ const ROLES = {
   'student': '👤 Học sinh'
 };
 
-const ROLE_COLORS = {
+const DEFAULT_ROLE_COLORS = {
   'admin': '#ef4444',
   'monitor': '#f59e0b',
   'secretary': '#ec4899',
@@ -92,6 +92,27 @@ const ROLE_COLORS = {
   'group_leader': '#6366f1',
   'student': '#64748b'
 };
+
+let ROLES = { ...DEFAULT_ROLES };
+let ROLE_COLORS = { ...DEFAULT_ROLE_COLORS };
+
+function applyCustomRoles(customRolesObj) {
+  ROLES = { ...DEFAULT_ROLES };
+  ROLE_COLORS = { ...DEFAULT_ROLE_COLORS };
+  if (customRolesObj && typeof customRolesObj === 'object') {
+    for (const [key, item] of Object.entries(customRolesObj)) {
+      if (item && item.name) {
+        ROLES[key] = item.name;
+        ROLE_COLORS[key] = item.color || '#8b5cf6';
+      }
+    }
+  }
+}
+
+try {
+  const cachedCustomRoles = JSON.parse(localStorage.getItem('c7aio_custom_roles_cache') || '{}');
+  applyCustomRoles(cachedCustomRoles);
+} catch (e) {}
 
 // Cấu hình các quyền hạn trong hệ thống
 const PERMISSIONS = {
