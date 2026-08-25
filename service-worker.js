@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.3-fix';
+const CACHE_NAME = 'c7aio-v3.3.4-refresh';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -29,26 +29,31 @@ const ASSETS_TO_CACHE = [
   './script/tk.js',
   './script/hs.js',
   './script/pq.js',
-  './script/nk.js'
+  './script/nk.js',
+  './manifest.json'
 ];
 
-// Cài đặt Service Worker và lưu trữ tài nguyên
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('✅ Caching C7AIO assets v3.0.0...');
+      return cache.addAll(ASSETS_TO_CACHE).catch(err => {
+        console.log('Lỗi khi cache một số assets:', err);
+        return Promise.resolve();
+      });
+    })
   );
+  self.skipWaiting();
 });
 
-// Kích hoạt SW và dọn dẹp các cache cũ không dùng nữa
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(keys => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('🗑️ Deleting old cache:', key);
+            return caches.delete(key);
           }
         })
       );
@@ -56,33 +61,31 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Chiến lược Network First, fallback về Cache khi mất mạng
-self.addEventListener('fetch', (event) => {
-  // Chỉ cache các request HTTP/HTTPS cơ bản (bỏ qua Firebase realtime websocket hoặc chrome-extension)
-  if (event.request.url.startsWith('http') && !event.request.url.includes('firebasedatabase.app')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Lưu bản sao vào cache nếu response hợp lệ
-          if (response && response.status === 200 && response.type === 'basic') {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  
+  // Ignore Firebase Realtime Database and external CDN calls
+  const url = new URL(event.request.url);
+  if (url.origin.includes('firebaseio.com') || 
+      url.origin.includes('googleapis.com') ||
+      url.origin.includes('gstatic.com')) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        // Fetch in background to update cache (Stale-While-Revalidate)
+        fetch(event.request).then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, networkResponse);
             });
           }
-          return response;
-        })
-        .catch(() => {
-          // Khi offline, trả về dữ liệu từ cache
-          return caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
-              return caches.match('./index.html');
-            }
-          });
-        })
-    );
-  }
+        }).catch(() => {});
+        return cachedResponse;
+      }
+      return fetch(event.request);
+    })
+  );
 });
