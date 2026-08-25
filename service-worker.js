@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.0-11c7';
+const CACHE_NAME = 'c7aio-v3.3.1-11c7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,7 +36,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('✅ Caching C7AIO assets v3.0.0...');
+      console.log('✅ Caching C7AIO assets v3.3.1...');
       return cache.addAll(ASSETS_TO_CACHE).catch(err => {
         console.log('Lỗi khi cache một số assets:', err);
         return Promise.resolve();
