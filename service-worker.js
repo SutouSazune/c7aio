@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.9-clean-roles';
+const CACHE_NAME = 'c7aio-v3.3.10-fix-align';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
