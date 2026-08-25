@@ -5,12 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>10C7 AIO - Phân Quyền Hệ Thống</title>
+  <title>11C7 AIO - Phân Quyền Hệ Thống</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style/hub.css?v=3.3.3">
-  <link rel="stylesheet" href="../style/pq.css?v=3.3.3">
+  <link rel="stylesheet" href="../style/hub.css?v=3.3.5">
+  <link rel="stylesheet" href="../style/pq.css?v=3.3.5">
 </head>
 <body>
 
@@ -37,18 +37,21 @@
 
   <main class="pq-page-container">
 
-    <!-- Top Action Bar -->
     <section class="pq-top-header">
       <div>
-        <h3 style="font-weight: 800; font-size: 1.15rem;">Ma Trận Quyền Hạn (Role Matrix)</h3>
-        <p style="color: var(--text-sub); font-size: 0.85rem;">Tích chọn các quyền mà từng chức vụ được phép thực hiện</p>
+        <h2 style="font-size: 1.25rem; font-weight: 800;">Ma Trận Quyền Hạn (Role Matrix)</h2>
+        <p style="font-size: 0.85rem; color: var(--text-sub);">Tích chọn các quyền mà từng chức vụ được phép thực hiện</p>
       </div>
-      <button class="c7-btn c7-btn-primary" onclick="saveRolesConfig()">
-        💾 Lưu Cấu Hình Phân Quyền
-      </button>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="c7-btn c7-btn-secondary" onclick="openAddRoleModal()">
+          ➕ Thêm Vai Trò Mới
+        </button>
+        <button class="c7-btn c7-btn-primary" onclick="saveRolesConfig()">
+          💾 Lưu Cấu Hình Phân Quyền
+        </button>
+      </div>
     </section>
 
-    <!-- Matrix Table Card -->
     <section class="pq-table-card">
       <div class="roles-matrix-container" id="rolesMatrixContainer">
         <!-- Rendered by pq.js -->
@@ -57,8 +60,41 @@
 
   </main>
 
+  <!-- Modal: Add / Edit Custom Role -->
+  <div class="c7-dialog-overlay" id="roleModalOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 480px; text-align: left;">
+      <h3 id="roleModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">➕ Thêm Vai Trò Mới</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tên vai trò / Chức vụ (*)</label>
+          <input type="text" id="inputRoleName" class="form-control-custom" placeholder="vd: 📸 Trưởng ban truyền thông, 🎨 Đội văn nghệ...">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Mã định danh (Key)</label>
+            <input type="text" id="inputRoleKey" class="form-control-custom" placeholder="vd: media, art_club...">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Màu sắc đại diện</label>
+            <input type="color" id="inputRoleColor" value="#8b5cf6" style="width: 100%; height: 42px; border: 1px solid var(--input-border); border-radius: var(--radius-sm); cursor: pointer; background: transparent; padding: 2px;">
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <button class="c7-btn c7-btn-danger" id="btnDeleteRoleTrigger" style="display: none;" onclick="deleteRoleAction()">Xóa vai trò</button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="c7-btn c7-btn-secondary" onclick="closeRoleModal()">Hủy bỏ</button>
+          <button class="c7-btn c7-btn-primary" onclick="submitRoleForm()">Lưu Vai Trò</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
@@ -67,11 +103,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js?v=3.3.3"></script>
-  <script src="../script/firebase-utils.js?v=3.3.3"></script>
-  <script src="../script/students-list.js?v=3.3.3"></script>
-  <script src="../script/hub.js?v=3.3.3"></script>
-  <script src="../script/console.js?v=3.3.3"></script>
-  <script src="../script/pq.js?v=3.3.3"></script>
+  <script src="../script/firebase-config.js?v=3.3.5"></script>
+  <script src="../script/firebase-utils.js?v=3.3.5"></script>
+  <script src="../script/students-list.js?v=3.3.5"></script>
+  <script src="../script/hub.js?v=3.3.5"></script>
+  <script src="../script/console.js?v=3.3.5"></script>
+  <script src="../script/pq.js?v=3.3.5"></script>
 </body>
 </html>
