@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>10C7 AIO - Đăng Nhập Hệ Thống</title>
+  <title>11C7 AIO - Đăng Nhập Hệ Thống</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/hub.css">
+  <link rel="stylesheet" href="style/hub.css?v=3.3.0">
   <style>
     body {
       display: flex;
@@ -69,6 +69,7 @@
       font-weight: 500;
     }
 
+    /* Search Student Box */
     .search-student-wrapper {
       position: relative;
       margin-bottom: 1.2rem;
@@ -101,6 +102,7 @@
       font-size: 1.1rem;
     }
 
+    /* Student Selection Grid */
     .student-select-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -151,6 +153,7 @@
       line-height: 1.3;
     }
 
+    /* Secondary verification forms */
     .verify-card {
       display: none;
       background: var(--bg-surface);
@@ -265,12 +268,14 @@
 <body>
 
   <div class="login-box">
+    <!-- Header / Brand -->
     <div class="login-brand">
       <div class="login-brand-icon">📚</div>
-      <h1>10C7 All In One</h1>
+      <h1>11C7 All In One</h1>
       <p>Cổng thông tin & quản lý học tập lớp học</p>
     </div>
 
+    <!-- Student Selection Flow -->
     <div id="studentSelectionFlow">
       <div class="search-student-wrapper">
         <span class="search-icon-pos">🔍</span>
@@ -278,9 +283,11 @@
       </div>
 
       <div class="student-select-grid" id="studentSelectGrid">
+        <!-- Rendered by JavaScript -->
       </div>
     </div>
 
+    <!-- Verification Card (DOB check) -->
     <div class="verify-card" id="studentVerifyCard">
       <div class="verify-header">
         <div class="verify-avatar" id="verifyAvatar">HS</div>
@@ -301,6 +308,7 @@
       </div>
     </div>
 
+    <!-- Admin Login Card -->
     <div class="verify-card" id="adminLoginCard">
       <div class="verify-header">
         <div class="verify-avatar" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">⚡</div>
@@ -321,6 +329,7 @@
       </div>
     </div>
 
+    <!-- Admin Panel Toggle -->
     <div class="admin-toggle-panel" id="adminTogglePanel">
       <button class="btn-admin-mode" onclick="openAdminLogin()">
         <span>👨‍💼 Đăng nhập với quyền Quản trị viên</span>
@@ -328,20 +337,23 @@
     </div>
   </div>
 
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <script src="script/firebase-config.js"></script>
-  <script src="script/firebase-utils.js"></script>
-  <script src="script/students-list.js"></script>
-  <script src="script/hub.js"></script>
-  <script src="script/console.js"></script>
+  <!-- Core Scripts -->
+  <script src="script/firebase-config.js?v=3.3.0"></script>
+  <script src="script/firebase-utils.js?v=3.3.0"></script>
+  <script src="script/students-list.js?v=3.3.0"></script>
+  <script src="script/hub.js?v=3.3.0"></script>
+  <script src="script/console.js?v=3.3.0"></script>
 
   <script>
     let selectedStudent = null;
 
     window.addEventListener('load', () => {
+      // Nếu đã đăng nhập, chuyển hướng thẳng vào Hub
       if (isLoggedIn()) {
         window.location.href = buildUrl('index.html');
         return;
@@ -349,6 +361,7 @@
 
       renderStudentGrid(STUDENTS);
 
+      // Đồng bộ danh sách học sinh từ Firebase
       if (typeof onSharedStudentsChanged === 'function') {
         onSharedStudentsChanged((data) => {
           if (data && data.length > 0) {
@@ -465,6 +478,7 @@
       }
     }
 
+    // Keyboard support (Enter key)
     document.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         if (document.getElementById('studentVerifyCard').classList.contains('active')) {
