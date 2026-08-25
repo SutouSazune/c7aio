@@ -35,44 +35,53 @@
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .roles-matrix-container {
   overflow-x: auto;
   width: 100%;
   border-radius: var(--radius-md);
+  -webkit-overflow-scrolling: touch;
 }
 
 .roles-matrix-container table {
-  min-width: 1050px;
   width: 100%;
+  min-width: 1050px;
   border-collapse: collapse;
 }
 
 .roles-matrix-container th {
-  padding: 14px 12px;
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: var(--text-sub);
-  background: var(--bg-surface);
-  text-align: center;
-  vertical-align: middle;
-  line-height: 1.4;
-  white-space: normal;
-  border-bottom: 2px solid var(--input-border);
+  padding: 14px 10px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: var(--text-sub) !important;
+  background: var(--bg-surface) !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+  min-width: 130px !important;
+  border-bottom: 2px solid var(--input-border) !important;
 }
 
 .roles-matrix-container th:first-child {
-  text-align: left;
-  min-width: 250px;
-  padding-left: 16px;
+  text-align: left !important;
+  min-width: 260px !important;
+  padding-left: 18px !important;
+  font-size: 0.88rem !important;
 }
 
 .roles-matrix-container td {
-  padding: 14px 12px;
-  border-bottom: 1px solid var(--input-border);
-  vertical-align: middle;
+  padding: 14px 10px !important;
+  border-bottom: 1px solid var(--input-border) !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.roles-matrix-container td:first-child {
+  text-align: left !important;
+  padding-left: 18px !important;
 }
 
 .roles-matrix-container tr:hover td {
@@ -89,7 +98,7 @@
 }
 
 .perm-checkbox-custom:hover {
-  transform: scale(1.2);
+  transform: scale(1.25);
 }
 
 .role-title-tag {
