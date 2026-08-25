@@ -91,17 +91,17 @@ function renderRolesMatrix() {
       : `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">(Chưa có thành viên)</div>`;
 
     const roleControls = `
-      <span style="display: inline-flex; gap: 6px; align-items: center;">
+      <div style="display: inline-flex; gap: 6px; align-items: center; flex-shrink: 0; white-space: nowrap;">
         <button class="btn-action-pill" onclick="openEditRoleModal('${roleKey}')" title="Sửa tên / emoji / màu sắc">✏️ Sửa</button>
         ${isCustom ? `<button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa chức vụ này">🗑️ Xóa</button>` : ''}
-      </span>
+      </div>
     `;
 
     html += `
       <tr>
-        <td style="vertical-align: top; padding: 14px 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-            <div class="role-title-tag" style="color: ${ROLE_COLORS[roleKey] || 'var(--primary)'}; font-weight: 800; font-size: 0.95rem; cursor: pointer;" onclick="openEditRoleModal('${roleKey}')" title="Bấm để chỉnh sửa chức vụ">
+        <td style="vertical-align: top; padding: 14px 16px; min-width: 320px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px;">
+            <div class="role-title-tag" style="color: ${ROLE_COLORS[roleKey] || 'var(--primary)'}; font-weight: 800; font-size: 0.95rem; cursor: pointer; flex: 1; min-width: 0;" onclick="openEditRoleModal('${roleKey}')" title="Bấm để chỉnh sửa chức vụ">
               ${ROLES[roleKey]}
             </div>
             ${roleControls}
