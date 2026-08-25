@@ -81,21 +81,21 @@ function renderRolesMatrix() {
          </div>`
       : `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">(Chưa có thành viên)</div>`;
 
-    const customControls = isCustom ? `
+    const roleControls = `
       <span style="display: inline-flex; gap: 6px; margin-left: 8px;">
-        <button class="btn-action-pill" onclick="openEditRoleModal('${roleKey}')" title="Sửa tên / màu sắc">✏️</button>
-        <button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa vai trò này">🗑️</button>
+        <button class="btn-action-pill" onclick="openEditRoleModal('${roleKey}')" title="Sửa tên / emoji / màu sắc">✏️ Sửa</button>
+        ${isCustom ? `<button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa chức vụ này">🗑️ Xóa</button>` : ''}
       </span>
-    ` : '';
+    `;
 
     html += `
       <tr>
         <td style="vertical-align: top; padding: 14px 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div class="role-title-tag" style="color: ${ROLE_COLORS[roleKey] || 'var(--primary)'}; font-weight: 800; font-size: 0.95rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+            <div class="role-title-tag" style="color: ${ROLE_COLORS[roleKey] || 'var(--primary)'}; font-weight: 800; font-size: 0.95rem; cursor: pointer;" onclick="openEditRoleModal('${roleKey}')" title="Bấm để chỉnh sửa chức vụ">
               ${ROLES[roleKey]}
             </div>
-            ${customControls}
+            ${roleControls}
           </div>
           ${holdersHtml}
         </td>
@@ -135,13 +135,19 @@ function openEditRoleModal(roleKey) {
   editingRoleKey = roleKey;
   const roleName = ROLES[roleKey] || roleKey;
   const roleColor = ROLE_COLORS[roleKey] || '#8b5cf6';
+  const isDefault = typeof DEFAULT_ROLES !== 'undefined' && !!DEFAULT_ROLES[roleKey];
 
-  document.getElementById('roleModalTitle').textContent = '✏️ Chỉnh Sửa Vai Trò';
+  document.getElementById('roleModalTitle').textContent = '✏️ Chỉnh Sửa Chức Vụ';
   document.getElementById('inputRoleName').value = roleName;
   document.getElementById('inputRoleKey').value = roleKey;
   document.getElementById('inputRoleKey').disabled = true; // Key cannot be edited
   document.getElementById('inputRoleColor').value = roleColor;
-  document.getElementById('btnDeleteRoleTrigger').style.display = 'inline-flex';
+  
+  const delBtn = document.getElementById('btnDeleteRoleTrigger');
+  if (delBtn) {
+    delBtn.style.display = 'inline-flex';
+    delBtn.textContent = isDefault ? '🔄 Đặt lại mặc định' : '🗑️ Xóa chức vụ';
+  }
 
   const overlay = document.getElementById('roleModalOverlay');
   if (overlay) overlay.style.display = 'flex';
@@ -200,26 +206,37 @@ async function submitRoleForm() {
 
     closeRoleModal();
     renderRolesMatrix();
-    showToast(editingRoleKey ? 'Đã cập nhật vai trò!' : 'Đã tạo vai trò mới thành công!', 'success');
+    showToast(editingRoleKey ? 'Đã cập nhật chức vụ thành công!' : 'Đã tạo chức vụ mới thành công!', 'success');
   } catch (e) {
     showToast('Lỗi khi lưu vai trò: ' + e.message, 'error');
   }
 }
 
 function confirmDeleteRole(roleKey) {
-  showConfirm('Xóa vai trò', `Bạn có chắc chắn muốn xóa chức vụ "${ROLES[roleKey] || roleKey}" không?`, async () => {
+  const isDefault = typeof DEFAULT_ROLES !== 'undefined' && !!DEFAULT_ROLES[roleKey];
+  const title = isDefault ? 'Đặt lại chức vụ mặc định' : 'Xóa chức vụ';
+  const msg = isDefault 
+    ? `Khôi phục chức vụ "${ROLES[roleKey] || roleKey}" về tên và màu mặc định ban đầu?`
+    : `Bạn có chắc chắn muốn xóa chức vụ "${ROLES[roleKey] || roleKey}" không?`;
+
+  showConfirm(title, msg, async () => {
     try {
       if (typeof deleteSharedCustomRole === 'function') {
         await deleteSharedCustomRole(roleKey);
       }
-      delete ROLES[roleKey];
-      delete ROLE_COLORS[roleKey];
-      delete ROLE_PERMISSIONS_CONFIG[roleKey];
+      if (isDefault) {
+        ROLES[roleKey] = DEFAULT_ROLES[roleKey];
+        ROLE_COLORS[roleKey] = DEFAULT_ROLE_COLORS[roleKey];
+      } else {
+        delete ROLES[roleKey];
+        delete ROLE_COLORS[roleKey];
+        delete ROLE_PERMISSIONS_CONFIG[roleKey];
+      }
 
       renderRolesMatrix();
-      showToast('Đã xóa vai trò thành công!', 'info');
+      showToast(isDefault ? 'Đã đặt lại chức vụ mặc định!' : 'Đã xóa chức vụ thành công!', 'info');
     } catch (e) {
-      showToast('Lỗi khi xóa vai trò: ' + e.message, 'error');
+      showToast('Lỗi khi xóa/đặt lại chức vụ: ' + e.message, 'error');
     }
   });
 }
