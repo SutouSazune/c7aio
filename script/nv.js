@@ -1,597 +1,378 @@
-// Load từ cache ngay lập tức
+/**
+ * C7AIO Tasks (Nhiệm Vụ) Controller
+ * Quản lý danh sách nhiệm vụ, check-in tiến độ, phân công nhóm và rich text editor
+ */
+
 let tasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
 let currentFilter = 'all';
+let searchQuery = '';
 let currentUser = null;
-let quill = null; // Biến global cho editor
+let quillEditor = null;
+let editingTaskId = null;
 
-// Khởi tạo
 window.addEventListener('load', () => {
   currentUser = getCurrentUser();
-  
-  // Chỉ admin mới thêm được task
+  if (!currentUser) {
+    window.location.href = buildUrl('login.html');
+    return;
+  }
+
+  const nameEl = document.getElementById('userNameDisplay');
+  if (nameEl) nameEl.textContent = currentUser.name;
+
   if (checkPermission('manage_tasks')) {
-    document.getElementById('adminControls').style.display = 'block';
+    const btnArea = document.getElementById('adminTaskBtnArea');
+    if (btnArea) btnArea.style.display = 'block';
   }
 
-  // Inject CSS cho bộ chọn học sinh
-  const style = document.createElement('style');
-  style.innerHTML = `
-    .task-modal-layout { display: flex !important; flex-direction: row !important; gap: 25px; min-height: 550px; width: 100%; align-items: stretch; }
-    .task-form-inputs { flex: 1.6; display: flex; flex-direction: column; gap: 15px; }
-    .task-student-selection { 
-      flex: 1; 
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 20px; 
-      display: flex; 
-      flex-direction: column;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-    }
-    #taskModal .modal-content { max-width: 1000px !important; width: 95%; padding: 30px; }
-    .search-student-box {
-      width: 100%;
-      padding: 10px 15px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      font-size: 0.9rem;
-      outline: none;
-      transition: border-color 0.3s;
-    }
-    .search-student-box:focus { border-color: var(--primary-color); }
-    .student-selector-list { 
-      flex: 1; 
-      overflow-y: auto; 
-      max-height: 400px;
-      padding-right: 5px;
-    }
-    .student-selector-list::-webkit-scrollbar { width: 5px; }
-    .student-selector-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-    
-    .student-select-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-bottom: 4px;
-    }
-    .student-select-item:hover { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .student-assign-checkbox { width: 18px; height: 18px; cursor: pointer; }
-    
-    .select-all-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .btn-select-all { background: #fff; border: 1px solid #ddd; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
-
-    @media (max-width: 768px) {
-      .task-modal-layout { flex-direction: column; }
-      .task-student-selection { max-height: 300px; }
-    }
-  `;
-  document.head.appendChild(style);
-
-  // --- FALLBACK ---
-  if (typeof window.showToast !== 'function') window.showToast = (msg) => alert(msg);
-  if (!document.getElementById('fallback-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'fallback-animation-style';
-    style.innerHTML = `
-      :root { --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
-      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-      
-      /* Fallback visibility */
-      .task-item { opacity: 1 !important; transform: none !important; animation: none !important; }
-      @supports (animation: fadeInUp) {
-        .task-item { opacity: 0 !important; animation: fadeInUp 0.5s var(--ease-spring) forwards !important; }
-      }
-      
-      /* Task Specific Styles */
-      .task-btn, .view-content-btn, .view-img-btn {
-        border-radius: 6px;
-        transition: all 0.2s ease;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // Khởi tạo Quill Editor
-  quill = new Quill('#editor-container', {
-    theme: 'snow',
-    placeholder: 'Viết nội dung chi tiết, chèn ảnh, định dạng văn bản tại đây...',
-    modules: {
-      toolbar: [
-        [{ 'header': [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        [{ 'color': [] }, { 'background': [] }],
-        ['link', 'image', 'video'], // Cho phép chèn ảnh trực tiếp
-        ['clean']
-      ]
-    }
-  });
-
-  // Custom Handler cho nút Image để hỗ trợ upload file local (Ảnh hoặc File khác)
-  quill.getModule('toolbar').addHandler('image', () => {
-    selectLocalFile();
-  });
-
-  // Render Skeleton hoặc Cache
-  if (!tasks || tasks.length === 0) {
-    renderSkeletonTasks();
-  } else {
-    renderTasks();
-  }
-
-  // Lắng nghe dữ liệu từ Firebase thay vì loadTasks từ localStorage
-  onSharedTasksChanged((updatedTasks) => {
-    tasks = updatedTasks;
-    renderTasks();
-  });
-});
-
-function renderSkeletonTasks() {
-  const taskList = document.getElementById('taskList');
-  let html = '';
-  for (let i = 0; i < 3; i++) {
-    html += `
-      <li class="task-item" style="padding: 20px; display: flex; gap: 15px; align-items: center;">
-        <div class="skeleton" style="width: 24px; height: 24px; border-radius: 4px;"></div>
-        <div style="flex: 1;">
-          <div class="skeleton" style="width: 60%; height: 24px; margin-bottom: 10px;"></div>
-          <div class="skeleton" style="width: 40%; height: 16px;"></div>
-        </div>
-      </li>
-    `;
-  }
-  taskList.innerHTML = html;
-}
-
-// Hàm chọn file từ máy tính và chèn vào editor
-function selectLocalFile() {
-  if (!quill) return;
-
-  // 1. Kiểm tra xem input đã tồn tại chưa, nếu chưa thì tạo mới và gắn vĩnh viễn vào DOM
-  let input = document.getElementById('quill-file-input-task');
-  if (!input) {
-    input = document.createElement('input');
-    input.id = 'quill-file-input-task';
-    input.type = 'file';
-    input.accept = 'image/*, .pdf, .doc, .docx, .xls, .xlsx';
-    input.style.display = 'none'; // Ẩn hoàn toàn
-    document.body.appendChild(input);
-  }
-
-  // 2. Gán lại sự kiện onchange (để cập nhật closure scope nếu cần, hoặc reset logic)
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        // Lấy vị trí con trỏ hiện tại hoặc cuối văn bản
-        const range = quill.getSelection(true) || { index: quill.getLength() };
-        // Đảm bảo index là số hợp lệ
-        const index = (range.index !== null && range.index !== undefined) ? range.index : quill.getLength();
-
-        if (file.type.startsWith('image/')) {
-          quill.insertEmbed(index, 'image', event.target.result, 'user');
-          quill.setSelection(index + 1, 'user');
-        } else {
-          quill.insertText(index, file.name, 'link', event.target.result, 'user');
-          quill.setSelection(index + file.name.length, 'user');
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-    // Reset giá trị để có thể chọn lại cùng 1 file nếu muốn
-    input.value = '';
-  };
-
-  // 3. Kích hoạt click
-  input.click();
-}
-
-// --- MODAL FUNCTIONS ---
-function openTaskModal() {
-  const modal = document.getElementById('taskModal');
-  const modalBody = modal.querySelector('.modal-body');
-
-  // Tái cấu trúc Modal Body thành 2 cột
-  if (!modalBody.querySelector('.task-modal-layout')) {
-    const originalContent = Array.from(modalBody.children);
-    const layout = document.createElement('div');
-    layout.className = 'task-modal-layout';
-    
-    const left = document.createElement('div');
-    left.className = 'task-form-inputs';
-    originalContent.forEach(child => left.appendChild(child));
-    
-    const right = document.createElement('div');
-    right.className = 'task-student-selection';
-    right.id = 'studentSelectorContainer';
-    
-    layout.appendChild(left);
-    layout.appendChild(right);
-    modalBody.appendChild(layout);
-  }
-
+  initQuill();
+  renderTasks();
   renderStudentSelector();
 
-  if (window.innerWidth < 768) {
-    modal.style.alignItems = 'flex-start';
-    modal.style.overflowY = 'auto';
-    modal.style.paddingTop = '10px';
-  }
-  document.body.style.overflow = 'hidden';
-  document.getElementById('taskModal').style.display = 'flex';
-  // Set default start time to now
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('modalStartTime').value = now.toISOString().slice(0, 16);
-}
-
-function renderStudentSelector() {
-  const container = document.getElementById('studentSelectorContainer');
-  if (!container) return;
-  
-  allSelected = true; // Reset state khi mở modal
-
-  container.innerHTML = `
-    <div class="select-all-bar">
-      <h3 style="font-size: 1rem; margin: 0;">👥 Giao cho:</h3>
-      <button class="btn-select-all" id="btnToggleAll" onclick="toggleSelectAllStudents()">Bỏ chọn tất cả</button>
-    </div>
-    <input type="text" class="search-student-box" placeholder="Tìm tên học sinh..." oninput="filterStudentSelection(this.value)">
-    <div class="student-selector-list" id="studentCheckList">
-      ${STUDENTS.map(s => `
-        <label class="student-select-item" data-name="${s.name.toLowerCase()}">
-          <input type="checkbox" class="student-assign-checkbox" value="${s.id}" checked>
-          <span style="font-size: 0.9rem;">${s.name}</span>
-        </label>
-      `).join('')}
-    </div>
-  `;
-}
-
-function filterStudentSelection(query) {
-  const term = query.toLowerCase();
-  const items = document.querySelectorAll('.student-select-item');
-  items.forEach(item => {
-    const name = item.getAttribute('data-name');
-    item.style.display = name.includes(term) ? 'flex' : 'none';
-  });
-}
-
-let allSelected = true;
-function toggleSelectAllStudents() {
-  const checkboxes = document.querySelectorAll('.student-assign-checkbox');
-  const btn = document.getElementById('btnToggleAll');
-  
-  allSelected = !allSelected;
-  checkboxes.forEach(cb => cb.checked = allSelected);
-  btn.textContent = allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả';
-}
-
-function closeTaskModal() {
-  document.body.style.overflow = ''; // Restore scroll
-  document.getElementById('taskModal').style.display = 'none';
-  // Clear inputs
-  document.getElementById('modalTaskName').value = '';
-  quill.setContents([]); // Xóa nội dung editor
-  document.getElementById('modalTaskImage').value = '';
-  document.getElementById('modalEndTime').value = '';
-}
-
-function saveTask() {
-  if (!checkPermission('manage_tasks')) {
-    showToast('Bạn không có quyền thêm nhiệm vụ', 'error');
-    return;
+  // Lắng nghe Realtime
+  if (typeof onSharedTasksChanged === 'function') {
+    onSharedTasksChanged((data) => {
+      tasks = data || [];
+      renderTasks();
+    });
   }
 
-  const name = document.getElementById('modalTaskName').value.trim();
-  const content = quill.root.innerHTML; // Lấy nội dung HTML từ Quill
-  const image = document.getElementById('modalTaskImage').value.trim();
-  const start = document.getElementById('modalStartTime').value;
-  const end = document.getElementById('modalEndTime').value;
-  
-  // Lấy danh sách ID học sinh được chọn
-  const assignedIds = Array.from(document.querySelectorAll('.student-assign-checkbox:checked'))
-                           .map(cb => parseInt(cb.value));
-
-  if (!name || !start || !end || assignedIds.length === 0) {
-    showToast('Vui lòng nhập đầy đủ thông tin và chọn ít nhất 1 học sinh!', 'error');
-    return;
+  if (typeof onSharedStudentsChanged === 'function') {
+    onSharedStudentsChanged((data) => {
+      if (data && data.length > 0) {
+        STUDENTS = data;
+        renderStudentSelector();
+      }
+    });
   }
+});
 
-  if (new Date(start) >= new Date(end)) {
-    showToast('Thời gian kết thúc phải sau thời gian bắt đầu!', 'error');
-    return;
-  }
-
-  const newTask = {
-    id: Date.now(),
-    name: name,
-    content: content, // Lưu HTML
-    imageUrl: image,
-    startTime: start,
-    endTime: end,
-    assignedStudents: assignedIds,
-    deadline: end.split('T')[0], // Giữ field cũ để tương thích ngược nếu cần
-    createdAt: new Date().toISOString(),
-    completions: {}
-  };
-
-  // Lưu lên Firebase
-  saveSharedTask(newTask);
-  logAction('Thêm nhiệm vụ', `Tên: ${name}`);
-  showToast('Đã thêm nhiệm vụ mới!', 'success');
-  closeTaskModal();
-}
-
-// Image Modal
-function viewImage(url) {
-  const modal = document.getElementById('imageModal');
-  const img = document.getElementById('previewImage');
-  img.src = url;
-  if (window.innerWidth < 768) {
-    modal.style.alignItems = 'flex-start';
-    modal.style.overflowY = 'auto';
-    modal.style.paddingTop = '10px';
-  }
-  document.body.style.overflow = 'hidden';
-  modal.style.display = 'flex';
-}
-
-function closeImageModal() {
-  document.getElementById('imageModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
-}
-
-// Content Modal (Xem chi tiết bài viết)
-function viewTaskContent(taskId) {
-  const task = tasks.find(t => t.id === taskId);
-  if (!task) return;
-
-  document.getElementById('viewTaskTitle').textContent = task.name;
-  document.getElementById('viewTaskBody').innerHTML = task.content || '<p>Không có nội dung chi tiết.</p>';
-  const modal = document.getElementById('contentModal');
-  if (window.innerWidth < 768) {
-    modal.style.alignItems = 'flex-start';
-    modal.style.overflowY = 'auto';
-    modal.style.paddingTop = '10px';
-  }
-  document.body.style.overflow = 'hidden';
-  modal.style.display = 'flex';
-}
-
-function closeContentModal() {
-  document.getElementById('contentModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
-}
-
-// Progress Modal (Xem danh sách người làm)
-function viewTaskProgress(taskId) {
-  const task = tasks.find(t => t.id === taskId);
-  if (!task) return;
-
-  document.getElementById('progressTaskTitle').textContent = `Tiến độ: ${task.name}`;
-  const modal = document.getElementById('progressModal');
-  const colDone = document.getElementById('colDone');
-  const colPending = document.getElementById('colPending');
-
-  const completions = task.completions || {};
-  
-  // Chỉ hiển thị những học sinh được giao nhiệm vụ này
-  const targetStudents = task.assignedStudents && task.assignedStudents.length > 0 
-    ? STUDENTS.filter(s => task.assignedStudents.includes(s.id))
-    : STUDENTS;
-
-  // Phân loại học sinh
-  const doneList = [];
-  const pendingList = [];
-
-  targetStudents.forEach(student => {
-    if (completions[student.id]) {
-      doneList.push(student);
-    } else {
-      pendingList.push(student);
-    }
-  });
-
-  // Render cột Đã xong
-  colDone.innerHTML = `
-    <h3 style="color: #27ae60;">✅ Đã xong (${doneList.length})</h3>
-    <ul class="progress-list">
-      ${doneList.map(s => `<li class="progress-item done">👤 ${s.name}</li>`).join('')}
-    </ul>
-  `;
-
-  // Render cột Chưa xong
-  colPending.innerHTML = `
-    <h3 style="color: #e74c3c;">⏳ Chưa xong (${pendingList.length})</h3>
-    <ul class="progress-list">
-      ${pendingList.map(s => `<li class="progress-item pending">⭕ ${s.name}</li>`).join('')}
-    </ul>
-  `;
-
-  if (window.innerWidth < 768) {
-    modal.style.alignItems = 'flex-start';
-    modal.style.overflowY = 'auto';
-    modal.style.paddingTop = '10px';
-  }
-  document.body.style.overflow = 'hidden';
-  modal.style.display = 'flex';
-}
-
-function closeProgressModal() {
-  document.getElementById('progressModal').style.display = 'none';
-  document.body.style.overflow = ''; // Restore scroll
-}
-
-async function deleteTask(taskId) {
-  if (!checkPermission('manage_tasks')) {
-    showToast('Bạn không có quyền xóa nhiệm vụ', 'error');
-    return;
-  }
-
-  if (confirm('Xóa nhiệm vụ này?')) {
-    deleteSharedTask(taskId);
-    logAction('Xóa nhiệm vụ', `ID: ${taskId}`);
-    showToast('Đã xóa nhiệm vụ', 'success');
+function initQuill() {
+  const container = document.getElementById('task-editor-container');
+  if (container && typeof Quill !== 'undefined' && !quillEditor) {
+    quillEditor = new Quill('#task-editor-container', {
+      theme: 'snow',
+      placeholder: 'Nhập nội dung chi tiết bài tập, tài liệu hoặc hướng dẫn làm...',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['link', 'clean']
+        ]
+      }
+    });
   }
 }
 
-async function toggleCompletion(taskId) {
-  const task = tasks.find(t => t.id === taskId);
-  if (!task) return;
-
-  if (!task.completions) {
-    task.completions = {};
-  }
-
-  // Toggle trạng thái của user hiện tại
-  task.completions[currentUser.id] = !task.completions[currentUser.id];
-  
-  // Chỉ cập nhật phần completions lên Firebase để tiết kiệm băng thông
-  updateSharedTaskCompletion(taskId, task.completions);
-}
-
-function filterTasks(filter) {
+// ============= FILTER & SEARCH =============
+function setTaskFilter(filter) {
   currentFilter = filter;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.classList.remove('active');
+  document.querySelectorAll('.filter-pill-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
   });
-  event.target.classList.add('active');
   renderTasks();
 }
 
-function filterTasks(filter) {
-  currentFilter = filter;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  event.target.classList.add('active');
+function handleTaskSearch(val) {
+  searchQuery = (val || '').toLowerCase().trim();
   renderTasks();
 }
 
 function getFilteredTasks() {
-  // Lọc theo phân quyền: Học sinh chỉ thấy task được giao cho mình
-  const visibleTasks = tasks.filter(t => {
-    if (isAdmin()) return true;
-    if (!t.assignedStudents || t.assignedStudents.length === 0) return true; // Task cũ hoặc giao cho tất cả
+  const isAdm = isAdmin();
+  
+  // 1. Phân loại theo quyền người dùng
+  let list = tasks.filter(t => {
+    if (isAdm) return true;
+    if (!t.assignedStudents || t.assignedStudents.length === 0) return true;
     return t.assignedStudents.includes(currentUser.id);
   });
 
-  switch (currentFilter) {
-    case 'done':
-      return visibleTasks.filter(t => t.completions && t.completions[currentUser.id]);
-    case 'pending':
-      return visibleTasks.filter(t => !t.completions || !t.completions[currentUser.id]);
-    default:
-      return visibleTasks;
+  // 2. Lọc theo trạng thái tab
+  const now = new Date();
+  const threeDaysLater = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+
+  if (currentFilter === 'pending') {
+    list = list.filter(t => !(t.completions && t.completions[currentUser.id]));
+  } else if (currentFilter === 'completed') {
+    list = list.filter(t => t.completions && t.completions[currentUser.id]);
+  } else if (currentFilter === 'urgent') {
+    list = list.filter(t => {
+      if (t.priority === 'Khẩn cấp') return true;
+      if (t.deadline && new Date(t.deadline) <= threeDaysLater && !(t.completions && t.completions[currentUser.id])) return true;
+      return false;
+    });
   }
+
+  // 3. Tìm kiếm từ khóa
+  if (searchQuery) {
+    list = list.filter(t => 
+      t.name.toLowerCase().includes(searchQuery) ||
+      (t.category && t.category.toLowerCase().includes(searchQuery)) ||
+      (t.description && t.description.toLowerCase().includes(searchQuery))
+    );
+  }
+
+  return list;
 }
 
+// ============= RENDER TASKS =============
 function renderTasks() {
-  const taskList = document.getElementById('taskList');
-  const filtered = getFilteredTasks();
+  const container = document.getElementById('taskListContainer');
+  if (!container) return;
 
-  if (filtered.length === 0) {
-    taskList.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">📭</div>
-        <p>Không có nhiệm vụ nào</p>
+  const list = getFilteredTasks();
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="empty-widget" style="background: var(--card-bg); border-radius: var(--radius-md); padding: 3rem 1rem;">
+        <span style="font-size: 3rem;">🎉</span>
+        <h3 style="font-size: 1.1rem; margin-bottom: 4px;">Không có nhiệm vụ nào</h3>
+        <p style="font-size: 0.85rem; color: var(--text-sub);">Hãy thư giãn hoặc kiểm tra lại bộ lọc tìm kiếm!</p>
       </div>
     `;
     return;
   }
 
-  taskList.innerHTML = filtered
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .map((task, index) => {
-      const isCompleted = task.completions && task.completions[currentUser.id];
-      const completionCount = Object.values(task.completions || {}).filter(v => v).length;
-      // Tính tổng số người được giao
-      const totalAssigned = task.assignedStudents ? task.assignedStudents.length : STUDENTS.length;
-      
-      // Xử lý thời gian
-      const now = new Date();
-      const start = new Date(task.startTime || task.createdAt);
-      const end = new Date(task.endTime || task.deadline);
-      
-      let timeStatus = '';
-      let isUrgent = false;
+  const isAdm = isAdmin();
 
-      if (now > end && !isCompleted) {
-        isUrgent = true;
-        timeStatus = '⚠️ Đã quá hạn';
-      } else if (now < start) {
-        timeStatus = '⏳ Sắp diễn ra';
-      } else {
-        timeStatus = '🔥 Đang diễn ra';
-      }
+  container.innerHTML = list.map(t => {
+    const isCompleted = t.completions && t.completions[currentUser.id];
+    const deadlineFormatted = t.deadline ? new Date(t.deadline).toLocaleString('vi-VN') : 'Không giới hạn';
+    const isOverdue = t.deadline && new Date(t.deadline) < new Date() && !isCompleted;
+    
+    const assignedCount = (t.assignedStudents && t.assignedStudents.length > 0) ? t.assignedStudents.length : STUDENTS.length;
+    const completedCount = t.completions ? Object.values(t.completions).filter(Boolean).length : 0;
 
-      // Format time range string
-      const timeRange = `${formatDateTime(start)} - ${formatDateTime(end)}`;
+    const priorityBadge = t.priority === 'Khẩn cấp' 
+      ? '<span class="task-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">🔥 Khẩn cấp</span>'
+      : '<span class="task-badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">Bình thường</span>';
 
-      return `
-        <li class="task-item ${isCompleted ? 'completed' : ''}" style="animation: fadeInUp 0.5s var(--ease-spring) forwards; animation-delay: ${index * 0.05}s; opacity: 0; transform: translateY(20px);">
-          <button class="task-checkbox-btn" onclick="toggleCompletion(${task.id})" title="${isCompleted ? 'Bỏ check-in' : 'Check-in'}">
-            ${isCompleted ? '✅' : '☐'}
-          </button>
-          <div class="task-content">
-            <div class="task-name ${isCompleted ? 'completed' : ''}">
-              ${escapeHtml(task.name)}
-            </div>
-            
-            <div class="task-meta">
-              <div class="task-time ${isUrgent ? 'urgent' : ''}">
-                📅 ${timeRange} <span style="margin-left:5px; font-weight:bold">(${timeStatus})</span>
-              </div>
-              
-              <div class="task-completion">
-                👥 ${completionCount} / ${totalAssigned} đã xong
-              </div>
+    return `
+      <div class="task-item-card ${isCompleted ? 'completed' : ''}">
+        <button class="btn-task-check ${isCompleted ? 'checked' : ''}" onclick="toggleTaskCheck('${t.id}')" title="${isCompleted ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành'}">
+          ${isCompleted ? '✓' : ''}
+        </button>
 
-              ${checkPermission('manage_tasks') ? `
-                <button class="view-progress-btn" onclick="viewTaskProgress(${task.id})">📋 Xem DS</button>
-              ` : ''}
-
-              <button class="view-content-btn" onclick="viewTaskContent(${task.id})">
-                📄 Xem chi tiết
-              </button>
-
-              ${task.imageUrl ? `
-                <button class="view-img-btn" onclick="viewImage('${escapeHtml(task.imageUrl)}')">
-                  📷 Xem hướng dẫn
-                </button>
-              ` : ''}
-            </div>
+        <div class="task-details-col">
+          <div class="task-title-row">
+            <span class="task-name-text">${escapeHtml(t.name)}</span>
+            ${priorityBadge}
+            <span class="task-badge" style="background: var(--bg-surface); border: 1px solid var(--input-border);">${escapeHtml(t.category || 'Bài tập')}</span>
           </div>
-          ${checkPermission('manage_tasks') ? `<button class="task-btn" onclick="deleteTask(${task.id})">Xóa</button>` : ''}
-        </li>
-      `;
-    })
-    .join('');
+
+          <div class="task-meta-row">
+            <span style="${isOverdue ? 'color: var(--danger); font-weight: 700;' : ''}">
+              ⏰ Hạn nộp: ${deadlineFormatted} ${isOverdue ? '(Quá hạn)' : ''}
+            </span>
+            <span>👥 Hoàn thành: <strong>${completedCount}/${assignedCount}</strong></span>
+          </div>
+
+          ${t.description && t.description !== '<p><br></p>' ? `
+            <div style="font-size: 0.85rem; color: var(--text-sub); margin-top: 4px;" class="ql-snow">
+              <div class="ql-editor" style="padding: 0; max-height: 80px; overflow-y: auto;">
+                ${t.description}
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="task-actions-row">
+            <button class="btn-task-action" onclick="toggleTaskCheck('${t.id}')">
+              ${isCompleted ? '↩️ Đánh dấu làm lại' : '✅ Đã nộp / Hoàn thành'}
+            </button>
+            ${checkPermission('manage_tasks') ? `
+              <button class="btn-task-action" onclick="editTask('${t.id}')">✏️ Sửa</button>
+              <button class="btn-task-action delete" onclick="deleteTaskAction('${t.id}')">🗑️ Xóa</button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-function formatDateTime(date) {
-  return date.toLocaleDateString('vi-VN', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+// ============= ACTIONS =============
+async function toggleTaskCheck(taskId) {
+  const task = tasks.find(t => String(t.id) === String(taskId));
+  if (!task) return;
+
+  if (!task.completions) task.completions = {};
+  const currentStatus = !!task.completions[currentUser.id];
+  task.completions[currentUser.id] = !currentStatus;
+
+  renderTasks();
+  if (typeof updateSharedTaskCompletion === 'function') {
+    await updateSharedTaskCompletion(task.id, task.completions);
+  }
+  showToast(task.completions[currentUser.id] ? '🎉 Đã hoàn thành nhiệm vụ!' : 'Đã chuyển nhiệm vụ về đang làm', 'info');
+}
+
+function openTaskModal(isEdit = false) {
+  const modal = document.getElementById('taskModalOverlay');
+  const title = document.getElementById('modalTaskTitle');
+  if (!modal) return;
+
+  if (!isEdit) {
+    editingTaskId = null;
+    title.textContent = '➕ Giao Nhiệm Vụ Mới';
+    document.getElementById('inputTaskName').value = '';
+    document.getElementById('inputTaskCategory').value = 'Bài tập';
+    document.getElementById('inputTaskPriority').value = 'Bình thường';
+    document.getElementById('inputTaskDeadline').value = '';
+    if (quillEditor) quillEditor.setContents([]);
+    selectAllStudents();
+  }
+
+  modal.classList.add('active');
+}
+
+function closeTaskModal() {
+  const modal = document.getElementById('taskModalOverlay');
+  if (modal) modal.classList.remove('active');
+  editingTaskId = null;
+}
+
+function editTask(taskId) {
+  const task = tasks.find(t => String(t.id) === String(taskId));
+  if (!task) return;
+
+  editingTaskId = taskId;
+  document.getElementById('modalTaskTitle').textContent = '✏️ Chỉnh Sửa Nhiệm Vụ';
+  document.getElementById('inputTaskName').value = task.name || '';
+  document.getElementById('inputTaskCategory').value = task.category || 'Bài tập';
+  document.getElementById('inputTaskPriority').value = task.priority || 'Bình thường';
+  document.getElementById('inputTaskDeadline').value = task.deadline ? toLocalISO(new Date(task.deadline)) : '';
+
+  if (quillEditor) {
+    quillEditor.root.innerHTML = task.description || '';
+  }
+
+  // Set assigned checkboxes
+  const assigned = task.assignedStudents || [];
+  document.querySelectorAll('.student-assign-check').forEach(cb => {
+    cb.checked = assigned.length === 0 || assigned.includes(parseInt(cb.value));
+  });
+  updateAssignCount();
+
+  openTaskModal(true);
+}
+
+function toLocalISO(date) {
+  const offset = date.getTimezoneOffset() * 60000;
+  return (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
+}
+
+// ============= STUDENT SELECTOR IN MODAL =============
+function renderStudentSelector() {
+  const container = document.getElementById('studentCheckboxList');
+  if (!container) return;
+
+  container.innerHTML = STUDENTS.map(s => `
+    <label class="student-check-row">
+      <input type="checkbox" class="student-assign-check" value="${s.id}" checked onchange="updateAssignCount()">
+      <span>${escapeHtml(s.name)} (Tổ ${s.group || 1})</span>
+    </label>
+  `).join('');
+
+  updateAssignCount();
+}
+
+function updateAssignCount() {
+  const total = document.querySelectorAll('.student-assign-check').length;
+  const checked = document.querySelectorAll('.student-assign-check:checked').length;
+  const el = document.getElementById('assignCountLabel');
+  if (el) el.textContent = `(${checked}/${total})`;
+}
+
+function selectAllStudents() {
+  document.querySelectorAll('.student-assign-check').forEach(cb => cb.checked = true);
+  updateAssignCount();
+}
+
+function deselectAllStudents() {
+  document.querySelectorAll('.student-assign-check').forEach(cb => cb.checked = false);
+  updateAssignCount();
+}
+
+function selectGroup(groupId) {
+  document.querySelectorAll('.student-assign-check').forEach(cb => {
+    const std = STUDENTS.find(s => String(s.id) === String(cb.value));
+    cb.checked = std && std.group === groupId;
+  });
+  updateAssignCount();
+}
+
+function selectCadres() {
+  document.querySelectorAll('.student-assign-check').forEach(cb => {
+    const std = STUDENTS.find(s => String(s.id) === String(cb.value));
+    const roles = Array.isArray(std?.role) ? std.role : [std?.role || 'student'];
+    cb.checked = roles.some(r => r !== 'student');
+  });
+  updateAssignCount();
+}
+
+// ============= SAVE / DELETE TASK =============
+async function saveTaskForm() {
+  if (!checkPermission('manage_tasks')) {
+    showToast('Bạn không có quyền giao nhiệm vụ!', 'error');
+    return;
+  }
+
+  const name = document.getElementById('inputTaskName').value.trim();
+  const category = document.getElementById('inputTaskCategory').value;
+  const priority = document.getElementById('inputTaskPriority').value;
+  const deadlineVal = document.getElementById('inputTaskDeadline').value;
+  const description = quillEditor ? quillEditor.root.innerHTML : '';
+
+  if (!name) {
+    showToast('Vui lòng nhập tên nhiệm vụ!', 'warning');
+    return;
+  }
+
+  const checkedStudentIds = Array.from(document.querySelectorAll('.student-assign-check:checked')).map(cb => parseInt(cb.value));
+  if (checkedStudentIds.length === 0) {
+    showToast('Vui lòng chọn ít nhất một học sinh nhận nhiệm vụ!', 'warning');
+    return;
+  }
+
+  const isEdit = !!editingTaskId;
+  const taskObj = {
+    id: isEdit ? editingTaskId : Date.now(),
+    name: name,
+    category: category,
+    priority: priority,
+    deadline: deadlineVal ? new Date(deadlineVal).toISOString() : null,
+    description: (description === '<p><br></p>') ? '' : description,
+    assignedStudents: checkedStudentIds.length === STUDENTS.length ? [] : checkedStudentIds,
+    completions: isEdit ? (tasks.find(t => String(t.id) === String(editingTaskId))?.completions || {}) : {},
+    createdAt: isEdit ? (tasks.find(t => String(t.id) === String(editingTaskId))?.createdAt || new Date().toISOString()) : new Date().toISOString()
+  };
+
+  if (typeof saveSharedTask === 'function') {
+    await saveSharedTask(taskObj);
+  }
+
+  if (typeof logAction === 'function') {
+    logAction(isEdit ? 'Sửa nhiệm vụ' : 'Giao nhiệm vụ mới', `Tên: ${name} (Phân loại: ${category})`);
+  }
+
+  showToast(isEdit ? 'Đã cập nhật nhiệm vụ!' : 'Đã giao nhiệm vụ thành công!', 'success');
+  closeTaskModal();
+  renderTasks();
+}
+
+async function deleteTaskAction(taskId) {
+  if (!checkPermission('manage_tasks')) return;
+
+  showConfirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa nhiệm vụ này không?', async () => {
+    if (typeof deleteSharedTask === 'function') {
+      await deleteSharedTask(taskId);
+      if (typeof logAction === 'function') {
+        logAction('Xóa nhiệm vụ', `ID: ${taskId}`);
+      }
+      showToast('Đã xóa nhiệm vụ!', 'success');
+      renderTasks();
+    }
   });
 }
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Xử lý phím Enter
-document.addEventListener('DOMContentLoaded', () => {
-  // Handled in window load
-});

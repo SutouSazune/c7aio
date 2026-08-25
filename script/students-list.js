@@ -1,152 +1,182 @@
-// Biến toàn cục chứa danh sách học sinh hiện tại
-// Khởi tạo từ Cache (localStorage) để hỗ trợ Offline ngay lập tức
-// Nếu chưa có cache (lần đầu truy cập), sẽ là mảng rỗng và chờ Firebase tải về
-let STUDENTS = JSON.parse(localStorage.getItem('c7aio_students_cache')) || [];
+/**
+ * C7AIO Students & Roles Data Management
+ * Quản lý danh sách học sinh, phân quyền và xác thực
+ */
 
-// Admin object - có mã bảo mật
-const ADMIN = {
-  id: 0,
-  name: "👨‍💼 Admin",
-  role: "admin",
-  code: "admin123" // Mã admin mặc định, có thể thay đổi
+let STUDENTS = JSON.parse(localStorage.getItem('c7aio_students_cache')) || [
+  { id: 1, name: "Nguyễn Văn An", dob: "2008-05-12", gender: "Nam", role: ["monitor"], group: 1, phone: "0912345678", email: "an.nguyen@gmail.com" },
+  { id: 2, name: "Trần Thị Bích", dob: "2008-08-20", gender: "Nữ", role: ["vice_study"], group: 1, phone: "0923456789", email: "bich.tran@gmail.com" },
+  { id: 3, name: "Lê Hoàng Cường", dob: "2008-03-15", gender: "Nam", role: ["secretary"], group: 2, phone: "0934567890", email: "cuong.le@gmail.com" },
+  { id: 4, name: "Phạm Thùy Dung", dob: "2008-11-02", gender: "Nữ", role: ["treasurer"], group: 2, phone: "0945678901", email: "dung.pham@gmail.com" },
+  { id: 5, name: "Hoàng Minh Đức", dob: "2008-01-25", gender: "Nam", role: ["vice_labor"], group: 3, phone: "0956789012", email: "duc.hoang@gmail.com" },
+  { id: 6, name: "Vũ Phương Linh", dob: "2008-09-18", gender: "Nữ", role: ["vice_art"], group: 3, phone: "0967890123", email: "linh.vu@gmail.com" },
+  { id: 7, name: "Đỗ Gia Huy", dob: "2008-07-07", gender: "Nam", role: ["group_leader"], group: 1, phone: "0978901234", email: "huy.do@gmail.com" },
+  { id: 8, name: "Ngô Khánh Huyền", dob: "2008-12-30", gender: "Nữ", role: ["group_leader"], group: 2, phone: "0989012345", email: "huyen.ngo@gmail.com" },
+  { id: 9, name: "Bùi Tuấn Kiệt", dob: "2008-04-14", gender: "Nam", role: ["group_leader"], group: 3, phone: "0990123456", email: "kiet.bui@gmail.com" },
+  { id: 10, name: "Đặng Mai Phương", dob: "2008-06-08", gender: "Nữ", role: ["group_leader"], group: 4, phone: "0901234567", email: "phuong.dang@gmail.com" },
+  { id: 11, name: "Phan Quốc Bảo", dob: "2008-10-10", gender: "Nam", role: ["student"], group: 1, phone: "", email: "" },
+  { id: 12, name: "Trịnh Thảo Nhi", dob: "2008-02-17", gender: "Nữ", role: ["student"], group: 4, phone: "", email: "" }
+];
+
+const ROLES = {
+  admin: "Quản trị viên (Admin)",
+  monitor: "Lớp trưởng",
+  vice_study: "Lớp phó học tập",
+  vice_labor: "Lớp phó lao động",
+  vice_art: "Lớp phó văn thể mỹ",
+  secretary: "Bí thư chi đoàn",
+  treasurer: "Thủ quỹ",
+  group_leader: "Tổ trưởng",
+  student: "Học sinh"
 };
 
-/**
- * Xử lý đăng nhập.
- * - Nếu là Admin, xác thực bằng code.
- * - Nếu là học sinh, xác thực bằng tên và ngày sinh (định dạng YYYY-MM-DD).
- * @param {string} name Tên đăng nhập.
- * @param {string} secret Mật khẩu (code cho admin) hoặc ngày sinh (cho học sinh).
- * @returns {object|null} Trả về đối tượng user nếu thành công, ngược lại trả về null.
- */
-function loginUser(name, secret) {
-  // 1. Xử lý đăng nhập Admin
-  if (name.toLowerCase() === ADMIN.name.toLowerCase() || name.toLowerCase() === 'admin') {
-    if (secret === ADMIN.code) {
-      console.log('✅ Admin login successful.');
-      setCurrentUser(ADMIN);
-      return ADMIN;
-    } else {
-      console.warn('❌ Admin login failed: Incorrect code.');
-      return null;
-    }
-  }
-
-  // 2. Xử lý đăng nhập học sinh
-  // Tìm học sinh trong danh sách (không phân biệt hoa thường, bỏ khoảng trắng thừa)
-  const student = STUDENTS.find(s => s.name.toLowerCase() === name.trim().toLowerCase());
-
-  // Nếu không tìm thấy học sinh
-  if (!student) {
-    console.warn(`Login failed: Student "${name}" not found.`);
-    return null;
-  }
-
-  // Kiểm tra ngày sinh (secret) - phải khớp định dạng YYYY-MM-DD
-  if (student.dob === secret) {
-    console.log(`✅ Login successful for ${student.name}`);
-    setCurrentUser(student);
-    return student;
-  } else {
-    console.warn(`Login failed: Incorrect date of birth for ${student.name}. Provided: ${secret}, Expected: ${student.dob}`);
-    return null;
-  }
-}
-
-// --- CẤU HÌNH CHỨC VỤ & QUYỀN HẠN ---
-const ROLES = {
-  'admin': '👨‍💼 Quản trị viên (Admin)',
-  'monitor': '⭐️ Lớp trưởng',
-  'secretary': '🔥 Bí thư chi đoàn',
-  'vice_study': '📚 Lớp phó học tập',
-  'vice_labor': '🧹 Lớp phó lao động',
-  'vice_art': '🎭 Lớp phó văn thể mỹ',
-  'vice_subject': '📝 Lớp phó bộ môn',
-  'treasurer': '💰 Thủ quỹ',
-  'group_leader': '👥 Tổ trưởng',
-  'student': '👤 Thành viên'
+const ROLE_COLORS = {
+  admin: "#ef4444",
+  monitor: "#f59e0b",
+  vice_study: "#3b82f6",
+  secretary: "#ec4899",
+  treasurer: "#10b981",
+  vice_labor: "#06b6d4",
+  vice_art: "#8b5cf6",
+  group_leader: "#14b8a6",
+  student: "#64748b"
 };
 
 const PERMISSIONS = {
-  'manage_students': 'Quản lý Học sinh (Thêm/Sửa/Xóa)',
-  'manage_tasks': 'Quản lý Nhiệm vụ (Thêm/Sửa/Xóa)',
-  'manage_schedule': 'Quản lý Lịch học (Thêm/Sửa/Xóa)',
-  'manage_notifications': 'Quản lý Thông báo',
-  'manage_roles': 'Điều hành Quyền hạn (Admin)',
-  'view_logs': 'Xem Nhật ký hoạt động'
+  manage_tasks: "Giao & Quản lý nhiệm vụ",
+  manage_schedule: "Quản lý thời khóa biểu",
+  manage_notifications: "Đăng & Quản lý thông báo",
+  manage_students: "Quản lý hồ sơ học sinh",
+  manage_roles: "Cấu hình phân quyền",
+  view_logs: "Xem nhật ký hệ thống"
 };
 
-// Lưu trữ cấu hình phân quyền hiện tại (Role -> [Permissions])
-// Mặc định Admin có full quyền
-let ROLE_PERMISSIONS_CONFIG = {
-  'admin': Object.keys(PERMISSIONS),
-  'monitor': ['manage_tasks', 'manage_schedule', 'manage_notifications'],
-  'secretary': ['manage_tasks', 'manage_notifications'],
-  'vice_study': ['manage_tasks', 'manage_schedule'],
-  'vice_labor': ['manage_tasks'],
-  'vice_art': ['manage_tasks'],
-  'vice_subject': ['manage_tasks'],
-  'treasurer': ['manage_tasks', 'manage_notifications'],
-  'group_leader': [],
-  'student': []
+let ROLE_PERMISSIONS_CONFIG = JSON.parse(localStorage.getItem('c7aio_permissions_cache')) || {
+  monitor: ["manage_tasks", "manage_schedule", "manage_notifications", "manage_students", "view_logs"],
+  vice_study: ["manage_tasks", "manage_schedule", "manage_notifications"],
+  secretary: ["manage_tasks", "manage_notifications"],
+  treasurer: ["manage_tasks", "manage_notifications"],
+  vice_labor: ["manage_tasks"],
+  vice_art: ["manage_tasks"],
+  group_leader: ["manage_tasks"],
+  student: []
 };
 
-// Load config từ cache nếu có
-const cachedPerms = localStorage.getItem('c7aio_permissions_cache');
-if (cachedPerms) {
-  ROLE_PERMISSIONS_CONFIG = JSON.parse(cachedPerms);
-}
-
-// Lấy current user từ localStorage
+// ==================== AUTHENTICATION ====================
 function getCurrentUser() {
-  const user = localStorage.getItem('c7aio_currentUser');
+  const user = localStorage.getItem('currentUser');
   return user ? JSON.parse(user) : null;
 }
 
-// Lưu current user
 function setCurrentUser(user) {
-  localStorage.setItem('c7aio_currentUser', JSON.stringify(user));
-  localStorage.setItem('c7aio_loginTime', new Date().toISOString());
+  if (!user) {
+    localStorage.removeItem('currentUser');
+  } else {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+  }
 }
 
-// Đăng xuất
+function isLoggedIn() {
+  return !!getCurrentUser();
+}
+
 function logoutUser() {
-  localStorage.removeItem('c7aio_currentUser');
-  localStorage.removeItem('c7aio_loginTime');
+  localStorage.removeItem('currentUser');
+  sessionStorage.clear();
 }
 
-// Kiểm tra user là admin
-function isAdmin() {
-  const user = getCurrentUser();
-  // Admin gốc hoặc user có role là admin
-  return user && (user.role === 'admin' || user.id === 0);
-}
-
-// Kiểm tra quyền hạn cụ thể
-function checkPermission(permissionCode) {
+function checkPermission(permKey) {
   const user = getCurrentUser();
   if (!user) return false;
-  
-  // Admin luôn có quyền
-  if (user.role === 'admin' || user.id === 0) return true;
-
-  // Chuyển đổi role thành mảng (để hỗ trợ cả dữ liệu cũ là string và mới là array)
+  if (user.role === 'admin' || (Array.isArray(user.role) && user.role.includes('admin'))) {
+    return true;
+  }
   const userRoles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
-
-  // Kiểm tra xem CÓ BẤT KỲ role nào của user sở hữu quyền này không
-  return userRoles.some(role => {
-    const allowedPerms = ROLE_PERMISSIONS_CONFIG[role] || [];
-    return allowedPerms.includes(permissionCode);
-  });
+  for (const r of userRoles) {
+    const perms = ROLE_PERMISSIONS_CONFIG[r] || [];
+    if (perms.includes(permKey)) return true;
+  }
+  return false;
 }
 
-// Kiểm tra user đã login
-function isLoggedIn() {
-  return getCurrentUser() !== null;
+function isAdmin() {
+  const user = getCurrentUser();
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  if (Array.isArray(user.role) && user.role.includes('admin')) return true;
+  return false;
 }
 
-// Lấy thời gian đăng nhập
-function getLoginTime() {
-  const time = localStorage.getItem('c7aio_loginTime');
-  return time ? new Date(time) : null;
+function formatDateIsoToVn(isoStr) {
+  if (!isoStr) return '';
+  const parts = isoStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return isoStr;
+}
+
+function loginUser(nameOrAdmin, passwordOrDob) {
+  if (nameOrAdmin === 'admin' && (passwordOrDob === '10c7' || passwordOrDob === 'admin' || passwordOrDob === 'admin10c7')) {
+    const adminObj = {
+      id: 0,
+      name: "Quản trị viên 10C7",
+      role: ["admin"],
+      group: 0,
+      isAdmin: true
+    };
+    setCurrentUser(adminObj);
+    return adminObj;
+  }
+
+  const cleanName = (nameOrAdmin || '').trim().toLowerCase();
+  const student = STUDENTS.find(s => s.name.toLowerCase() === cleanName);
+  if (!student) return null;
+
+  const targetDob = (student.dob || '').trim();
+  const inputDob = (passwordOrDob || '').trim();
+
+  const isMatch = (targetDob === inputDob) || 
+                  (formatDateIsoToVn(targetDob) === inputDob) ||
+                  (targetDob.replace(/-/g, '') === inputDob.replace(/-/g, ''));
+
+  if (isMatch) {
+    const userObj = {
+      id: student.id,
+      name: student.name,
+      dob: student.dob,
+      role: Array.isArray(student.role) ? student.role : [student.role || 'student'],
+      group: student.group || 1,
+      gender: student.gender || 'Nam',
+      phone: student.phone || '',
+      email: student.email || ''
+    };
+    setCurrentUser(userObj);
+    return userObj;
+  }
+
+  return null;
+}
+
+function getAvatarGradient(name) {
+  const gradients = [
+    "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+    "linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)",
+    "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)",
+    "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
+    "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
+    "linear-gradient(135deg, #14b8a6 0%, #10b981 100%)"
+  ];
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return gradients[Math.abs(hash) % gradients.length];
+}
+
+function getInitials(name) {
+  if (!name) return 'HS';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }

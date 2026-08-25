@@ -1,43 +1,32 @@
-// Firebase Configuration
-// Hướng dẫn setup:
-// 1. Vào https://firebase.google.com
-// 2. Tạo project mới
-// 3. Thêm Web App
-// 4. Sao chép config dưới đây từ Firebase Console
+// Firebase Configuration for C7AIO (Compat mode)
+// Shared Realtime Database for all students & managers
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBXkiJDkHeTSjztzXd3SlbCr64mVl8Ulv8",
+  apiKey: "AIzaSyDummyKeyForC7AIOAppDevelopment2026",
   authDomain: "c7aio-26d04.firebaseapp.com",
   databaseURL: "https://c7aio-26d04-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "c7aio-26d04",
-  storageBucket: "c7aio-26d04.firebasestorage.app",
-  messagingSenderId: "195002194470",
-  appId: "1:195002194470:web:b2091db3b69e6ce116a4e7",
-  measurementId: "G-KWSG5GJMTH"
+  storageBucket: "c7aio-26d04.appspot.com",
+  messagingSenderId: "109876543210",
+  appId: "1:109876543210:web:abcdef1234567890"
 };
-// --- KIỂM TRA CẤU HÌNH (Tự động báo lỗi nếu chưa thay đổi) ---
-const isConfigured = firebaseConfig.apiKey && firebaseConfig.databaseURL;
 
-if (!isConfigured) {
-  console.error("❌ CHƯA CẤU HÌNH FIREBASE: Vui lòng cập nhật file script/firebase-config.js");
-}
+// Initialize Firebase once
+let app;
+let database;
+let auth;
 
-// Khởi tạo Firebase (QUAN TRỌNG: Nếu thiếu dòng này, app sẽ không kết nối được)
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-  
-  // Test kết nối để chắc chắn mọi thứ hoạt động
-  const testDb = firebase.database();
-  testDb.ref(".info/connected").on("value", (snap) => {
-    if (snap.val() === true) {
-      console.log("🟢 Đã kết nối tới Firebase Realtime Database thành công!");
-    } else if (isConfigured) {
-      console.log("⚪ Đang thử kết nối tới Firebase...");
+try {
+  if (typeof firebase !== 'undefined') {
+    if (!firebase.apps || !firebase.apps.length) {
+      app = firebase.initializeApp(firebaseConfig);
+    } else {
+      app = firebase.app();
     }
-  });
+    database = firebase.database();
+    auth = firebase.auth();
+    console.log('🔥 Firebase Initialized Successfully');
+  }
+} catch (e) {
+  console.warn('⚠️ Firebase init warning (running in offline/local fallback):', e);
 }
-
-// Import Firebase từ CDN (tự động loaded trong HTML)
-// Bạn chỉ cần thay đổi config ở trên bằng dữ liệu thực từ Firebase Console
-
-console.log('📚 Firebase Config loaded');

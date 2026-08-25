@@ -1,624 +1,375 @@
-// Firebase Utilities - Cung cấp các hàm tiện ích cho Firebase
-// Hỗ trợ Realtime + Offline + Sync
+/**
+ * C7AIO Firebase Realtime Database Handlers & Utilities
+ * Hỗ trợ đồng bộ dữ liệu Realtime Database an toàn, chống ghi đè rỗng
+ */
 
-// Khởi tạo Firebase
-const db = firebase.database();
-const auth = firebase.auth();
+const DB_PATHS = {
+  STUDENTS: 'shared/students',
+  TASKS: 'shared/tasks',
+  NOTIFICATIONS: 'shared/notifications',
+  SCHEDULES: 'shared/schedules',
+  WEEK_METADATA: 'shared/weekMetadata',
+  INPUT_HISTORY: 'shared/inputHistory',
+  PERMISSIONS: 'shared/permissions',
+  LOGS: 'shared/logs'
+};
 
-// ============= AUTHENTICATION =============
-
-// Đăng nhập email
-async function loginWithEmail(email, password) {
-  try {
-    const result = await auth.signInWithEmailAndPassword(email, password);
-    console.log('✅ Đăng nhập thành công:', result.user.email);
-    return result.user;
-  } catch (error) {
-    console.error('❌ Lỗi đăng nhập:', error.message);
-    throw error;
+function getDbRef(path) {
+  if (typeof database !== 'undefined' && database) {
+    return database.ref(path);
   }
+  return null;
 }
 
-// Đăng ký email
-async function registerWithEmail(email, password, displayName) {
-  try {
-    const result = await auth.createUserWithEmailAndPassword(email, password);
-    await result.user.updateProfile({ displayName });
-    console.log('✅ Đăng ký thành công:', email);
-    return result.user;
-  } catch (error) {
-    console.error('❌ Lỗi đăng ký:', error.message);
-    throw error;
-  }
-}
-
-// Đăng nhập Google
-async function loginWithGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  try {
-    const result = await auth.signInWithPopup(provider);
-    console.log('✅ Đăng nhập Google thành công:', result.user.email);
-    return result.user;
-  } catch (error) {
-    console.error('❌ Lỗi đăng nhập Google:', error.message);
-    throw error;
-  }
-}
-
-// Đăng xuất
-async function logout() {
-  try {
-    await auth.signOut();
-    console.log('✅ Đã đăng xuất');
-  } catch (error) {
-    console.error('❌ Lỗi đăng xuất:', error.message);
-    throw error;
-  }
-}
-
-// Lấy user hiện tại
-function getCurrentUser() {
-  return auth.currentUser;
-}
-
-// Lắng nghe thay đổi authentication state
-function onAuthStateChanged(callback) {
-  auth.onAuthStateChanged(user => {
-    callback(user);
-  });
-}
-
-// ============= DATABASE - TASKS =============
-
-// Lấy tất cả tasks
-async function getTasks() {
-  const user = getCurrentUser();
-  if (!user) {
-    console.warn('⚠️ User chưa đăng nhập');
-    return [];
-  }
-
-  try {
-    const snapshot = await db.ref(`users/${user.uid}/tasks`).once('value');
-    const tasks = [];
-    snapshot.forEach(child => {
-      tasks.push({
-        id: child.key,
-        ...child.val()
-      });
-    });
-    console.log('📥 Tải tasks từ Firebase:', tasks.length);
-    return tasks;
-  } catch (error) {
-    console.error('❌ Lỗi lấy tasks:', error.message);
-    return [];
-  }
-}
-
-// Thêm task
-async function addTask(taskName, deadline) {
-  const user = getCurrentUser();
-  if (!user) {
-    throw new Error('User chưa đăng nhập');
-  }
-
-  try {
-    const newTaskRef = db.ref(`users/${user.uid}/tasks`).push();
-    await newTaskRef.set({
-      name: taskName,
-      deadline: deadline,
-      done: false,
-      createdAt: new Date().toISOString()
-    });
-    console.log('✅ Thêm task:', taskName);
-    return newTaskRef.key;
-  } catch (error) {
-    console.error('❌ Lỗi thêm task:', error.message);
-    throw error;
-  }
-}
-
-// Cập nhật task
-async function updateTask(taskId, updates) {
-  const user = getCurrentUser();
-  if (!user) {
-    throw new Error('User chưa đăng nhập');
-  }
-
-  try {
-    await db.ref(`users/${user.uid}/tasks/${taskId}`).update(updates);
-    console.log('✅ Cập nhật task:', taskId);
-  } catch (error) {
-    console.error('❌ Lỗi cập nhật task:', error.message);
-    throw error;
-  }
-}
-
-// Xóa task
-async function deleteTask(taskId) {
-  const user = getCurrentUser();
-  if (!user) {
-    throw new Error('User chưa đăng nhập');
-  }
-
-  try {
-    await db.ref(`users/${user.uid}/tasks/${taskId}`).remove();
-    console.log('✅ Xóa task:', taskId);
-  } catch (error) {
-    console.error('❌ Lỗi xóa task:', error.message);
-    throw error;
-  }
-}
-
-// Lắng nghe thay đổi tasks (real-time)
-function onTasksChanged(callback) {
-  const user = getCurrentUser();
-  if (!user) {
-    console.warn('⚠️ User chưa đăng nhập');
-    return () => {};
-  }
-
-  const ref = db.ref(`users/${user.uid}/tasks`);
-  ref.on('value', snapshot => {
-    const tasks = [];
-    snapshot.forEach(child => {
-      tasks.push({
-        id: child.key,
-        ...child.val()
-      });
-    });
-    callback(tasks);
-  });
-
-  // Return hàm unsubscribe
-  return () => ref.off('value');
-}
-
-// ============= DATABASE - EVENTS =============
-
-// Lấy sự kiện
-async function getEvents() {
-  const user = getCurrentUser();
-  if (!user) return {};
-
-  try {
-    const snapshot = await db.ref(`users/${user.uid}/events`).once('value');
-    return snapshot.val() || {};
-  } catch (error) {
-    console.error('❌ Lỗi lấy events:', error.message);
-    return {};
-  }
-}
-
-// Thêm sự kiện
-async function addEvent(dateKey, eventName) {
-  const user = getCurrentUser();
-  if (!user) throw new Error('User chưa đăng nhập');
-
-  try {
-    const eventRef = db.ref(`users/${user.uid}/events/${dateKey}`).push();
-    await eventRef.set({
-      name: eventName,
-      createdAt: new Date().toISOString()
-    });
-    return eventRef.key;
-  } catch (error) {
-    console.error('❌ Lỗi thêm event:', error.message);
-    throw error;
-  }
-}
-
-// Xóa event
-async function deleteEvent(dateKey, eventId) {
-  const user = getCurrentUser();
-  if (!user) throw new Error('User chưa đăng nhập');
-
-  try {
-    await db.ref(`users/${user.uid}/events/${dateKey}/${eventId}`).remove();
-  } catch (error) {
-    console.error('❌ Lỗi xóa event:', error.message);
-    throw error;
-  }
-}
-
-// Lắng nghe sự kiện real-time
-function onEventsChanged(callback) {
-  const user = getCurrentUser();
-  if (!user) return () => {};
-
-  const ref = db.ref(`users/${user.uid}/events`);
-  ref.on('value', snapshot => {
-    callback(snapshot.val() || {});
-  });
-
-  return () => ref.off('value');
-}
-
-// ============= DATABASE - NOTIFICATIONS =============
-
-// Lấy thông báo
-async function getNotifications() {
-  const user = getCurrentUser();
-  if (!user) return [];
-
-  try {
-    const snapshot = await db.ref(`users/${user.uid}/notifications`).once('value');
-    const notifications = [];
-    snapshot.forEach(child => {
-      notifications.push({
-        id: child.key,
-        ...child.val()
-      });
-    });
-    return notifications;
-  } catch (error) {
-    console.error('❌ Lỗi lấy notifications:', error.message);
-    return [];
-  }
-}
-
-// Thêm thông báo
-async function addNotification(message, type = 'info') {
-  const user = getCurrentUser();
-  if (!user) throw new Error('User chưa đăng nhập');
-
-  try {
-    const notifRef = db.ref(`users/${user.uid}/notifications`).push();
-    await notifRef.set({
-      message: message,
-      type: type,
-      createdAt: new Date().toISOString()
-    });
-    return notifRef.key;
-  } catch (error) {
-    console.error('❌ Lỗi thêm notification:', error.message);
-    throw error;
-  }
-}
-
-// Xóa thông báo
-async function deleteNotification(notifId) {
-  const user = getCurrentUser();
-  if (!user) throw new Error('User chưa đăng nhập');
-
-  try {
-    await db.ref(`users/${user.uid}/notifications/${notifId}`).remove();
-  } catch (error) {
-    console.error('❌ Lỗi xóa notification:', error.message);
-    throw error;
-  }
-}
-
-// Lắng nghe thông báo real-time
-function onNotificationsChanged(callback) {
-  const user = getCurrentUser();
-  if (!user) return () => {};
-
-  const ref = db.ref(`users/${user.uid}/notifications`);
-  ref.on('value', snapshot => {
-    const notifications = [];
-    snapshot.forEach(child => {
-      notifications.push({
-        id: child.key,
-        ...child.val()
-      });
-    });
-    callback(notifications);
-  });
-
-  return () => ref.off('value');
-}
-
-// ============= SHARED DATA (SYNC ADMIN -> STUDENTS) =============
-
-// --- SHARED STUDENTS ---
-// Lắng nghe danh sách học sinh thay đổi
-function onSharedStudentsChanged(callback) {
-  const ref = db.ref('shared/students');
-  ref.on('value', (snapshot) => {
-    const val = snapshot.val();
-    
-    // CHUẨN HÓA DỮ LIỆU: Luôn chuyển về dạng Array
-    let data = [];
-    if (Array.isArray(val)) {
-      data = val;
-    } else if (val && typeof val === 'object') {
-      data = Object.values(val); // Chuyển Object {1:.., 2:..} thành Array [.., ..]
-    }
-
-    localStorage.setItem('c7aio_students_cache', JSON.stringify(data));
-    console.log('📥 Sync học sinh:', data.length);
-    callback(data);
-  }, (error) => {
-    console.error('❌ Lỗi sync học sinh:', error);
-  });
-}
-
-// Lưu toàn bộ danh sách học sinh (Admin dùng)
+// ==================== STUDENTS ====================
 async function saveSharedStudents(studentsList) {
-  try {
-    const cleanList = Array.isArray(studentsList) ? studentsList : [];
-    
-    // FIX SYNC: Dùng transaction để kiểm tra trước khi lưu
-    await db.ref('shared/students').transaction((currentData) => {
-      // Nếu server đang có dữ liệu (>0) mà client định lưu rỗng (0) -> CHẶN
-      if (currentData && currentData.length > 0 && cleanList.length === 0) {
-        console.warn('⛔ Transaction blocked: Ngăn chặn ghi đè danh sách học sinh bằng dữ liệu rỗng.');
-        return; // Hủy update
+  if (!studentsList || !studentsList.length) return false;
+  localStorage.setItem('c7aio_students_cache', JSON.stringify(studentsList));
+
+  const ref = getDbRef(DB_PATHS.STUDENTS);
+  if (ref) {
+    try {
+      await ref.set(studentsList);
+      return true;
+    } catch (e) {
+      console.error('Error saving students to Firebase:', e);
+    }
+  }
+  return false;
+}
+
+function onSharedStudentsChanged(callback) {
+  const cached = localStorage.getItem('c7aio_students_cache');
+  if (cached) {
+    try { callback(JSON.parse(cached)); } catch(e) {}
+  }
+
+  const ref = getDbRef(DB_PATHS.STUDENTS);
+  if (ref) {
+    ref.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val && Array.isArray(val) && val.length > 0) {
+        localStorage.setItem('c7aio_students_cache', JSON.stringify(val));
+        callback(val);
       }
-      return cleanList;
     });
-    console.log('✅ Đã đồng bộ danh sách học sinh (Safe Sync)');
-  } catch (error) {
-    console.error('❌ Lỗi lưu học sinh:', error);
-    window.showDialog('Lỗi hệ thống', 'Không thể lưu danh sách học sinh. Vui lòng kiểm tra kết nối.', '❌');
   }
 }
 
-// --- SHARED TASKS ---
-// Lắng nghe nhiệm vụ chung thay đổi
-function onSharedTasksChanged(callback) {
-  const ref = db.ref('shared/tasks');
-  ref.on('value', snapshot => {
-    const tasks = [];
-    snapshot.forEach(child => {
-      tasks.push(child.val());
-    });
-    localStorage.setItem('c7aio_tasks_cache', JSON.stringify(tasks));
-    callback(tasks);
-  });
-}
-
-// Lưu/Cập nhật một nhiệm vụ chung
+// ==================== TASKS ====================
 async function saveSharedTask(task) {
-  try {
-    // Dùng task.id làm key để dễ update
-    await db.ref(`shared/tasks/${task.id}`).set(task);
-    console.log('✅ Đã lưu task lên Firebase:', task.name);
-  } catch (error) {
-    console.error('❌ Lỗi lưu task:', error);
-  }
-}
-
-// Xóa nhiệm vụ chung
-async function deleteSharedTask(taskId) {
-  try {
-    await db.ref(`shared/tasks/${taskId}`).remove();
-    console.log('✅ Đã xóa task trên Firebase:', taskId);
-  } catch (error) {
-    console.error('❌ Lỗi xóa task:', error);
-  }
-}
-
-// Cập nhật trạng thái hoàn thành (Check-in)
-async function updateSharedTaskCompletion(taskId, completions) {
-  await db.ref(`shared/tasks/${taskId}/completions`).set(completions);
-}
-
-// --- SHARED NOTIFICATIONS ---
-// Lắng nghe thông báo chung
-function onSharedNotificationsChanged(callback) {
-  const ref = db.ref('shared/notifications');
-  ref.on('value', snapshot => {
-    const notifications = [];
-    snapshot.forEach(child => {
-      const val = child.val();
-      if (val) {
-        // Đảm bảo luôn có ID và ngày tháng (cứu dữ liệu cũ)
-        notifications.push({ 
-          id: val.id || child.key, 
-          createdAt: val.createdAt || new Date().toISOString(),
-          ...val 
-        });
-      }
-    });
-    // Sắp xếp mới nhất lên đầu
-    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    localStorage.setItem('c7aio_notifications_cache', JSON.stringify(notifications));
-    callback(notifications);
-  });
-}
-
-// Lưu thông báo chung
-async function saveSharedNotification(notification) {
-  try {
-    await db.ref(`shared/notifications/${notification.id}`).set(notification);
-    console.log('✅ Đã lưu thông báo lên Firebase');
-  } catch (error) {
-    console.error('❌ Lỗi lưu thông báo:', error);
-  }
-}
-
-// Xóa thông báo chung
-async function deleteSharedNotification(notifId) {
-  await db.ref(`shared/notifications/${notifId}`).remove();
-}
-
-// Cập nhật trạng thái đã xem
-async function updateSharedNotificationCompletion(notifId, completions) {
-  await db.ref(`shared/notifications/${notifId}/completions`).set(completions);
-}
-
-// --- SHARED SCHEDULES (LỊCH HỌC) ---
-// Lắng nghe lịch học
-function onSharedSchedulesChanged(callback) {
-  const ref = db.ref('shared/schedules');
-  ref.on('value', snapshot => {
-    const data = snapshot.val() || {};
-    localStorage.setItem('c7aio_schedules_cache', JSON.stringify(data));
-    callback(data);
-  });
-}
-
-// Lưu lịch học
-async function saveSharedSchedules(schedules) {
-  try {
-    // FIX SYNC: Dùng transaction để kiểm tra trước khi lưu
-    await db.ref('shared/schedules').transaction((currentData) => {
-      // Nếu server đang có dữ liệu mà client định lưu rỗng -> CHẶN
-      if (currentData && Object.keys(currentData).length > 0 && (!schedules || Object.keys(schedules).length === 0)) {
-        console.warn('⛔ Transaction blocked: Ngăn chặn ghi đè lịch học bằng dữ liệu rỗng.');
-        return; // Hủy update
-      }
-      return schedules;
-    });
-    console.log('✅ Đã lưu lịch học (Safe Sync)');
-  } catch (error) {
-    console.error('❌ Lỗi lưu lịch học:', error);
-  }
-}
-
-// Lắng nghe metadata tuần (Thông tin ngày bắt đầu/kết thúc của tuần)
-function onSharedWeekMetadataChanged(callback) {
-  const ref = db.ref('shared/weekMetadata');
-  ref.on('value', snapshot => {
-    const data = snapshot.val() || {};
-    localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(data));
-    callback(data);
-  });
-}
-
-// Lưu metadata tuần
-async function saveSharedWeekMetadata(metadata) {
-  try {
-    await db.ref('shared/weekMetadata').set(metadata);
-    console.log('✅ Đã lưu thông tin tuần lên Firebase');
-  } catch (error) {
-    console.error('❌ Lỗi lưu thông tin tuần:', error);
-  }
-}
-
-// --- SHARED INPUT HISTORY (Gợi ý nhập liệu: Tên lớp, Môn, Phòng) ---
-// Lắng nghe thay đổi history
-function onSharedInputHistoryChanged(callback) {
-  const ref = db.ref('shared/inputHistory');
-  ref.on('value', snapshot => {
-    const data = snapshot.val() || {};
-    localStorage.setItem('c7aio_inputHistory_cache', JSON.stringify(data));
-    callback(data);
-  });
-}
-
-// Lưu history
-async function saveSharedInputHistory(type, list) {
-  try {
-    await db.ref(`shared/inputHistory/${type}`).set(list);
-  } catch (error) {
-    console.error(`❌ Lỗi lưu history ${type}:`, error);
-  }
-}
-
-// --- SHARED LOGS (NHẬT KÝ HOẠT ĐỘNG) ---
-async function logAction(action, detail) {
-  const user = getCurrentUser();
+  if (!task || !task.id) return false;
   
-  let roleDisplay = 'Unknown';
-  if (user) {
-    const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
-    roleDisplay = roles.map(r => ROLES[r] || r).join(', ');
+  let currentTasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
+  const idx = currentTasks.findIndex(t => String(t.id) === String(task.id));
+  if (idx !== -1) {
+    currentTasks[idx] = task;
+  } else {
+    currentTasks.push(task);
+  }
+  localStorage.setItem('c7aio_tasks_cache', JSON.stringify(currentTasks));
+
+  const ref = getDbRef(`${DB_PATHS.TASKS}/${task.id}`);
+  if (ref) {
+    try {
+      await ref.set(task);
+      return true;
+    } catch (e) {
+      console.error('Error saving task to Firebase:', e);
+    }
+  }
+  return false;
+}
+
+async function deleteSharedTask(taskId) {
+  let currentTasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
+  currentTasks = currentTasks.filter(t => String(t.id) !== String(taskId));
+  localStorage.setItem('c7aio_tasks_cache', JSON.stringify(currentTasks));
+
+  const ref = getDbRef(`${DB_PATHS.TASKS}/${taskId}`);
+  if (ref) {
+    try {
+      await ref.remove();
+      return true;
+    } catch (e) {
+      console.error('Error deleting task in Firebase:', e);
+    }
+  }
+  return false;
+}
+
+async function updateSharedTaskCompletion(taskId, completionsObj) {
+  let currentTasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache')) || [];
+  const target = currentTasks.find(t => String(t.id) === String(taskId));
+  if (target) {
+    target.completions = completionsObj;
+    localStorage.setItem('c7aio_tasks_cache', JSON.stringify(currentTasks));
   }
 
-  const logEntry = {
+  const ref = getDbRef(`${DB_PATHS.TASKS}/${taskId}/completions`);
+  if (ref) {
+    try {
+      await ref.set(completionsObj);
+      return true;
+    } catch (e) {
+      console.error('Error updating task completions in Firebase:', e);
+    }
+  }
+  return false;
+}
+
+function onSharedTasksChanged(callback) {
+  const cached = localStorage.getItem('c7aio_tasks_cache');
+  if (cached) {
+    try { callback(JSON.parse(cached)); } catch(e) {}
+  }
+
+  const ref = getDbRef(DB_PATHS.TASKS);
+  if (ref) {
+    ref.on('value', (snapshot) => {
+      const val = snapshot.val();
+      let taskList = [];
+      if (val) {
+        if (Array.isArray(val)) {
+          taskList = val.filter(Boolean);
+        } else if (typeof val === 'object') {
+          taskList = Object.values(val);
+        }
+      }
+      localStorage.setItem('c7aio_tasks_cache', JSON.stringify(taskList));
+      callback(taskList);
+    });
+  }
+}
+
+// ==================== NOTIFICATIONS ====================
+async function saveSharedNotification(notif) {
+  if (!notif || !notif.id) return false;
+
+  let currentList = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  const idx = currentList.findIndex(n => String(n.id) === String(notif.id));
+  if (idx !== -1) {
+    currentList[idx] = notif;
+  } else {
+    currentList.unshift(notif);
+  }
+  localStorage.setItem('c7aio_notifications_cache', JSON.stringify(currentList));
+
+  const ref = getDbRef(`${DB_PATHS.NOTIFICATIONS}/${notif.id}`);
+  if (ref) {
+    try {
+      await ref.set(notif);
+      return true;
+    } catch (e) {
+      console.error('Error saving notification to Firebase:', e);
+    }
+  }
+  return false;
+}
+
+async function deleteSharedNotification(notifId) {
+  let currentList = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  currentList = currentList.filter(n => String(n.id) !== String(notifId));
+  localStorage.setItem('c7aio_notifications_cache', JSON.stringify(currentList));
+
+  const ref = getDbRef(`${DB_PATHS.NOTIFICATIONS}/${notifId}`);
+  if (ref) {
+    try {
+      await ref.remove();
+      return true;
+    } catch (e) {
+      console.error('Error deleting notification in Firebase:', e);
+    }
+  }
+  return false;
+}
+
+async function updateSharedNotificationCompletion(notifId, completionsObj) {
+  let currentList = JSON.parse(localStorage.getItem('c7aio_notifications_cache')) || [];
+  const target = currentList.find(n => String(n.id) === String(notifId));
+  if (target) {
+    target.completions = completionsObj;
+    localStorage.setItem('c7aio_notifications_cache', JSON.stringify(currentList));
+  }
+
+  const ref = getDbRef(`${DB_PATHS.NOTIFICATIONS}/${notifId}/completions`);
+  if (ref) {
+    try {
+      await ref.set(completionsObj);
+      return true;
+    } catch (e) {
+      console.error('Error updating notification completions in Firebase:', e);
+    }
+  }
+  return false;
+}
+
+function onSharedNotificationsChanged(callback) {
+  const cached = localStorage.getItem('c7aio_notifications_cache');
+  if (cached) {
+    try { callback(JSON.parse(cached)); } catch(e) {}
+  }
+
+  const ref = getDbRef(DB_PATHS.NOTIFICATIONS);
+  if (ref) {
+    ref.on('value', (snapshot) => {
+      const val = snapshot.val();
+      let notifList = [];
+      if (val) {
+        if (Array.isArray(val)) {
+          notifList = val.filter(Boolean);
+        } else if (typeof val === 'object') {
+          notifList = Object.values(val);
+        }
+      }
+      notifList.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return (new Date(b.createdAt || 0)) - (new Date(a.createdAt || 0));
+      });
+      localStorage.setItem('c7aio_notifications_cache', JSON.stringify(notifList));
+      callback(notifList);
+    });
+  }
+}
+
+// ==================== SCHEDULES & WEEKS ====================
+async function saveSharedSchedules(schedulesData) {
+  if (!schedulesData) return false;
+  localStorage.setItem('c7aio_schedules_cache', JSON.stringify(schedulesData));
+
+  const ref = getDbRef(DB_PATHS.SCHEDULES);
+  if (ref) {
+    try {
+      await ref.set(schedulesData);
+      return true;
+    } catch (e) {
+      console.error('Error saving schedules in Firebase:', e);
+    }
+  }
+  return false;
+}
+
+function onSharedSchedulesChanged(callback) {
+  const cached = localStorage.getItem('c7aio_schedules_cache');
+  if (cached) {
+    try { callback(JSON.parse(cached)); } catch(e) {}
+  }
+
+  const ref = getDbRef(DB_PATHS.SCHEDULES);
+  if (ref) {
+    ref.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        localStorage.setItem('c7aio_schedules_cache', JSON.stringify(val));
+        callback(val);
+      }
+    });
+  }
+}
+
+async function saveSharedWeekMetadata(metaData) {
+  if (!metaData) return false;
+  localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(metaData));
+
+  const ref = getDbRef(DB_PATHS.WEEK_METADATA);
+  if (ref) {
+    try {
+      await ref.set(metaData);
+      return true;
+    } catch (e) {
+      console.error('Error saving week metadata in Firebase:', e);
+    }
+  }
+  return false;
+}
+
+function onSharedWeekMetadataChanged(callback) {
+  const cached = localStorage.getItem('c7aio_weekMetadata_cache');
+  if (cached) {
+    try { callback(JSON.parse(cached)); } catch(e) {}
+  }
+
+  const ref = getDbRef(DB_PATHS.WEEK_METADATA);
+  if (ref) {
+    ref.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(val));
+        callback(val);
+      }
+    });
+  }
+}
+
+// ==================== PERMISSIONS & ROLES ====================
+async function saveSharedPermissions(permConfig) {
+  if (!permConfig) return false;
+  localStorage.setItem('c7aio_permissions_cache', JSON.stringify(permConfig));
+
+  const ref = getDbRef(DB_PATHS.PERMISSIONS);
+  if (ref) {
+    try {
+      await ref.set(permConfig);
+      return true;
+    } catch (e) {
+      console.error('Error saving permissions in Firebase:', e);
+    }
+  }
+  return false;
+}
+
+function onSharedPermissionsChanged(callback) {
+  const cached = localStorage.getItem('c7aio_permissions_cache');
+  if (cached) {
+    try { callback(JSON.parse(cached)); } catch(e) {}
+  }
+
+  const ref = getDbRef(DB_PATHS.PERMISSIONS);
+  if (ref) {
+    ref.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        localStorage.setItem('c7aio_permissions_cache', JSON.stringify(val));
+        callback(val);
+      }
+    });
+  }
+}
+
+// ==================== SYSTEM LOGS ====================
+async function logAction(action, detail = '') {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser')) || { name: 'Khách', role: ['guest'] };
+  const logItem = {
     id: Date.now(),
-    user: user ? user.name : 'Unknown',
-    role: roleDisplay,
+    timestamp: new Date().toISOString(),
+    user: currentUser.name || 'Học sinh',
+    role: Array.isArray(currentUser.role) ? currentUser.role.join(', ') : (currentUser.role || 'student'),
     action: action,
-    detail: detail,
-    timestamp: new Date().toISOString()
+    detail: detail
   };
 
-  try {
-    // Lưu vào node shared/logs
-    // Để tránh quá tải, có thể giới hạn số lượng log sau này
-    await db.ref('shared/logs').push(logEntry);
-    console.log('📝 Logged:', action);
-  } catch (error) {
-    console.error('❌ Lỗi ghi log:', error);
+  const ref = getDbRef(DB_PATHS.LOGS);
+  if (ref) {
+    try {
+      await ref.push(logItem);
+    } catch (e) {
+      console.error('Error logging to Firebase:', e);
+    }
   }
 }
 
 function onSharedLogsChanged(callback) {
-  const ref = db.ref('shared/logs').limitToLast(200); // Chỉ lấy 200 log gần nhất
-  ref.on('value', snapshot => {
-    const logs = [];
-    snapshot.forEach(child => {
-      logs.push(child.val());
-    });
-    // Sắp xếp mới nhất lên đầu
-    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    callback(logs);
-  });
-}
-
-// --- SHARED PERMISSIONS (PHÂN QUYỀN) ---
-function onSharedPermissionsChanged(callback) {
-  const ref = db.ref('shared/permissions');
-  ref.on('value', snapshot => {
-    const data = snapshot.val();
-    if (data) {
-      localStorage.setItem('c7aio_permissions_cache', JSON.stringify(data));
-      callback(data);
-    }
-  });
-}
-
-async function saveSharedPermissions(perms) {
-  try {
-    await db.ref('shared/permissions').set(perms);
-    // Ghi log hành động này
-    logAction('Cập nhật quyền hạn', 'Thay đổi bảng phân quyền hệ thống');
-    console.log('✅ Đã lưu phân quyền lên Firebase');
-  } catch (error) {
-    console.error('❌ Lỗi lưu phân quyền:', error);
-    window.showToast('Lỗi khi lưu phân quyền!', 'error');
-  }
-}
-
-// ============= FALLBACK - Offline Support =============
-
-// Nếu offline, sử dụng localStorage tạm thời
-function getLocalStorageData(key) {
-  return localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : [];
-}
-
-function saveLocalStorageData(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
-// Sync offline data với Firebase khi online
-async function syncOfflineData() {
-  try {
-    const offlineTasks = getLocalStorageData('c7aio_tasks_detail');
-    const user = getCurrentUser();
-
-    if (user && offlineTasks.length > 0) {
-      console.log('🔄 Đang sync dữ liệu offline...');
-      for (const task of offlineTasks) {
-        if (!task.id || task.id.toString().length < 15) {
-          // Task mới (được tạo offline)
-          await addTask(task.name, task.deadline);
-        }
+  const ref = getDbRef(DB_PATHS.LOGS);
+  if (ref) {
+    ref.limitToLast(150).on('value', (snapshot) => {
+      const val = snapshot.val();
+      let logsList = [];
+      if (val) {
+        logsList = Object.values(val);
+        logsList.sort((a, b) => (new Date(b.timestamp || 0)) - (new Date(a.timestamp || 0)));
       }
-      localStorage.removeItem('c7aio_tasks_detail');
-      console.log('✅ Sync hoàn tất');
-    }
-  } catch (error) {
-    console.error('❌ Lỗi sync:', error.message);
+      callback(logsList);
+    });
   }
 }
-
-// Kiểm tra kết nối
-window.addEventListener('online', () => {
-  console.log('✅ Kết nối lại - Đang sync...');
-  syncOfflineData();
-});
-
-console.log('📱 Firebase Utilities loaded');
-
-// ============= SHORTCUTS / ALIASES =============
-// Các hàm viết tắt để dễ sử dụng trong các script khác
-
-const getTasks_Firebase = getTasks;
-const addTask_Firebase = addTask;
-const updateTask_Firebase = updateTask;
-const deleteTask_Firebase = deleteTask;
