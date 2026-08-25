@@ -38,6 +38,36 @@
   overflow-x: auto;
 }
 
+.roles-matrix-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.roles-matrix-container table {
+  min-width: 900px;
+  width: 100%;
+}
+
+.roles-matrix-container th {
+  padding: 14px 16px;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  background: var(--bg-surface);
+  text-align: center;
+}
+
+.roles-matrix-container th:first-child {
+  text-align: left;
+  min-width: 260px;
+}
+
+.roles-matrix-container td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--input-border);
+}
+
 .perm-checkbox-custom {
   width: 22px;
   height: 22px;
