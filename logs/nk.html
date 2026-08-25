@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>11C7 AIO - Nhật Ký Hoạt Động</title>
+  <title>10C7 AIO - Nhật Ký Hoạt Động</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style/hub.css?v=3.3.0">
-  <link rel="stylesheet" href="../style/nk.css?v=3.3.0">
+  <link rel="stylesheet" href="../style/hub.css?v=3.3.2">
+  <link rel="stylesheet" href="../style/nk.css?v=3.3.2">
 </head>
 <body>
 
@@ -22,7 +23,7 @@
             <span class="header-icon">📜</span>
             <span class="header-title-text">Nhật Ký Hoạt Động</span>
           </div>
-          <p>Lịch sử các thao tác & thay đổi trên toàn hệ thống</p>
+          <p>Lịch sử các thao tác & cập nhật của lớp</p>
         </div>
       </div>
       <div class="header-right">
@@ -36,38 +37,30 @@
 
   <main class="nk-page-container">
 
-    <section class="nk-top-header">
+    <!-- Top Action Bar -->
+    <section class="nk-top-bar">
       <div>
-        <h2 style="font-size: 1.25rem; font-weight: 800;">Lịch Sử Thao Tác Hệ Thống</h2>
-        <p style="font-size: 0.85rem; color: var(--text-sub);">Ghi lại 150 hành động gần nhất của người dùng</p>
+        <h3 style="font-weight: 800; font-size: 1.15rem;">Dòng Sự Kiện Hệ Thống (Audit Logs)</h3>
+        <p style="color: var(--text-sub); font-size: 0.85rem;">Ghi nhận mọi thao tác phân công, sửa đổi lịch học và thông báo</p>
       </div>
-      <div class="c7-search-box" style="max-width: 340px;">
-        <span class="c7-search-icon">🔍</span>
-        <input type="text" id="logSearchInput" class="c7-search-input" placeholder="Lọc người dùng hoặc hành động..." oninput="handleLogSearch(this.value)">
+      <div>
+        <button class="c7-btn c7-btn-danger" id="btnClearLogsBtn" onclick="clearAllLogsAction()">
+          🗑️ Xóa Nhật Ký
+        </button>
       </div>
     </section>
 
-    <section class="nk-table-card">
-      <table class="c7-table">
-        <thead>
-          <tr>
-            <th style="width: 160px;">Thời gian</th>
-            <th>Người thực hiện</th>
-            <th>Chức vụ</th>
-            <th>Hành động</th>
-            <th>Chi tiết nội dung</th>
-          </tr>
-        </thead>
-        <tbody id="logsTableBody">
-          <!-- Rendered by nk.js -->
-        </tbody>
-      </table>
+    <!-- Logs Timeline Card -->
+    <section class="nk-card-container">
+      <div class="nk-timeline" id="logsTimelineContainer">
+        <!-- Rendered by nk.js -->
+      </div>
     </section>
 
   </main>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
@@ -76,11 +69,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js?v=3.3.0"></script>
-  <script src="../script/firebase-utils.js?v=3.3.0"></script>
-  <script src="../script/students-list.js?v=3.3.0"></script>
-  <script src="../script/hub.js?v=3.3.0"></script>
-  <script src="../script/console.js?v=3.3.0"></script>
-  <script src="../script/nk.js?v=3.3.0"></script>
+  <script src="../script/firebase-config.js?v=3.3.2"></script>
+  <script src="../script/firebase-utils.js?v=3.3.2"></script>
+  <script src="../script/students-list.js?v=3.3.2"></script>
+  <script src="../script/hub.js?v=3.3.2"></script>
+  <script src="../script/console.js?v=3.3.2"></script>
+  <script src="../script/nk.js?v=3.3.2"></script>
 </body>
 </html>
