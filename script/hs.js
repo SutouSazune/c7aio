@@ -44,7 +44,8 @@ function getFilteredStudents() {
     const matchName = (s.name || '').toLowerCase().includes(searchQuery);
     const matchPhone = (s.phone || '').includes(searchQuery);
     const matchEmail = (s.email || '').toLowerCase().includes(searchQuery);
-    return matchName || matchPhone || matchEmail;
+    const matchPrev = (s.previousClass || '').toLowerCase().includes(searchQuery);
+    return matchName || matchPhone || matchEmail || matchPrev;
   });
 }
 
@@ -57,7 +58,7 @@ function renderStudentsTable() {
   if (list.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+        <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
           Không tìm thấy học sinh nào phù hợp.
         </td>
       </tr>
@@ -74,6 +75,8 @@ function renderStudentsTable() {
         ${ROLES[r] || r}
       </span>
     `).join(' ');
+
+    const prevClassBadge = `<span class="user-role-pill" style="background: ${s.previousClass === '10C9' ? '#ec4899' : '#0284c7'}; font-size: 0.75rem;">${escapeHtml(s.previousClass || '10C7')}</span>`;
 
     const phoneLink = s.phone ? `<a href="tel:${s.phone}" class="hs-quick-btn">📞 ${s.phone}</a>` : '';
     const emailLink = s.email ? `<a href="mailto:${s.email}" class="hs-quick-btn">✉️ Email</a>` : '';
@@ -92,6 +95,7 @@ function renderStudentsTable() {
         <td>${roleBadges}</td>
         <td>${formatDateVn(s.dob)}</td>
         <td>${s.gender || 'Nam'}</td>
+        <td>${prevClassBadge}</td>
         <td>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             ${phoneLink}
@@ -132,6 +136,8 @@ function openAddStudentModal() {
   document.getElementById('inputStdName').value = '';
   document.getElementById('inputStdDob').value = '';
   document.getElementById('selectStdGender').value = 'Nam';
+  const prevInput = document.getElementById('inputStdPreviousClass');
+  if (prevInput) prevInput.value = '10C7';
   document.getElementById('selectStdRole').value = 'student';
   document.getElementById('selectStdGroup').value = '1';
   document.getElementById('inputStdPhone').value = '';
@@ -151,6 +157,8 @@ function openEditStudentModal(studentId) {
   document.getElementById('inputStdName').value = s.name || '';
   document.getElementById('inputStdDob').value = s.dob || '';
   document.getElementById('selectStdGender').value = s.gender || 'Nam';
+  const prevInput = document.getElementById('inputStdPreviousClass');
+  if (prevInput) prevInput.value = s.previousClass || '10C7';
 
   const primaryRole = Array.isArray(s.role) ? (s.role[0] || 'student') : (s.role || 'student');
   document.getElementById('selectStdRole').value = primaryRole;
@@ -174,6 +182,7 @@ async function submitStudentForm() {
   const name = document.getElementById('inputStdName').value.trim();
   const dob = document.getElementById('inputStdDob').value.trim();
   const gender = document.getElementById('selectStdGender').value;
+  const previousClass = (document.getElementById('inputStdPreviousClass') ? document.getElementById('inputStdPreviousClass').value.trim() : '') || '10C7';
   const role = document.getElementById('selectStdRole').value;
   const group = parseInt(document.getElementById('selectStdGroup').value) || 1;
   const phone = document.getElementById('inputStdPhone').value.trim();
@@ -191,6 +200,7 @@ async function submitStudentForm() {
     name,
     dob,
     gender,
+    previousClass,
     role: [role],
     group,
     phone,
@@ -212,7 +222,7 @@ async function submitStudentForm() {
   }
 
   if (typeof logAction === 'function') {
-    logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (${ROLES[role] || role})`);
+    logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (Lớp cũ: ${previousClass}, ${ROLES[role] || role})`);
   }
 
   showToast(isEdit ? 'Đã cập nhật hồ sơ!' : 'Đã thêm học sinh mới thành công!', 'success');
@@ -246,18 +256,18 @@ function exportStudentsCsv() {
   }
 
   let csv = '\uFEFF';
-  csv += 'STT,Họ và tên,Ngày sinh,Giới tính,Chức vụ,Tổ,Số điện thoại,Email,Địa chỉ\n';
+  csv += 'STT,Họ và tên,Ngày sinh,Giới tính,Lớp cũ,Chức vụ,Tổ,Số điện thoại,Email,Địa chỉ\n';
 
   STUDENTS.forEach((s, idx) => {
     const roleStr = (Array.isArray(s.role) ? s.role : [s.role || 'student']).join(';');
-    csv += `"${idx + 1}","${s.name.replace(/"/g, '""')}","${s.dob || ''}","${s.gender || 'Nam'}","${roleStr}","${s.group || 1}","${s.phone || ''}","${s.email || ''}","${(s.address || '').replace(/"/g, '""')}"\n`;
+    csv += `"${idx + 1}","${s.name.replace(/"/g, '""')}","${s.dob || ''}","${s.gender || 'Nam'}","${s.previousClass || '10C7'}","${roleStr}","${s.group || 1}","${s.phone || ''}","${s.email || ''}","${(s.address || '').replace(/"/g, '""')}"\n`;
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Danh_Sach_Hoc_Sinh_10C7_${new Date().toISOString().split('T')[0]}.csv`;
+  a.download = `Danh_Sach_Hoc_Sinh_11C7_${new Date().toISOString().split('T')[0]}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -304,13 +314,14 @@ function handleCsvFile(e) {
           newStudents.push({
             id: Date.now() + i,
             name: cols[1],
-            dob: cols[2] || '2008-01-01',
+            dob: cols[2] || '2010-01-01',
             gender: cols[3] || 'Nam',
-            role: cols[4] ? cols[4].split(';') : ['student'],
-            group: parseInt(cols[5]) || 1,
-            phone: cols[6] || '',
-            email: cols[7] || '',
-            address: cols[8] || ''
+            previousClass: cols[4] || '10C7',
+            role: cols[5] ? cols[5].split(';') : ['student'],
+            group: parseInt(cols[6]) || 1,
+            phone: cols[7] || '',
+            email: cols[8] || '',
+            address: cols[9] || ''
           });
         }
       }
