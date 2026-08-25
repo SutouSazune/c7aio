@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.4-refresh';
+const CACHE_NAME = 'c7aio-v3.3.5-custom-roles';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
