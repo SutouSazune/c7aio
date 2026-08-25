@@ -1,8 +1,10 @@
 /**
- * C7AIO Role Permissions Matrix Controller
+ * C7AIO Role Permissions Matrix Controller & Dynamic Role Creator
  */
 
 let currentStudents = STUDENTS || [];
+let customRolesData = {};
+let editingRoleKey = null;
 
 window.addEventListener('load', () => {
   const user = getCurrentUser();
@@ -18,6 +20,16 @@ window.addEventListener('load', () => {
   if (nameEl) nameEl.textContent = user.name;
 
   renderRolesMatrix();
+
+  if (typeof onSharedCustomRolesChanged === 'function') {
+    onSharedCustomRolesChanged((data) => {
+      customRolesData = data || {};
+      if (typeof applyCustomRoles === 'function') {
+        applyCustomRoles(customRolesData);
+      }
+      renderRolesMatrix();
+    });
+  }
 
   if (typeof onSharedPermissionsChanged === 'function') {
     onSharedPermissionsChanged((data) => {
@@ -57,6 +69,7 @@ function renderRolesMatrix() {
   `;
 
   roleKeys.forEach(roleKey => {
+    const isCustom = typeof DEFAULT_ROLES !== 'undefined' ? !DEFAULT_ROLES[roleKey] : false;
     const holders = currentStudents.filter(s => {
       const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
       return roles.includes(roleKey);
@@ -68,11 +81,21 @@ function renderRolesMatrix() {
          </div>`
       : `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">(Chưa có thành viên)</div>`;
 
+    const customControls = isCustom ? `
+      <span style="display: inline-flex; gap: 6px; margin-left: 8px;">
+        <button class="btn-action-pill" onclick="openEditRoleModal('${roleKey}')" title="Sửa tên / màu sắc">✏️</button>
+        <button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa vai trò này">🗑️</button>
+      </span>
+    ` : '';
+
     html += `
       <tr>
         <td style="vertical-align: top; padding: 14px 16px;">
-          <div class="role-title-tag" style="color: ${ROLE_COLORS[roleKey] || 'var(--primary)'};">
-            ${ROLES[roleKey]}
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div class="role-title-tag" style="color: ${ROLE_COLORS[roleKey] || 'var(--primary)'}; font-weight: 800; font-size: 0.95rem;">
+              ${ROLES[roleKey]}
+            </div>
+            ${customControls}
           </div>
           ${holdersHtml}
         </td>
@@ -94,40 +117,140 @@ function renderRolesMatrix() {
   container.innerHTML = html;
 }
 
+// ============= CUSTOM ROLES MODAL LOGIC =============
+function openAddRoleModal() {
+  editingRoleKey = null;
+  document.getElementById('roleModalTitle').textContent = '➕ Thêm Vai Trò Mới';
+  document.getElementById('inputRoleName').value = '';
+  document.getElementById('inputRoleKey').value = '';
+  document.getElementById('inputRoleKey').disabled = false;
+  document.getElementById('inputRoleColor').value = '#8b5cf6';
+  document.getElementById('btnDeleteRoleTrigger').style.display = 'none';
+
+  const overlay = document.getElementById('roleModalOverlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function openEditRoleModal(roleKey) {
+  editingRoleKey = roleKey;
+  const roleName = ROLES[roleKey] || roleKey;
+  const roleColor = ROLE_COLORS[roleKey] || '#8b5cf6';
+
+  document.getElementById('roleModalTitle').textContent = '✏️ Chỉnh Sửa Vai Trò';
+  document.getElementById('inputRoleName').value = roleName;
+  document.getElementById('inputRoleKey').value = roleKey;
+  document.getElementById('inputRoleKey').disabled = true; // Key cannot be edited
+  document.getElementById('inputRoleColor').value = roleColor;
+  document.getElementById('btnDeleteRoleTrigger').style.display = 'inline-flex';
+
+  const overlay = document.getElementById('roleModalOverlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function closeRoleModal() {
+  const overlay = document.getElementById('roleModalOverlay');
+  if (overlay) overlay.style.display = 'none';
+  editingRoleKey = null;
+}
+
+function slugifyKey(text) {
+  return text.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .substring(0, 30);
+}
+
+async function submitRoleForm() {
+  const name = (document.getElementById('inputRoleName').value || '').trim();
+  let key = (document.getElementById('inputRoleKey').value || '').trim();
+  const color = document.getElementById('inputRoleColor').value || '#8b5cf6';
+
+  if (!name) {
+    showToast('Vui lòng nhập tên vai trò / chức vụ!', 'warning');
+    return;
+  }
+
+  if (editingRoleKey) {
+    key = editingRoleKey;
+  } else {
+    if (!key) {
+      key = 'role_' + slugifyKey(name);
+    } else {
+      key = slugifyKey(key);
+    }
+  }
+
+  if (!key) {
+    showToast('Mã định danh không hợp lệ!', 'error');
+    return;
+  }
+
+  try {
+    if (typeof saveSharedCustomRole === 'function') {
+      await saveSharedCustomRole(key, { name, color });
+    }
+
+    ROLES[key] = name;
+    ROLE_COLORS[key] = color;
+    if (!ROLE_PERMISSIONS_CONFIG[key]) {
+      ROLE_PERMISSIONS_CONFIG[key] = [];
+    }
+
+    closeRoleModal();
+    renderRolesMatrix();
+    showToast(editingRoleKey ? 'Đã cập nhật vai trò!' : 'Đã tạo vai trò mới thành công!', 'success');
+  } catch (e) {
+    showToast('Lỗi khi lưu vai trò: ' + e.message, 'error');
+  }
+}
+
+function confirmDeleteRole(roleKey) {
+  showConfirm('Xóa vai trò', `Bạn có chắc chắn muốn xóa chức vụ "${ROLES[roleKey] || roleKey}" không?`, async () => {
+    try {
+      if (typeof deleteSharedCustomRole === 'function') {
+        await deleteSharedCustomRole(roleKey);
+      }
+      delete ROLES[roleKey];
+      delete ROLE_COLORS[roleKey];
+      delete ROLE_PERMISSIONS_CONFIG[roleKey];
+
+      renderRolesMatrix();
+      showToast('Đã xóa vai trò thành công!', 'info');
+    } catch (e) {
+      showToast('Lỗi khi xóa vai trò: ' + e.message, 'error');
+    }
+  });
+}
+
+function deleteRoleAction() {
+  if (editingRoleKey) {
+    confirmDeleteRole(editingRoleKey);
+    closeRoleModal();
+  }
+}
+
+// ============= SAVE ROLE PERMISSIONS MATRIX =============
 async function saveRolesConfig() {
   if (!checkPermission('manage_roles')) return;
 
   const newConfig = { ...ROLE_PERMISSIONS_CONFIG };
-  const checkboxes = document.querySelectorAll('.perm-box');
-
-  // Reset all
-  Object.keys(newConfig).forEach(role => {
-    newConfig[role] = [];
+  Object.keys(ROLES).forEach(r => {
+    if (r !== 'admin') newConfig[r] = [];
   });
 
-  checkboxes.forEach(cb => {
-    if (cb.checked) {
-      const role = cb.getAttribute('data-role');
-      const perm = cb.getAttribute('data-perm');
-      if (role && perm) {
-        if (!newConfig[role]) newConfig[role] = [];
-        if (!newConfig[role].includes(perm)) {
-          newConfig[role].push(perm);
-        }
-      }
+  document.querySelectorAll('.perm-box:checked').forEach(cb => {
+    const role = cb.dataset.role;
+    const perm = cb.dataset.perm;
+    if (newConfig[role]) {
+      newConfig[role].push(perm);
     }
   });
 
-  try {
-    if (typeof updateSharedPermissions === 'function') {
-      await updateSharedPermissions(newConfig);
-      showToast('Đã lưu cấu hình phân quyền lên hệ thống!', 'success');
-      logActivity('Phân quyền', 'Cập nhật ma trận quyền hạn cho các ban cán sự');
-    } else {
-      ROLE_PERMISSIONS_CONFIG = newConfig;
-      showToast('Đã lưu cục bộ (Chưa kết nối Cloud)!', 'warning');
-    }
-  } catch (err) {
-    showToast('Lỗi khi lưu cấu hình: ' + err.message, 'error');
+  if (typeof saveSharedPermissions === 'function') {
+    await saveSharedPermissions(newConfig);
   }
+
+  showToast('Đã lưu bảng phân quyền thành công!', 'success');
 }
