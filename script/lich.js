@@ -48,8 +48,8 @@ window.addEventListener('load', () => {
   if (checkPermission('manage_schedule')) {
     const btnAdd = document.getElementById('btnAddClassTrigger');
     const btnManage = document.getElementById('btnManageWeekTrigger');
-    if (btnAdd) btnAdd.style.display = 'inline-block';
-    if (btnManage) btnManage.style.display = 'inline-block';
+    if (btnAdd) btnAdd.style.display = 'inline-flex';
+    if (btnManage) btnManage.style.display = 'inline-flex';
   }
 
   initDefaultScheduleIfEmpty();
@@ -312,7 +312,7 @@ function renderTimetable() {
     const isToday = (day === todayDayName);
 
     const classesHtml = classes.length === 0
-      ? '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 12px 0;">Không có tiết học</div>'
+      ? '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 14px 0;">Không có tiết học</div>'
       : classes.map((c, idx) => {
           const color = getSubjectColor(c.name || c.subject);
           return `
@@ -323,8 +323,8 @@ function renderTimetable() {
               <div class="class-card-room">📍 ${escapeHtml(c.room || 'Chưa rõ')}</div>
               ${checkPermission('manage_schedule') ? `
                 <div style="display: flex; gap: 6px; margin-top: 6px;">
-                  <button class="btn-task-action" style="padding: 2px 6px; font-size: 0.7rem;" onclick="editClass('${day}', ${idx})">✏️ Sửa</button>
-                  <button class="btn-task-action delete" style="padding: 2px 6px; font-size: 0.7rem;" onclick="deleteClass('${day}', ${idx})">🗑️ Xóa</button>
+                  <button class="btn-action-pill" onclick="editClass('${day}', ${idx})">✏️ Sửa</button>
+                  <button class="btn-action-pill danger" onclick="deleteClass('${day}', ${idx})">🗑️ Xóa</button>
                 </div>
               ` : ''}
             </div>
@@ -336,7 +336,7 @@ function renderTimetable() {
         <div class="day-col-header">
           <div class="day-col-title">
             <span>${DAY_LABELS[day]}</span>
-            ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 6px; font-size: 0.7rem;">Hôm nay</span>' : ''}
+            ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 6px; font-size: 0.7rem; font-weight: 700;">Hôm nay</span>' : ''}
           </div>
           <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết</span>
         </div>
@@ -357,7 +357,7 @@ function openAddClassModal() {
   document.getElementById('inputClassSubject').value = '';
   document.getElementById('inputClassTime').value = '';
   document.getElementById('inputClassRoom').value = 'P.204';
-  document.getElementById('selectClassPeriod').value = 'custom';
+  document.querySelectorAll('.period-picker-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('classModalOverlay').style.display = 'flex';
 }
 
@@ -365,10 +365,16 @@ function closeClassModal() {
   document.getElementById('classModalOverlay').style.display = 'none';
 }
 
-function autoFillPeriodTime() {
-  const period = document.getElementById('selectClassPeriod').value;
-  if (PERIOD_TIMES[period]) {
-    document.getElementById('inputClassTime').value = PERIOD_TIMES[period];
+function pickSubjectTag(subj) {
+  document.getElementById('inputClassName').value = subj;
+}
+
+function selectPeriodNum(periodNum) {
+  document.querySelectorAll('.period-picker-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', idx + 1 === periodNum);
+  });
+  if (PERIOD_TIMES[periodNum]) {
+    document.getElementById('inputClassTime').value = PERIOD_TIMES[periodNum];
   }
 }
 
@@ -385,6 +391,15 @@ function editClass(day, index) {
   document.getElementById('inputClassTime').value = c.time || '';
   document.getElementById('inputClassRoom').value = c.room || '';
   document.getElementById('selectClassDay').value = day;
+
+  document.querySelectorAll('.period-picker-btn').forEach(btn => btn.classList.remove('active'));
+  for (const [pNum, pTime] of Object.entries(PERIOD_TIMES)) {
+    if (c.time === pTime) {
+      selectPeriodNum(parseInt(pNum));
+      break;
+    }
+  }
+
   document.getElementById('classModalOverlay').style.display = 'flex';
 }
 
@@ -413,7 +428,6 @@ async function submitClassForm() {
   const classData = { name, subject, time, room: room || 'P.204' };
 
   if (editingClassDay !== null && editingClassIndex !== null) {
-    // Nếu đổi thứ
     if (editingClassDay !== day) {
       schedules[currentWeekKey][editingClassDay].splice(editingClassIndex, 1);
       schedules[currentWeekKey][day].push(classData);

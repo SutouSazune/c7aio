@@ -55,8 +55,7 @@ function initEditor() {
           [{ 'header': [1, 2, 3, false] }],
           ['bold', 'italic', 'underline'],
           [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          ['link', 'image'],
-          ['clean']
+          ['link', 'clean']
         ]
       }
     });
@@ -140,13 +139,13 @@ function renderNotifications() {
           </div>
 
           <div style="display: flex; gap: 8px; margin-top: 6px;" onclick="event.stopPropagation()">
-            <button class="btn-task-action" onclick="toggleNotifRead('${n.id}')">
+            <button class="btn-action-pill" onclick="toggleNotifRead('${n.id}')">
               ${isRead ? '✉️ Đánh dấu chưa đọc' : '✅ Đã đọc'}
             </button>
             ${checkPermission('manage_notifications') ? `
-              <button class="btn-task-action" onclick="editNotif('${n.id}')">✏️ Sửa</button>
-              <button class="btn-task-action" onclick="togglePinNotif('${n.id}')">${isPinned ? 'Bỏ ghim' : '📌 Ghim'}</button>
-              <button class="btn-task-action delete" onclick="deleteNotifAction('${n.id}')">🗑️ Xóa</button>
+              <button class="btn-action-pill" onclick="editNotif('${n.id}')">✏️ Sửa</button>
+              <button class="btn-action-pill" onclick="togglePinNotif('${n.id}')">${isPinned ? 'Bỏ ghim' : '📌 Ghim'}</button>
+              <button class="btn-action-pill danger" onclick="deleteNotifAction('${n.id}')">🗑️ Xóa</button>
             ` : ''}
           </div>
         </div>
@@ -183,7 +182,6 @@ function viewNotifDetail(notifId) {
   const n = notifications.find(item => String(item.id) === String(notifId));
   if (!n) return;
 
-  // Auto mark as read
   if (!n.completions) n.completions = {};
   if (!n.completions[currentUser.id]) {
     n.completions[currentUser.id] = true;
