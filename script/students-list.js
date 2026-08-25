@@ -38,7 +38,7 @@ const DEFAULT_STUDENTS = [
   { id: 32, name: "Việt Vũ Thành", role: ["student"], dob: "2010-10-09", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 33, name: "Lê Ngọc Anh Thư", role: ["student"], dob: "2010-04-26", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 34, name: "Nguyễn Thùy Trâm", role: ["student"], dob: "2010-03-16", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
-  { id: 35, name: "Huỳnh配合Trân" ? "Huỳnh Bảo Trân" : "Huỳnh Bảo Trân", role: ["student"], dob: "2010-11-22", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
+  { id: 35, name: "Huỳnh Bảo Trân", role: ["student"], dob: "2010-11-22", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 36, name: "Lê Khánh Trang", role: ["student"], dob: "2010-06-23", gender: "Nữ", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 37, name: "Nguyễn Phú Trọng", role: ["student"], dob: "2010-06-25", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
   { id: 38, name: "Nguyễn Minh Trường", role: ["student"], dob: "2010-02-15", gender: "Nam", phone: "", email: "", group: 4, previousClass: "10C7", note: "" },
@@ -101,9 +101,14 @@ function applyCustomRoles(customRolesObj) {
   ROLE_COLORS = { ...DEFAULT_ROLE_COLORS };
   if (customRolesObj && typeof customRolesObj === 'object') {
     for (const [key, item] of Object.entries(customRolesObj)) {
-      if (item && item.name) {
-        ROLES[key] = item.name;
-        ROLE_COLORS[key] = item.color || '#8b5cf6';
+      if (item) {
+        if (item.deleted) {
+          delete ROLES[key];
+          delete ROLE_COLORS[key];
+        } else if (item.name) {
+          ROLES[key] = item.name;
+          ROLE_COLORS[key] = item.color || '#8b5cf6';
+        }
       }
     }
   }
