@@ -3,233 +3,244 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#667eea">
-  <meta name="description" content="Ứng dụng quản lý học tập cho lớp 10A1 - Sử dụng được offline">
-  <title>10C7 AIO</title>
+  <meta name="theme-color" content="#6366f1">
+  <meta name="description" content="Hệ thống quản lý học tập lớp 10C7 - C7AIO Hub">
+  <title>10C7 AIO - Cổng Thông Tin Lớp Học</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='60' font-size='80' text-anchor='middle'>📚</text></svg>">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23667eea' width='180' height='180'/><text x='90' y='100' font-size='90' font-weight='bold' fill='white' text-anchor='middle'>📚</text></svg>">
-  <link rel="stylesheet" href="style/hub.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/hub.css">
 </head>
 <body>
 
+  <!-- Top Navigation Header -->
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <h1>📚 Lớp học 10C7</h1>
-        <p>Trung tâm quản lý học tập</p>
+        <span class="header-logo">📚</span>
+        <div class="header-titles">
+          <h1>Lớp Học 10C7</h1>
+          <p>Cổng Quản Lý & Học Tập Toàn Diện</p>
+        </div>
       </div>
       <div class="header-right">
-        <button class="admin-toggle" id="adminToggle" onclick="toggleAdminMode()" style="display:none;" title="Chế độ Admin">⚙️</button>
-        <button class="logout-btn" onclick="handleLogout()" title="Đăng xuất">
-          <span id="userNameDisplay">👤</span>
+        <button class="user-badge-btn" onclick="handleProfileClick()" title="Thông tin người dùng">
+          <div class="user-avatar-mini" id="userAvatarMini" style="background: linear-gradient(135deg, #6366f1, #a855f7);">HS</div>
+          <span id="userNameDisplay">Học sinh</span>
+        </button>
+        <button class="btn-logout" onclick="handleLogout()" title="Đăng xuất">
+          <span>Đăng xuất</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Welcome Banner -->
-  <section class="welcome-section">
-    <div class="welcome-content">
-      <h2>👋 Xin chào, <span id="welcomeName">bạn</span>!</h2>
-      <p id="welcomeMessage">Chúc bạn một ngày học tập hiệu quả!</p>
-    </div>
-  </section>
+  <main class="main-container">
+    
+    <!-- Welcome Hero Section -->
+    <section class="welcome-hero">
+      <div class="welcome-text">
+        <h2>👋 Xin chào, <span id="welcomeName" style="color: var(--primary);">bạn</span>!</h2>
+        <p id="welcomeMessage">Chúc bạn một ngày học tập nhiều hứng khởi và đạt kết quả tốt nhất!</p>
+      </div>
+    </section>
 
-  <!-- Notification Ticker -->
-  <div class="stats-section" style="margin-bottom: 0;">
-    <div class="notif-ticker" id="notifTicker">
-      <span id="notifTickerText">Đang tải thông báo mới nhất...</span>
-    </div>
-  </div>
+    <!-- Profile Progress Summary Card -->
+    <section class="profile-card-widget" id="userProfileWidget">
+    </section>
 
-  <!-- Thống kê -->
-  <section class="stats-section">
-    <h2 class="section-title">📊 Tổng Quan Học Tập</h2>
-    <div class="stats-grid">
-      <div class="stat-card" onclick="go('nhiemvu/nv.html')">
-        <div class="stat-icon-wrapper">
-          <span class="stat-icon">📋</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Tổng Task</span>
-          <span class="stat-value" id="totalTask">0</span>
-        </div>
-        <div class="stat-indicator"></div>
-      </div>
-      <div class="stat-card" onclick="go('nhiemvu/nv.html')">
-        <div class="stat-icon-wrapper">
-          <span class="stat-icon">🔄</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Đang mở</span>
-          <span class="stat-value" id="openTask">0</span>
-        </div>
-        <div class="stat-indicator"></div>
-      </div>
-      <div class="stat-card" onclick="go('thongke/tk.html')">
-        <div class="stat-icon-wrapper">
-          <span class="stat-icon">✅</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Hoàn thành</span>
-          <span class="stat-value" id="doneTask">0</span>
-        </div>
-        <div class="stat-indicator success"></div>
-      </div>
-      <div class="stat-card" onclick="go('nhiemvu/nv.html')">
-        <div class="stat-icon-wrapper">
-          <span class="stat-icon">⏰</span>
-        </div>
-        <div class="stat-content">
-          <span class="stat-label">Sắp hết hạn</span>
-          <span class="stat-value" id="nearDeadline">0</span>
-        </div>
-        <div class="stat-indicator warning"></div>
-      </div>
+    <!-- Notification Ticker -->
+    <div class="notif-ticker" id="notifTicker" style="display: none;">
+      <span style="font-size: 1.2rem;">📢</span>
+      <span id="notifTickerText" style="font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Đang tải thông báo...</span>
+      <span style="color: var(--primary); font-size: 0.85rem; font-weight: 700;">Xem chi tiết →</span>
     </div>
-  </section>
 
-  <!-- Điều hướng -->
-  <section class="nav-section">
-    <h2 class="section-title">🚀 Điều Hướng Nhanh</h2>
-    <div class="nav-grid">
-      <button class="nav-btn nav-btn-primary" onclick="go('nhiemvu/nv.html')">
-        <span class="nav-icon">📌</span>
-        <span class="nav-text">Nhiệm vụ</span>
-        <span class="nav-desc">Quản lý công việc</span>
-      </button>
-      <button class="nav-btn nav-btn-success" onclick="go('thongke/tk.html')">
-        <span class="nav-icon">📊</span>
-        <span class="nav-text">Thống kê</span>
-        <span class="nav-desc">Xem tiến độ</span>
-      </button>
-      <button class="nav-btn nav-btn-info" onclick="go('thongbao/tb.html')">
-        <span class="nav-icon">🔔</span>
-        <span class="nav-text">Thông báo</span>
-        <span class="notif-badge" id="notifBadge">0</span>
-        <span class="nav-desc">Cập nhật tin tức</span>
-      </button>
-      <button class="nav-btn nav-btn-calendar" onclick="go('lich/lich.html')">
-        <span class="nav-icon">📅</span>
-        <span class="nav-text">Lịch học</span>
-        <span class="nav-desc">Xem thời khoá biểu</span>
-      </button>
-      
-      <!-- Admin Buttons (Integrated) -->
-      <button class="nav-btn" id="btnNavStudents" onclick="go('hoso/hs.html')" style="display:none; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white;">
-        <span class="nav-icon">👨‍🎓</span>
-        <span class="nav-text">Học sinh</span>
-        <span class="nav-desc">Quản lý hồ sơ</span>
-      </button>
-      <button class="nav-btn" id="btnNavRoles" onclick="go('perm/pq.html')" style="display:none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
-        <span class="nav-icon">⚙️</span>
-        <span class="nav-text">Phân quyền</span>
-        <span class="nav-desc">Cấp quyền chức vụ</span>
-      </button>
-      <button class="nav-btn" id="btnNavLogs" onclick="go('logs/nk.html')" style="display:none; background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); color: white;">
-        <span class="nav-icon">📜</span>
-        <span class="nav-text">Logs</span>
-        <span class="nav-desc">Nhật ký hoạt động</span>
-      </button>
-    </div>
-  </section>
+    <!-- Quick Stats Grid -->
+    <section class="stats-overview-section">
+      <h2 class="section-title">📊 Tổng Quan Nhiệm Vụ</h2>
+      <div class="stats-grid">
+        <div class="stat-card" onclick="go('nhiemvu/nv.html')">
+          <div class="stat-icon-wrapper">
+            <span>📋</span>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Tổng Nhiệm Vụ</span>
+            <span class="stat-value" id="totalTask">0</span>
+          </div>
+        </div>
 
-  <!-- Task gần nhất -->
-  <section class="recent-section">
-    <div class="section-header">
-      <h2>⏰ Task Gần Hạn</h2>
-      <a href="nhiemvu/nv.html" class="view-all">Xem tất cả →</a>
-    </div>
-    <div class="recent-container">
-      <ul class="recent-list" id="recentTasks">
-        <!-- Nội dung được tạo bởi script -->
-      </ul>
-      <div class="empty-state" id="emptyState" style="display: none;">
-        <span class="empty-icon">🎉</span>
-        <p>Không có task sắp hết hạn!</p>
+        <div class="stat-card" onclick="go('nhiemvu/nv.html')">
+          <div class="stat-icon-wrapper" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+            <span>⏳</span>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Đang Thực Hiện</span>
+            <span class="stat-value" id="openTask">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card" onclick="go('thongke/tk.html')">
+          <div class="stat-icon-wrapper" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+            <span>✅</span>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Đã Hoàn Thành</span>
+            <span class="stat-value" id="doneTask">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card" onclick="go('nhiemvu/nv.html')">
+          <div class="stat-icon-wrapper" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+            <span>⏰</span>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Sắp Hết Hạn / Gấp</span>
+            <span class="stat-value" id="nearDeadline">0</span>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- Quick Navigation Grid -->
+    <section class="quick-nav-section">
+      <h2 class="section-title">🚀 Điều Hướng Chức Năng</h2>
+      <div class="nav-grid">
+        <button class="nav-btn" onclick="go('nhiemvu/nv.html')" style="border-left: 4px solid #6366f1;">
+          <span class="nav-icon">📌</span>
+          <span class="nav-text">Nhiệm Vụ</span>
+          <span class="nav-desc">Giao việc & Check-in tiến độ</span>
+        </button>
+
+        <button class="nav-btn" onclick="go('lich/lich.html')" style="border-left: 4px solid #06b6d4;">
+          <span class="nav-icon">📅</span>
+          <span class="nav-text">Thời Khóa Biểu</span>
+          <span class="nav-desc">Lịch học & phòng học theo tuần</span>
+        </button>
+
+        <button class="nav-btn" onclick="go('thongbao/tb.html')" style="border-left: 4px solid #f59e0b; position: relative;">
+          <span class="nav-icon">🔔</span>
+          <span class="nav-text">Thông Báo</span>
+          <span class="nav-desc">Tin tức & Nhắc nhở lớp</span>
+          <div id="notifBadge" class="notif-badge" style="position: absolute; top: 12px; right: 12px; background: #ef4444; color: white; border-radius: 99px; padding: 2px 8px; font-size: 0.75rem; font-weight: 800; display: none;">0</div>
+        </button>
+
+        <button class="nav-btn" onclick="go('thongke/tk.html')" style="border-left: 4px solid #10b981;">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Thống Kê</span>
+          <span class="nav-desc">Báo cáo & Tỷ lệ hoàn thành</span>
+        </button>
+
+        <button class="nav-btn" id="btnNavStudents" onclick="go('hoso/hs.html')" style="display: none; border-left: 4px solid #8b5cf6;">
+          <span class="nav-icon">👨‍🎓</span>
+          <span class="nav-text">Hồ Sơ Học Sinh</span>
+          <span class="nav-desc">Danh sách & Liên lạc lớp</span>
+        </button>
+
+        <button class="nav-btn" id="btnNavRoles" onclick="go('perm/pq.html')" style="display: none; border-left: 4px solid #ec4899;">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">Phân Quyền</span>
+          <span class="nav-desc">Cấp quyền các ban cán sự</span>
+        </button>
+
+        <button class="nav-btn" id="btnNavLogs" onclick="go('logs/nk.html')" style="display: none; border-left: 4px solid #f43f5e;">
+          <span class="nav-icon">📜</span>
+          <span class="nav-text">Nhật Ký Hệ Thống</span>
+          <span class="nav-desc">Lịch sử thay đổi & thao tác</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Two Column Dashboard Grid -->
+    <section class="dashboard-content-grid">
+      <div class="dashboard-panel" id="todayScheduleWidget">
+        <div class="widget-header">
+          <h3>📅 Tiết học hôm nay</h3>
+          <a href="lich/lich.html" class="widget-link">Xem tuần →</a>
+        </div>
+        <div class="empty-widget">
+          <span>⏳</span>
+          <p>Đang tải dữ liệu thời khóa biểu...</p>
+        </div>
+      </div>
+
+      <div class="dashboard-panel">
+        <div class="widget-header">
+          <h3>⏰ Nhiệm vụ cần làm</h3>
+          <a href="nhiemvu/nv.html" class="widget-link">Xem tất cả →</a>
+        </div>
+        <ul class="recent-list" id="recentTasks">
+        </ul>
+        <div class="empty-widget" id="emptyState" style="display: none;">
+          <span>🎉</span>
+          <p>Tuyệt vời! Không có nhiệm vụ nào gần hạn.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
   <footer class="footer">
-    <p>&copy; 2025 Lớp 10A1. Tất cả quyền được bảo lưu.</p>
-    <p class="online-status" id="onlineStatus">🟢 Online</p>
+    <p>&copy; 2026 Tập thể Lớp 10C7. Nền tảng học tập thông minh C7AIO.</p>
+    <div id="onlineStatus" style="font-weight: 700; margin-top: 4px;">🟢 Trực tuyến</div>
   </footer>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="script/firebase-config.js"></script>
-<script>firebase.initializeApp(firebaseConfig);</script>
-<script src="script/firebase-utils.js"></script>
-<script src="script/students-list.js"></script>
-<script src="script/hub.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<!-- Service Worker Registration -->
-<script>
-  // Check user login
-  window.addEventListener('load', () => {
-    if (!isLoggedIn()) {
-      window.location.href = buildUrl('login.html');
-      return;
-    }
+  <!-- Core Scripts -->
+  <script src="script/firebase-config.js"></script>
+  <script src="script/firebase-utils.js"></script>
+  <script src="script/students-list.js"></script>
+  <script src="script/hub.js"></script>
+  <script src="script/console.js"></script>
 
-    const user = getCurrentUser();
-    console.log('✅ Đã đăng nhập:', user.name);
-    document.getElementById('userNameDisplay').textContent = user.name;
+  <script>
+    window.addEventListener('load', () => {
+      if (!isLoggedIn()) {
+        window.location.href = buildUrl('login.html');
+        return;
+      }
 
-    // Hiện nút Admin nếu là admin
-    if (isAdmin()) {
-      document.getElementById('adminToggle').style.display = 'inline-block';
-    }
+      const user = getCurrentUser();
+      const displayName = user ? user.name : 'Học sinh';
+      const nameEl = document.getElementById('userNameDisplay');
+      if (nameEl) nameEl.textContent = displayName;
 
-    // Cập nhật welcome message
-    updateWelcomeMessage();
-    
-    // Load stats
-    loadStats();
-    
-    // Cập nhật trạng thái kết nối
-    updateOnlineStatus();
-    
-    // Tải lại stats mỗi 30 giây
-    setInterval(() => {
+      const avatarMini = document.getElementById('userAvatarMini');
+      if (avatarMini) {
+        avatarMini.textContent = getInitials(displayName);
+        avatarMini.style.background = getAvatarGradient(displayName);
+      }
+
+      updateWelcomeMessage();
+      checkAdminButtons();
       loadStats();
-    }, 30000);
-  });
+      updateOnlineStatus();
 
-  // Xử lý đăng xuất
-  function handleLogout() {
-    if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-      logoutUser();
-      window.location.href = buildUrl('login.html');
+      setInterval(() => {
+        loadStats();
+      }, 30000);
+    });
+
+    function handleLogout() {
+      showConfirm('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?', () => {
+        logoutUser();
+        window.location.href = buildUrl('login.html');
+      });
     }
-  }
 
-  // Toggle chế độ Admin
-  let adminMode = false;
-  function toggleAdminMode() {
-    adminMode = !adminMode;
-    console.log(adminMode ? '🔓 Chế độ Admin ON' : '🔒 Chế độ Admin OFF');
-  }
-
-  // Gợi ý người dùng cài đặt ứng dụng
-  let deferredPrompt;
-  window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault();
-    deferredPrompt = event;
-  });
-
-  // Kiểm tra kết nối mạng
-  window.addEventListener('online', () => {
-    console.log('✅ Bạn đã online');
-  });
-
-  window.addEventListener('offline', () => {
-    console.log('⚠️ Bạn đã offline - Sử dụng dữ liệu đã cached');
-  });
-</script>
+    function handleProfileClick() {
+      const user = getCurrentUser();
+      if (!user) return;
+      const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+      const roleText = roles.map(r => ROLES[r] || r).join(', ');
+      showDialog('Hồ sơ học sinh', `👤 Họ và tên: ${user.name}<br>⭐️ Chức vụ: ${roleText}<br>📅 Ngày sinh: ${user.dob || 'Chưa cập nhật'}`, '👤');
+    }
+  </script>
+</body>
+</html>

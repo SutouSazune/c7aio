@@ -1,42 +1,51 @@
-const CACHE_NAME = 'c7aio-v2.4.0-premium-ui'; // FORCE UPDATE: New Dialog System & Premium UI
+const CACHE_NAME = 'c7aio-v3.0.0-figma-pro';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './login.html',
   './lich/lich.html',
   './nhiemvu/nv.html',
   './thongbao/tb.html',
   './thongke/tk.html',
   './hoso/hs.html',
+  './perm/pq.html',
+  './logs/nk.html',
   './style/hub.css',
   './style/lich.css',
   './style/nv.css',
   './style/tb.css',
   './style/tk.css',
   './style/hs.css',
+  './style/pq.css',
+  './style/nk.css',
+  './script/firebase-config.js',
+  './script/firebase-utils.js',
+  './script/students-list.js',
   './script/hub.js',
+  './script/console.js',
   './script/lich.js',
   './script/nv.js',
   './script/tb.js',
   './script/tk.js',
   './script/hs.js',
+  './script/pq.js',
+  './script/nk.js',
   './manifest.json'
 ];
 
-// Install event - cache assets
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('✅ Caching assets v1.0.0...');
+      console.log('✅ Caching C7AIO assets v3.0.0...');
       return cache.addAll(ASSETS_TO_CACHE).catch(err => {
-        console.log('Lỗi khi cache một số assets, tiếp tục...', err);
+        console.log('Lỗi khi cache một số assets:', err);
         return Promise.resolve();
       });
     })
   );
-  self.skipWaiting(); // Kích hoạt ngay mà không đợi
+  self.skipWaiting();
 });
 
-// Activate event - clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -50,120 +59,30 @@ self.addEventListener('activate', event => {
       );
     })
   );
-  self.clients.claim(); // Kiểm soát tất cả clients ngay lập tức
+  self.clients.claim();
 });
 
-// Fetch event - Chiến lược: Network-first cho HTML/JS/CSS, Cache-first cho icon/font
 self.addEventListener('fetch', event => {
   const { request } = event;
-  const url = new URL(request.url);
+  if (request.method !== 'GET') return;
 
-  // Bỏ qua các request không phải GET
-  if (request.method !== 'GET') {
-    return;
-  }
-
-  // Handle directory requests - redirect to index.html
-  if (request.destination === 'document') {
-    // Nếu là request cho document (HTML page)
-    event.respondWith(
-      fetch(request)
-        .then(networkResponse => {
-          if (!networkResponse || networkResponse.status !== 200) {
-            // Nếu 404, thử fetch index.html của folder đó
-            if (networkResponse.status === 404) {
-              const pathWithIndex = url.pathname.endsWith('/') 
-                ? url.pathname + 'index.html'
-                : url.pathname + '/index.html';
-              
-              return fetch(pathWithIndex)
-                .catch(() => caches.match('./index.html'));
-            }
-            return networkResponse;
-          }
-
+  event.respondWith(
+    fetch(request)
+      .then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, responseToCache);
-          });
-
-          return networkResponse;
-        })
-        .catch(() => {
-          // Network error - use cache
-          return caches.match(request).then(cachedResponse => {
-            if (cachedResponse) {
-              console.log('📦 Phục vụ từ cache:', request.url);
-              return cachedResponse;
-            }
-
-            // Try to serve index.html from the directory
-            const pathWithIndex = url.pathname.endsWith('/') 
-              ? url.pathname + 'index.html'
-              : url.pathname + '/index.html';
-            
-            return caches.match(pathWithIndex)
-              .catch(() => caches.match('./index.html'));
-          });
-        })
-    );
-  } 
-  // Chiến lược Network-first cho HTML, JS, CSS
-  else if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
-    event.respondWith(
-      fetch(request)
-        .then(networkResponse => {
-          if (!networkResponse || networkResponse.status !== 200) {
-            return networkResponse;
-          }
-
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, responseToCache);
-          });
-
-          return networkResponse;
-        })
-        .catch(() => {
-          return caches.match(request).then(cachedResponse => {
-            if (cachedResponse) {
-              console.log('📦 Phục vụ từ cache:', request.url);
-              return cachedResponse;
-            }
-
-            return new Response('Offline - Không thể tải tài nguyên này', {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: new Headers({
-                'Content-Type': 'text/plain; charset=utf-8'
-              })
-            });
-          });
-        })
-    );
-  } else {
-    // Chiến lược Cache-first cho các tài nguyên khác (fonts, images, etc)
-    event.respondWith(
-      caches.match(request).then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
+          caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
         }
-
-        return fetch(request).then(networkResponse => {
-          if (!networkResponse || networkResponse.status !== 200) {
-            return networkResponse;
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(request).then(cachedResponse => {
+          if (cachedResponse) return cachedResponse;
+          if (request.destination === 'document') {
+            return caches.match('./index.html');
           }
-
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, responseToCache);
-          });
-
-          return networkResponse;
-        }).catch(() => {
-          return new Response('Offline');
+          return new Response('Offline', { status: 503, statusText: 'Offline' });
         });
       })
-    );
-  }
+  );
 });

@@ -3,481 +3,475 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#667eea">
-  <title>10C7 AIO - Chọn Người Dùng</title>
-  <script>
-    // Detect base path for GitHub Pages
-    function getBasePath() {
-      const hostname = window.location.hostname;
-      const pathname = window.location.pathname;
-      
-      if (hostname.includes('github.io')) {
-        const parts = pathname.split('/');
-        if (parts.length >= 2 && parts[1]) return '/' + parts[1] + '/';
-      }
-      if (pathname.startsWith('/c7aio/')) return '/c7aio/';
-      return '/';
-    }
-    const BASE_PATH = getBasePath();
-    
-    // Helper function to build correct URL
-    function buildUrl(relativePath) {
-      // Remove leading slash if present
-      const path = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
-      return BASE_PATH === '/' ? path : BASE_PATH + path;
-    }
-  </script>
+  <meta name="theme-color" content="#6366f1">
+  <title>10C7 AIO - Đăng Nhập Hệ Thống</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/hub.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      padding: 1rem;
+      padding: 1.5rem;
+      background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.25) 0%, transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.2) 0%, transparent 40%),
+                  var(--bg-gradient);
+      background-attachment: fixed;
     }
 
-    .login-container {
-      background: white;
+    .login-box {
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
       padding: 2.5rem;
-      border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
       width: 100%;
-      max-width: 500px;
-      animation: slideUp 0.3s ease;
+      max-width: 560px;
+      box-shadow: var(--shadow-lg);
+      animation: popIn 0.4s var(--ease-spring);
+      position: relative;
     }
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .login-header {
+    .login-brand {
       text-align: center;
-      margin-bottom: 2.5rem;
-    }
-
-    .login-header-icon {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .login-header h1 {
-      font-size: 1.8rem;
-      color: #667eea;
-      margin-bottom: 0.3rem;
-      font-weight: 700;
-    }
-
-    .login-header p {
-      color: #999;
-      font-size: 0.9rem;
-    }
-
-    .student-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 1rem;
       margin-bottom: 2rem;
     }
 
-    .student-btn {
-      padding: 1rem;
-      background: white;
-      border: 2px solid #f0f0f0;
-      border-radius: 12px;
-      cursor: pointer;
+    .login-brand-icon {
+      font-size: 3.2rem;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+      filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.4));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .login-brand h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .login-brand p {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .search-student-wrapper {
+      position: relative;
+      margin-bottom: 1.2rem;
+    }
+
+    .search-student-input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      background: var(--bg-surface);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      color: var(--text-main);
+      outline: none;
       transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .search-student-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .search-icon-pos {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .student-select-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 6px;
+      margin-bottom: 1.5rem;
+    }
+
+    .student-card-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      padding: 12px 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
-      font-weight: 600;
-      color: #333;
-      will-change: transform, border-color;
-    }
-
-    .student-btn:hover {
-      border-color: #667eea;
-      transform: translateY(-3px);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-    }
-
-    .student-btn:active {
-      transform: translateY(-1px);
-    }
-
-    .student-icon {
-      font-size: 2rem;
-    }
-
-    .student-name {
-      font-size: 0.85rem;
-      text-align: center;
-      word-break: break-word;
-      line-height: 1.2;
-    }
-
-    .admin-section {
-      border-top: 2px solid #f0f0f0;
-      padding-top: 2rem;
-      margin-top: 2rem;
-    }
-
-    .admin-toggle-btn {
-      width: 100%;
-      padding: 1rem;
-      background: #f5f5f5;
-      color: #667eea;
-      border: 2px solid #f0f0f0;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
+      gap: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.25s var(--ease-spring);
+      text-align: center;
+    }
+
+    .student-card-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .student-bubble-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.6rem;
-    }
-
-    .admin-toggle-btn:hover {
-      border-color: #667eea;
-      background: white;
-    }
-
-    .admin-toggle-btn.active {
-      background: #667eea;
       color: white;
-      border-color: #667eea;
-    }
-
-    .admin-form {
-      display: none;
-      margin-top: 1.5rem;
-      padding: 1.5rem;
-      background: #f9f9f9;
-      border-radius: 10px;
-    }
-
-    .admin-form.show {
-      display: block;
-      animation: slideDown 0.3s ease;
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-label {
-      display: block;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 0.8rem;
-      border: 2px solid #f0f0f0;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: border-color 0.3s ease;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    .admin-submit-btn {
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
       font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      font-size: 1rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    .admin-submit-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
-    }
-
-    .admin-submit-btn:active {
-      transform: translateY(0);
-    }
-
-    .admin-cancel-btn {
-      width: 100%;
-      padding: 0.8rem;
-      background: white;
-      color: #667eea;
-      border: 2px solid #f0f0f0;
-      border-radius: 8px;
-      font-size: 0.9rem;
+    .student-card-name {
+      font-size: 0.85rem;
       font-weight: 600;
-      cursor: pointer;
-      margin-top: 0.8rem;
-      transition: all 0.3s ease;
+      color: var(--text-main);
+      line-height: 1.3;
     }
 
-    .admin-cancel-btn:hover {
-      border-color: #667eea;
-    }
-
-    .error-message {
-      color: #e74c3c;
-      padding: 1rem;
-      background: #ffe6e6;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+    .verify-card {
       display: none;
-      font-size: 0.9rem;
-      animation: shake 0.3s ease;
+      background: var(--bg-surface);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      animation: fadeIn 0.3s ease;
     }
 
-    .error-message.show {
+    .verify-card.active {
       display: block;
     }
 
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
+    .verify-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.2rem;
     }
 
-    @media (max-width: 600px) {
-      .login-container {
-        padding: 1.5rem;
-      }
+    .verify-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
 
-      .student-grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 0.8rem;
-      }
+    .verify-title h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
 
-      .login-header h1 {
-        font-size: 1.5rem;
-      }
+    .verify-title p {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    .form-group-custom {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group-custom label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-sub);
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      color: var(--text-main);
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-control-custom:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-group-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .admin-toggle-panel {
+      border-top: 1px solid var(--input-border);
+      padding-top: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-admin-mode {
+      background: transparent;
+      border: 1px dashed var(--input-border);
+      color: var(--text-sub);
+      padding: 10px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-admin-mode:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    [data-theme="dark"] .btn-admin-mode:hover {
+      background: rgba(99, 102, 241, 0.15);
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <div class="login-header">
-      <div class="login-header-icon">📚</div>
-      <h1>Class Hub</h1>
-      <p>Chọn người dùng để tiếp tục</p>
+
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="login-brand-icon">📚</div>
+      <h1>10C7 All In One</h1>
+      <p>Cổng thông tin & quản lý học tập lớp học</p>
     </div>
 
-    <div id="errorMessage" class="error-message"></div>
-
-    <div class="student-grid" id="studentGrid">
-      <!-- Danh sách học sinh sẽ được thêm vào đây -->
-    </div>
-
-    <!-- Form đăng nhập cho Học sinh (Yêu cầu Ngày sinh) -->
-    <div class="admin-form" id="studentLoginForm">
-      <div class="form-group">
-        <label class="form-label">Ngày sinh(Tháng/Ngày/Năm) của <span id="selectedStudentName" style="color: #667eea;"></span></label>
-        <input type="date" id="studentDobInput" class="form-input" />
+    <div id="studentSelectionFlow">
+      <div class="search-student-wrapper">
+        <span class="search-icon-pos">🔍</span>
+        <input type="text" id="searchStudentInput" class="search-student-input" placeholder="Tìm tên học sinh trong lớp..." oninput="filterStudents(this.value)">
       </div>
-      <button class="admin-submit-btn" onclick="submitStudentLogin()">Xác nhận đăng nhập</button>
-      <button class="admin-cancel-btn" onclick="cancelStudentForm()">Quay lại</button>
+
+      <div class="student-select-grid" id="studentSelectGrid">
+      </div>
     </div>
 
-    <div class="admin-section">
-      <button class="admin-toggle-btn" id="adminToggleBtn" onclick="toggleAdminForm()">
-        <span>👨‍💼 Đăng nhập Admin</span>
-      </button>
-
-      <div class="admin-form" id="adminForm">
-        <div class="form-group">
-          <label class="form-label">Mã Admin</label>
-          <input type="password" id="adminCodeInput" class="form-input" placeholder="Nhập mã bảo mật..." />
+    <div class="verify-card" id="studentVerifyCard">
+      <div class="verify-header">
+        <div class="verify-avatar" id="verifyAvatar">HS</div>
+        <div class="verify-title">
+          <h3 id="verifyName">Họ và tên</h3>
+          <p>Xác nhận ngày sinh để đăng nhập</p>
         </div>
-        <button class="admin-submit-btn" onclick="submitAdminLogin()">Đăng nhập</button>
-        <button class="admin-cancel-btn" onclick="cancelAdminForm()">Hủy</button>
       </div>
+
+      <div class="form-group-custom">
+        <label for="inputStudentDob">Ngày sinh (Ngày / Tháng / Năm):</label>
+        <input type="date" id="inputStudentDob" class="form-control-custom">
+      </div>
+
+      <div class="btn-group-row">
+        <button class="c7-btn c7-btn-secondary" onclick="cancelStudentVerify()">← Quay lại</button>
+        <button class="c7-btn c7-btn-primary" onclick="confirmStudentLogin()">Đăng nhập →</button>
+      </div>
+    </div>
+
+    <div class="verify-card" id="adminLoginCard">
+      <div class="verify-header">
+        <div class="verify-avatar" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">⚡</div>
+        <div class="verify-title">
+          <h3>Quản trị viên (Admin)</h3>
+          <p>Nhập mã bảo mật để truy cập bảng điều khiển</p>
+        </div>
+      </div>
+
+      <div class="form-group-custom">
+        <label for="inputAdminCode">Mã bảo mật Admin:</label>
+        <input type="password" id="inputAdminCode" class="form-control-custom" placeholder="Nhập mã admin...">
+      </div>
+
+      <div class="btn-group-row">
+        <button class="c7-btn c7-btn-secondary" onclick="cancelAdminLogin()">← Quay lại</button>
+        <button class="c7-btn c7-btn-primary" onclick="confirmAdminLogin()">Đăng nhập Admin</button>
+      </div>
+    </div>
+
+    <div class="admin-toggle-panel" id="adminTogglePanel">
+      <button class="btn-admin-mode" onclick="openAdminLogin()">
+        <span>👨‍💼 Đăng nhập với quyền Quản trị viên</span>
+      </button>
     </div>
   </div>
 
-  <!-- Firebase SDKs (Cần thiết để đồng bộ dữ liệu Realtime) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <!-- Project Scripts -->
   <script src="script/firebase-config.js"></script>
   <script src="script/firebase-utils.js"></script>
   <script src="script/students-list.js"></script>
+  <script src="script/hub.js"></script>
+  <script src="script/console.js"></script>
+
   <script>
-    let adminFormOpen = false;
     let selectedStudent = null;
 
-    // Render danh sách học sinh
-    function renderStudents() {
-      const grid = document.getElementById('studentGrid');
-      grid.innerHTML = STUDENTS.map(student => `
-        <button class="student-btn" onclick="loginAsStudent(${student.id})">
-          <div class="student-icon">👤</div>
-          <div class="student-name">${student.name}</div>
+    window.addEventListener('load', () => {
+      if (isLoggedIn()) {
+        window.location.href = buildUrl('index.html');
+        return;
+      }
+
+      renderStudentGrid(STUDENTS);
+
+      if (typeof onSharedStudentsChanged === 'function') {
+        onSharedStudentsChanged((data) => {
+          if (data && data.length > 0) {
+            STUDENTS = data;
+            renderStudentGrid(STUDENTS);
+          }
+        });
+      }
+    });
+
+    function renderStudentGrid(list) {
+      const grid = document.getElementById('studentSelectGrid');
+      if (!grid) return;
+
+      if (!list || list.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 20px; color: var(--text-muted);">Đang tải danh sách học sinh...</div>';
+        return;
+      }
+
+      grid.innerHTML = list.map(student => `
+        <button class="student-card-btn" onclick="selectStudentForLogin(${student.id})">
+          <div class="student-bubble-avatar" style="background: ${getAvatarGradient(student.name)}">
+            ${getInitials(student.name)}
+          </div>
+          <span class="student-card-name">${escapeHtml(student.name)}</span>
         </button>
       `).join('');
     }
 
-    // Đăng nhập học sinh
-    function loginAsStudent(studentId) {
-      selectedStudent = STUDENTS.find(s => s.id === studentId);
-      if (selectedStudent) {
-        // Ẩn grid và hiện form nhập DOB
-        document.getElementById('studentGrid').style.display = 'none';
-        document.getElementById('adminToggleBtn').style.display = 'none';
-        document.getElementById('selectedStudentName').textContent = selectedStudent.name;
-        document.getElementById('studentLoginForm').classList.add('show');
-        document.getElementById('studentDobInput').focus();
-      }
+    function filterStudents(query) {
+      const q = (query || '').toLowerCase().trim();
+      const filtered = STUDENTS.filter(s => 
+        s.name.toLowerCase().includes(q) || 
+        (s.phone && s.phone.includes(q))
+      );
+      renderStudentGrid(filtered);
     }
 
-    // Xác nhận đăng nhập học sinh
-    function submitStudentLogin() {
-      const dob = document.getElementById('studentDobInput').value;
+    function selectStudentForLogin(studentId) {
+      selectedStudent = STUDENTS.find(s => s.id === studentId);
+      if (!selectedStudent) return;
+
+      document.getElementById('studentSelectionFlow').style.display = 'none';
+      document.getElementById('adminTogglePanel').style.display = 'none';
+      
+      const verifyCard = document.getElementById('studentVerifyCard');
+      document.getElementById('verifyName').textContent = selectedStudent.name;
+      const avatarEl = document.getElementById('verifyAvatar');
+      avatarEl.textContent = getInitials(selectedStudent.name);
+      avatarEl.style.background = getAvatarGradient(selectedStudent.name);
+      
+      const dobInput = document.getElementById('inputStudentDob');
+      dobInput.value = '';
+      verifyCard.classList.add('active');
+      dobInput.focus();
+    }
+
+    function cancelStudentVerify() {
+      selectedStudent = null;
+      document.getElementById('studentVerifyCard').classList.remove('active');
+      document.getElementById('studentSelectionFlow').style.display = 'block';
+      document.getElementById('adminTogglePanel').style.display = 'flex';
+    }
+
+    function confirmStudentLogin() {
+      if (!selectedStudent) return;
+      const dob = document.getElementById('inputStudentDob').value;
       if (!dob) {
-        showError('Vui lòng chọn ngày sinh để xác thực');
+        showToast('Vui lòng chọn ngày sinh để xác thực!', 'warning');
         return;
       }
 
       const user = loginUser(selectedStudent.name, dob);
       if (user) {
-        window.location.href = buildUrl('index.html');
+        showToast(`🎉 Xin chào, ${user.name}!`, 'success');
+        setTimeout(() => {
+          window.location.href = buildUrl('index.html');
+        }, 500);
       } else {
-        showError('Ngày sinh không chính xác!');
+        showToast('Ngày sinh không chính xác. Vui lòng thử lại!', 'error');
       }
     }
 
-    // Toggle Admin Form
-    function toggleAdminForm() {
-      adminFormOpen = !adminFormOpen;
-      const form = document.getElementById('adminForm');
-      const btn = document.getElementById('adminToggleBtn');
-      
-      if (adminFormOpen) {
-        form.classList.add('show');
-        btn.classList.add('active');
-        document.getElementById('adminCodeInput').focus();
-      } else {
-        form.classList.remove('show');
-        btn.classList.remove('active');
-      }
+    function openAdminLogin() {
+      document.getElementById('studentSelectionFlow').style.display = 'none';
+      document.getElementById('adminTogglePanel').style.display = 'none';
+      document.getElementById('adminLoginCard').classList.add('active');
+      document.getElementById('inputAdminCode').value = '';
+      document.getElementById('inputAdminCode').focus();
     }
 
-    // Hủy form học sinh
-    function cancelStudentForm() {
-      selectedStudent = null;
-      document.getElementById('studentLoginForm').classList.remove('show');
-      document.getElementById('studentGrid').style.display = 'grid';
-      document.getElementById('adminToggleBtn').style.display = 'flex';
-      document.getElementById('studentDobInput').value = '';
+    function cancelAdminLogin() {
+      document.getElementById('adminLoginCard').classList.remove('active');
+      document.getElementById('studentSelectionFlow').style.display = 'block';
+      document.getElementById('adminTogglePanel').style.display = 'flex';
     }
 
-    // Cancel Admin Form
-    function cancelAdminForm() {
-      adminFormOpen = false;
-      const form = document.getElementById('adminForm');
-      const btn = document.getElementById('adminToggleBtn');
-      form.classList.remove('show');
-      btn.classList.remove('active');
-      document.getElementById('adminCodeInput').value = '';
-    }
-
-    // Submit Admin Login
-    function submitAdminLogin() {
-      const code = document.getElementById('adminCodeInput').value.trim();
-      const errorEl = document.getElementById('errorMessage');
-
+    function confirmAdminLogin() {
+      const code = document.getElementById('inputAdminCode').value.trim();
       if (!code) {
-        showError('Vui lòng nhập mã admin');
+        showToast('Vui lòng nhập mã bảo mật Admin!', 'warning');
         return;
       }
 
-      // Sử dụng hàm loginUser tập trung
       const user = loginUser('admin', code);
       if (user) {
-        window.location.href = buildUrl('index.html');
+        showToast('🔓 Đăng nhập quyền Admin thành công!', 'success');
+        setTimeout(() => {
+          window.location.href = buildUrl('index.html');
+        }, 500);
       } else {
-        showError('Mã bảo mật Admin không đúng');
-        document.getElementById('adminCodeInput').value = '';
+        showToast('Mã bảo mật Admin không đúng!', 'error');
+        document.getElementById('inputAdminCode').value = '';
       }
     }
 
-    // Show error message
-    function showError(msg) {
-      const errorEl = document.getElementById('errorMessage');
-      errorEl.textContent = msg;
-      errorEl.classList.add('show');
-      setTimeout(() => {
-        errorEl.classList.remove('show');
-      }, 3000);
-    }
-
-    // Handle Enter key
     document.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        if (adminFormOpen) {
-          submitAdminLogin();
-        } else if (selectedStudent) {
-          submitStudentLogin();
+        if (document.getElementById('studentVerifyCard').classList.contains('active')) {
+          confirmStudentLogin();
+        } else if (document.getElementById('adminLoginCard').classList.contains('active')) {
+          confirmAdminLogin();
         }
-      }
-    });
-
-    // Kiểm tra nếu đã login
-    if (isLoggedIn()) {
-      window.location.href = buildUrl('index.html');
-    }
-
-    // Load danh sách khi trang load
-    window.addEventListener('load', () => {
-      renderStudents(); // Render từ cache trước (nếu có)
-      
-      // Lắng nghe dữ liệu mới nhất từ Firebase để cập nhật danh sách
-      if (typeof onSharedStudentsChanged === 'function') {
-        onSharedStudentsChanged((data) => {
-          STUDENTS = data || [];
-          renderStudents();
-        });
       }
     });
   </script>
