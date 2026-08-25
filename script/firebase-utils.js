@@ -456,13 +456,12 @@ function onSharedCustomRolesChanged(callback) {
 }
 
 async function saveSharedCustomRole(roleKey, roleData) {
+  const cached = JSON.parse(localStorage.getItem('c7aio_custom_roles_cache') || '{}');
+  cached[roleKey] = roleData;
+  localStorage.setItem('c7aio_custom_roles_cache', JSON.stringify(cached));
+
   const db = getDb();
-  if (!db) {
-    const cached = JSON.parse(localStorage.getItem('c7aio_custom_roles_cache') || '{}');
-    cached[roleKey] = roleData;
-    localStorage.setItem('c7aio_custom_roles_cache', JSON.stringify(cached));
-    return;
-  }
+  if (!db) return;
   try {
     await db.ref(`shared/custom_roles/${roleKey}`).set(roleData);
     logAction('Thêm/Sửa vai trò', `Cập nhật chức vụ: ${roleData.name || roleKey}`);
@@ -473,15 +472,14 @@ async function saveSharedCustomRole(roleKey, roleData) {
 }
 
 async function deleteSharedCustomRole(roleKey) {
+  const cached = JSON.parse(localStorage.getItem('c7aio_custom_roles_cache') || '{}');
+  cached[roleKey] = { deleted: true };
+  localStorage.setItem('c7aio_custom_roles_cache', JSON.stringify(cached));
+
   const db = getDb();
-  if (!db) {
-    const cached = JSON.parse(localStorage.getItem('c7aio_custom_roles_cache') || '{}');
-    delete cached[roleKey];
-    localStorage.setItem('c7aio_custom_roles_cache', JSON.stringify(cached));
-    return;
-  }
+  if (!db) return;
   try {
-    await db.ref(`shared/custom_roles/${roleKey}`).remove();
+    await db.ref(`shared/custom_roles/${roleKey}`).set({ deleted: true });
     await db.ref(`shared/permissions/${roleKey}`).remove();
     logAction('Xóa vai trò', `Đã xóa chức vụ: ${roleKey}`);
   } catch (error) {
