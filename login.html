@@ -5,66 +5,336 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>10C7 AIO - Đăng Nhập Hệ Thống</title>
+  <title>11C7 AIO - Đăng Nhập Hệ Thống</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/hub.css?v=3.3.3">
-  <link rel="stylesheet" href="style/login.css?v=3.3.3">
+  <link rel="stylesheet" href="style/hub.css?v=3.3.13">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.25) 0%, transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.2) 0%, transparent 40%),
+                  var(--bg-gradient);
+      background-attachment: fixed;
+    }
+
+    .login-box {
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: var(--shadow-lg);
+      animation: popIn 0.4s var(--ease-spring);
+      position: relative;
+    }
+
+    .login-brand {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-brand-icon {
+      font-size: 3.2rem;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+      filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.4));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .login-brand h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .login-brand p {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* Search Student Box */
+    .search-student-wrapper {
+      position: relative;
+      margin-bottom: 1.2rem;
+    }
+
+    .search-student-input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      background: var(--bg-surface);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .search-student-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .search-icon-pos {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    /* Student Selection Grid */
+    .student-select-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 6px;
+      margin-bottom: 1.5rem;
+    }
+
+    .student-card-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-spring);
+      text-align: center;
+    }
+
+    .student-card-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .student-bubble-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .student-card-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    /* Secondary verification forms */
+    .verify-card {
+      display: none;
+      background: var(--bg-surface);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .verify-card.active {
+      display: block;
+    }
+
+    .verify-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.2rem;
+    }
+
+    .verify-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    .verify-title h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .verify-title p {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    .form-group-custom {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group-custom label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-sub);
+    }
+
+    .form-control-custom {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      color: var(--text-main);
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-control-custom:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-group-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .admin-toggle-panel {
+      border-top: 1px solid var(--input-border);
+      padding-top: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-admin-mode {
+      background: transparent;
+      border: 1px dashed var(--input-border);
+      color: var(--text-sub);
+      padding: 10px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-admin-mode:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    [data-theme="dark"] .btn-admin-mode:hover {
+      background: rgba(99, 102, 241, 0.15);
+    }
+  </style>
 </head>
-<body class="login-body">
+<body>
 
-  <div class="login-card">
-    <div class="login-header">
-      <span class="login-badge-icon">🔐</span>
-      <h2>C7AIO Portal</h2>
-      <p>Cổng Thông Tin & Quản Lý Lớp Học 10C7</p>
+  <div class="login-box">
+    <!-- Header / Brand -->
+    <div class="login-brand">
+      <div class="login-brand-icon">📚</div>
+      <h1>11C7 All In One</h1>
+      <p>Cổng thông tin & quản lý học tập lớp học</p>
     </div>
 
-    <!-- Mode Selector Tab -->
-    <div class="login-tabs">
-      <button class="login-tab active" id="tabStudent" onclick="switchLoginMode('student')">👨‍🎓 Học Sinh</button>
-      <button class="login-tab" id="tabAdmin" onclick="switchLoginMode('admin')">👑 Quản Trị Viên</button>
+    <!-- Student Selection Flow -->
+    <div id="studentSelectionFlow">
+      <div class="search-student-wrapper">
+        <span class="search-icon-pos">🔍</span>
+        <input type="text" id="searchStudentInput" class="search-student-input" placeholder="Tìm tên học sinh trong lớp..." oninput="filterStudents(this.value)">
+      </div>
+
+      <div class="student-select-grid" id="studentSelectGrid">
+        <!-- Rendered by JavaScript -->
+      </div>
     </div>
 
-    <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="login-form">
-      
-      <!-- Student View -->
-      <div id="studentFieldsWrap">
-        <div class="form-group">
-          <label for="studentNameSelect">Chọn Họ và Tên</label>
-          <select id="studentNameSelect" class="form-control-custom">
-            <option value="">-- Chọn tên học sinh 10C7 --</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="studentSecretInput">Mật khẩu (Ngày sinh YYYY-MM-DD hoặc DD/MM/YYYY)</label>
-          <input type="password" id="studentSecretInput" class="form-control-custom" placeholder="vd: 2010-02-14 hoặc 14022010">
+    <!-- Verification Card (DOB check) -->
+    <div class="verify-card" id="studentVerifyCard">
+      <div class="verify-header">
+        <div class="verify-avatar" id="verifyAvatar">HS</div>
+        <div class="verify-title">
+          <h3 id="verifyName">Họ và tên</h3>
+          <p>Xác nhận ngày sinh để đăng nhập</p>
         </div>
       </div>
 
-      <!-- Admin View -->
-      <div id="adminFieldsWrap" style="display: none;">
-        <div class="form-group">
-          <label for="adminUsernameInput">Tài khoản Quản trị</label>
-          <input type="text" id="adminUsernameInput" class="form-control-custom" value="Admin" placeholder="Nhập admin...">
-        </div>
-        <div class="form-group">
-          <label for="adminPasswordInput">Mật khẩu Admin</label>
-          <input type="password" id="adminPasswordInput" class="form-control-custom" placeholder="Nhập mã truy cập...">
+      <div class="form-group-custom">
+        <label for="inputStudentDob">Ngày sinh (Ngày / Tháng / Năm):</label>
+        <input type="date" id="inputStudentDob" class="form-control-custom">
+      </div>
+
+      <div class="btn-group-row">
+        <button class="c7-btn c7-btn-secondary" onclick="cancelStudentVerify()">← Quay lại</button>
+        <button class="c7-btn c7-btn-primary" onclick="confirmStudentLogin()">Đăng nhập →</button>
+      </div>
+    </div>
+
+    <!-- Admin Login Card -->
+    <div class="verify-card" id="adminLoginCard">
+      <div class="verify-header">
+        <div class="verify-avatar" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">⚡</div>
+        <div class="verify-title">
+          <h3>Quản trị viên (Admin)</h3>
+          <p>Nhập mã bảo mật để truy cập bảng điều khiển</p>
         </div>
       </div>
 
-      <div class="login-action-btn-wrap">
-        <button type="submit" class="c7-btn c7-btn-primary btn-block" id="btnLoginSubmit">
-          Đăng Nhập Hệ Thống →
-        </button>
+      <div class="form-group-custom">
+        <label for="inputAdminCode">Mã bảo mật Admin:</label>
+        <input type="password" id="inputAdminCode" class="form-control-custom" placeholder="Nhập mã admin...">
       </div>
 
-    </form>
+      <div class="btn-group-row">
+        <button class="c7-btn c7-btn-secondary" onclick="cancelAdminLogin()">← Quay lại</button>
+        <button class="c7-btn c7-btn-primary" onclick="confirmAdminLogin()">Đăng nhập Admin</button>
+      </div>
+    </div>
 
-    <div class="login-footer-hint">
-      <span>💡 Gợi ý: Học sinh sử dụng ngày sinh (YYYY-MM-DD) để đăng nhập bảo mật.</span>
+    <!-- Admin Panel Toggle -->
+    <div class="admin-toggle-panel" id="adminTogglePanel">
+      <button class="btn-admin-mode" onclick="openAdminLogin()">
+        <span>👨‍💼 Đăng nhập với quyền Quản trị viên</span>
+      </button>
     </div>
   </div>
 
@@ -73,12 +343,152 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <!-- Scripts -->
-  <script src="script/firebase-config.js?v=3.3.3"></script>
-  <script src="script/firebase-utils.js?v=3.3.3"></script>
-  <script src="script/students-list.js?v=3.3.3"></script>
-  <script src="script/hub.js?v=3.3.3"></script>
-  <script src="script/console.js?v=3.3.3"></script>
-  <script src="script/login.js?v=3.3.3"></script>
+  <!-- Core Scripts -->
+  <script src="script/firebase-config.js?v=3.3.13"></script>
+  <script src="script/firebase-utils.js?v=3.3.13"></script>
+  <script src="script/students-list.js?v=3.3.13"></script>
+  <script src="script/hub.js?v=3.3.13"></script>
+  <script src="script/console.js?v=3.3.13"></script>
+
+  <script>
+    let selectedStudent = null;
+
+    window.addEventListener('load', () => {
+      // Nếu đã đăng nhập, chuyển hướng thẳng vào Hub
+      if (isLoggedIn()) {
+        window.location.href = buildUrl('index.html');
+        return;
+      }
+
+      renderStudentGrid(STUDENTS);
+
+      // Đồng bộ danh sách học sinh từ Firebase
+      if (typeof onSharedStudentsChanged === 'function') {
+        onSharedStudentsChanged((data) => {
+          if (data && data.length > 0) {
+            STUDENTS = data;
+            renderStudentGrid(STUDENTS);
+          }
+        });
+      }
+    });
+
+    function renderStudentGrid(list) {
+      const grid = document.getElementById('studentSelectGrid');
+      if (!grid) return;
+
+      if (!list || list.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 20px; color: var(--text-muted);">Đang tải danh sách học sinh...</div>';
+        return;
+      }
+
+      grid.innerHTML = list.map(student => `
+        <button class="student-card-btn" onclick="selectStudentForLogin(${student.id})">
+          <div class="student-bubble-avatar" style="background: ${getAvatarGradient(student.name)}">
+            ${getInitials(student.name)}
+          </div>
+          <span class="student-card-name">${escapeHtml(student.name)}</span>
+        </button>
+      `).join('');
+    }
+
+    function filterStudents(query) {
+      const q = (query || '').toLowerCase().trim();
+      const filtered = STUDENTS.filter(s => 
+        s.name.toLowerCase().includes(q) || 
+        (s.phone && s.phone.includes(q))
+      );
+      renderStudentGrid(filtered);
+    }
+
+    function selectStudentForLogin(studentId) {
+      selectedStudent = STUDENTS.find(s => s.id === studentId);
+      if (!selectedStudent) return;
+
+      document.getElementById('studentSelectionFlow').style.display = 'none';
+      document.getElementById('adminTogglePanel').style.display = 'none';
+      
+      const verifyCard = document.getElementById('studentVerifyCard');
+      document.getElementById('verifyName').textContent = selectedStudent.name;
+      const avatarEl = document.getElementById('verifyAvatar');
+      avatarEl.textContent = getInitials(selectedStudent.name);
+      avatarEl.style.background = getAvatarGradient(selectedStudent.name);
+      
+      const dobInput = document.getElementById('inputStudentDob');
+      dobInput.value = '';
+      verifyCard.classList.add('active');
+      dobInput.focus();
+    }
+
+    function cancelStudentVerify() {
+      selectedStudent = null;
+      document.getElementById('studentVerifyCard').classList.remove('active');
+      document.getElementById('studentSelectionFlow').style.display = 'block';
+      document.getElementById('adminTogglePanel').style.display = 'flex';
+    }
+
+    function confirmStudentLogin() {
+      if (!selectedStudent) return;
+      const dob = document.getElementById('inputStudentDob').value;
+      if (!dob) {
+        showToast('Vui lòng chọn ngày sinh để xác thực!', 'warning');
+        return;
+      }
+
+      const user = loginUser(selectedStudent.name, dob);
+      if (user) {
+        showToast(`🎉 Xin chào, ${user.name}!`, 'success');
+        setTimeout(() => {
+          window.location.href = buildUrl('index.html');
+        }, 500);
+      } else {
+        showToast('Ngày sinh không chính xác. Vui lòng thử lại!', 'error');
+      }
+    }
+
+    function openAdminLogin() {
+      document.getElementById('studentSelectionFlow').style.display = 'none';
+      document.getElementById('adminTogglePanel').style.display = 'none';
+      document.getElementById('adminLoginCard').classList.add('active');
+      document.getElementById('inputAdminCode').value = '';
+      document.getElementById('inputAdminCode').focus();
+    }
+
+    function cancelAdminLogin() {
+      document.getElementById('adminLoginCard').classList.remove('active');
+      document.getElementById('studentSelectionFlow').style.display = 'block';
+      document.getElementById('adminTogglePanel').style.display = 'flex';
+    }
+
+    function confirmAdminLogin() {
+      const code = document.getElementById('inputAdminCode').value.trim();
+      if (!code) {
+        showToast('Vui lòng nhập mã bảo mật Admin!', 'warning');
+        return;
+      }
+
+      const user = loginUser('admin', code);
+      if (user) {
+        showToast('🔓 Đăng nhập quyền Admin thành công!', 'success');
+        setTimeout(() => {
+          window.location.href = buildUrl('index.html');
+        }, 500);
+      } else {
+        showToast('Mã bảo mật Admin không đúng!', 'error');
+        document.getElementById('inputAdminCode').value = '';
+      }
+    }
+
+    // Keyboard support (Enter key)
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('studentVerifyCard').classList.contains('active')) {
+          confirmStudentLogin();
+        } else if (document.getElementById('adminLoginCard').classList.contains('active')) {
+          confirmAdminLogin();
+        }
+      }
+    });
+  </script>
 </body>
 </html>
