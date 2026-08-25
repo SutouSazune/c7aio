@@ -84,9 +84,6 @@ function renderRolesMatrix() {
       return roles.includes(roleKey);
     });
 
-    const permCount = (ROLE_PERMISSIONS_CONFIG[roleKey] || []).length;
-    const permBadge = `<span class="role-perm-badge" style="font-size: 0.72rem; font-weight: 700; background: rgba(99, 102, 241, 0.12); color: var(--primary); padding: 2px 8px; border-radius: 99px; white-space: nowrap;">${permCount}/${permKeys.length} quyền</span>`;
-
     const holdersHtml = holders.length > 0
       ? `<div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
            ${holders.map(h => `<span class="role-holder-chip">👤 ${escapeHtml(h.name)}</span>`).join('')}
@@ -95,7 +92,6 @@ function renderRolesMatrix() {
 
     const roleControls = `
       <span style="display: inline-flex; gap: 6px; align-items: center;">
-        ${permBadge}
         <button class="btn-action-pill" onclick="openEditRoleModal('${roleKey}')" title="Sửa tên / emoji / màu sắc">✏️ Sửa</button>
         ${isCustom ? `<button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa chức vụ này">🗑️ Xóa</button>` : ''}
       </span>
