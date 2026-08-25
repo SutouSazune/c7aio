@@ -1,339 +1,173 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/**
+ * C7AIO Statistics & Analytics Stylesheet
+ * Responsive charts, progress rings, completion matrices & export tools
+ */
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #333;
-  line-height: 1.6;
-  min-height: 100vh;
-  will-change: background;
-  contain: layout style paint;
-}
-
-/* Header */
-.header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 2rem 0;
-  margin-bottom: 2rem;
-}
-
-.header-content {
+.stats-page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
-  text-align: center;
-  position: relative;
-}
-
-.back-btn {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.8rem;
-  text-decoration: none;
-  color: #667eea;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-}
-
-.back-btn:hover {
-  background: #f0f0f0;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.header h1 {
-  font-size: 2.5rem;
-  color: #667eea;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-}
-
-.header p {
-  font-size: 1rem;
-  color: #666;
-  font-weight: 500;
-}
-
-/* Stats Overview Cards */
-.stats-overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto 2rem;
-  padding: 0 1rem;
-}
-
-.stat-card {
-  background: white;
   padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  position: relative;
-  transition: transform 0.3s ease;
+  gap: 1.5rem;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
+.stats-top-header {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
 }
 
-.stat-label {
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.stat-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #333;
-  line-height: 1.2;
-}
-
-.stat-percent {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  font-weight: 700;
-  color: #4CAF50;
-  background: #e8f5e9;
-  padding: 0.2rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-}
-
-/* Charts Section */
-.charts-section {
+.analytics-cards-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto 2rem;
-  padding: 0 1rem;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 1.5rem;
 }
 
-.chart-container {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+@media (max-width: 860px) {
+  .analytics-cards-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.analytics-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.8rem;
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.chart-container h2 {
-  margin-bottom: 2rem;
-  font-size: 1.2rem;
-  color: #333;
+  justify-content: center;
   text-align: center;
 }
 
-/* Progress Ring */
-.progress-ring-container {
+.progress-ring-box {
   position: relative;
-  width: 200px;
-  height: 200px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 180px;
+  height: 180px;
+  margin: 1rem 0;
 }
 
 .progress-ring-circle {
-  transition: stroke-dashoffset 0.5s ease;
+  transition: stroke-dashoffset 0.8s var(--ease-spring);
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
-  fill: transparent;
-  stroke: #667eea;
-  stroke-width: 12;
-  stroke-dasharray: 565.48;
-  stroke-dashoffset: 565.48;
-  stroke-linecap: round;
+  stroke: var(--primary);
 }
 
-.progress-ring-base {
-  fill: transparent;
-  stroke: #f0f0f0;
-  stroke-width: 12;
+.progress-ring-bg {
+  stroke: rgba(99, 102, 241, 0.15);
 }
 
-.progress-text {
+.progress-ring-text {
   position: absolute;
-  text-align: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.progress-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #333;
+.progress-ring-val {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-main);
 }
 
-.progress-label {
-  font-size: 0.9rem;
-  color: #666;
+.progress-ring-sub {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  font-weight: 600;
 }
 
-/* Status Bars */
-.status-bars {
+.category-bars-list {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 14px;
+  margin-top: 1rem;
 }
 
-.status-bar-item {
+.cat-bar-row {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 4px;
 }
 
-.status-label {
-  font-weight: 600;
-  color: #666;
-  font-size: 0.9rem;
+.cat-bar-header {
   display: flex;
   justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.status-bar {
-  height: 12px;
-  background: #f0f0f0;
+.cat-bar-track {
+  height: 10px;
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 6px;
   overflow: hidden;
 }
 
-.status-fill {
+[data-theme="dark"] .cat-bar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cat-bar-fill {
   height: 100%;
   border-radius: 6px;
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 0%;
+  transition: width 0.8s var(--ease-spring);
 }
 
-.status-fill.done { background: #4CAF50; }
-.status-fill.pending { background: #667eea; }
-
-.status-count {
-  text-align: right;
-  font-size: 0.85rem;
-  color: #999;
-  font-weight: 600;
+.matrix-table-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
 }
 
-/* Activity Section */
-.activity-section {
-  max-width: 1200px;
-  margin: 0 auto 2rem;
-  padding: 0 1rem;
-}
-
-.activity-section h2 {
-  color: white;
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.activity-list {
-  background: white;
-  border-radius: 12px;
-  padding: 1rem;
-  min-height: 100px;
-}
-
-/* Footer */
-.footer {
-  text-align: center;
-  padding: 2rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 3rem;
-}
-
-.dashboard-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
-
-.dashboard-section {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.dashboard-section h2 {
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  color: #333;
-}
-
-.completion-table {
+.matrix-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
 
-.completion-table thead {
-  background: #f5f5f5;
-}
-
-.completion-table th {
-  padding: 0.75rem;
+.matrix-table th, .matrix-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--input-border);
   text-align: center;
-  font-weight: 600;
-  color: #666;
-  border-bottom: 2px solid #ddd;
 }
 
-.completion-table th:first-child {
+.matrix-table th:first-child, .matrix-table td:first-child {
   text-align: left;
+  font-weight: 700;
+  position: sticky;
+  left: 0;
+  background: var(--bg-surface);
+  z-index: 2;
 }
 
-.completion-table td {
-  padding: 0.75rem;
-  text-align: center;
-  border-bottom: 1px solid #eee;
+.matrix-table th {
+  background: var(--bg-surface);
+  font-weight: 700;
+  color: var(--text-sub);
+  white-space: nowrap;
 }
 
-.completion-table td:first-child {
-  text-align: left;
-  font-weight: 500;
-}
-
-.completion-table td.completed {
-  color: #4CAF50;
-  font-weight: 600;
-}
-
-.completion-table tr:hover {
-  background: #fafafa;
-}
-
-@media (max-width: 768px) {
-  .dashboard-section {
-    padding: 1rem;
-  }
-
-  .completion-table {
-    font-size: 0.8rem;
-  }
-
-  .completion-table th,
-  .completion-table td {
-    padding: 0.5rem 0.25rem;
-  }
+.matrix-table tr:hover td {
+  background: rgba(99, 102, 241, 0.05);
 }
