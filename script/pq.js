@@ -169,12 +169,19 @@ function closeRoleModal() {
 }
 
 function slugifyKey(text) {
-  return text.toLowerCase()
+  if (!text) return 'role_' + Date.now().toString(36);
+  let str = text.toLowerCase()
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]/g, '_')
     .replace(/^_+|_+$/g, '')
-    .substring(0, 30);
+    .replace(/_+/g, '_');
+  if (!str) {
+    str = 'role_' + Date.now().toString(36);
+  }
+  return str.substring(0, 30);
 }
 
 async function submitRoleForm() {
@@ -190,25 +197,36 @@ async function submitRoleForm() {
   if (editingRoleKey) {
     key = editingRoleKey;
   } else {
-    if (!key) {
-      key = 'role_' + slugifyKey(name);
-    } else {
-      key = slugifyKey(key);
+    let baseKey = key ? slugifyKey(key) : ('role_' + slugifyKey(name));
+    if (!baseKey || baseKey === 'role' || baseKey === 'role_') {
+      baseKey = 'role_' + Date.now().toString(36);
+    }
+    key = baseKey;
+    // Đảm bảo không trùng key với các vai trò đã có khi thêm mới
+    if (ROLES[key] || (typeof DEFAULT_ROLES !== 'undefined' && DEFAULT_ROLES[key])) {
+      key = `${baseKey}_${Date.now().toString(36).slice(-4)}`;
     }
   }
 
   if (!key) {
-    showToast('Mã định danh không hợp lệ!', 'error');
-    return;
+    key = 'role_' + Date.now().toString(36);
   }
 
   try {
+    const rolePayload = { name, color, deleted: false };
+    customRolesData[key] = rolePayload;
+
     if (typeof saveSharedCustomRole === 'function') {
-      await saveSharedCustomRole(key, { name, color, deleted: false });
+      await saveSharedCustomRole(key, rolePayload);
     }
 
-    ROLES[key] = name;
-    ROLE_COLORS[key] = color;
+    if (typeof applyCustomRoles === 'function') {
+      applyCustomRoles(customRolesData);
+    } else {
+      ROLES[key] = name;
+      ROLE_COLORS[key] = color;
+    }
+
     if (!ROLE_PERMISSIONS_CONFIG[key]) {
       ROLE_PERMISSIONS_CONFIG[key] = [];
     }
