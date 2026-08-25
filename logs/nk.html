@@ -16,9 +16,12 @@
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <a href="../index.html" class="back-btn">←</a>
+        <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
         <div class="header-titles">
-          <h1>📜 Nhật Ký Hoạt Động</h1>
+          <div class="header-title-row">
+            <span class="header-icon">📜</span>
+            <span class="header-title-text">Nhật Ký Hoạt Động</span>
+          </div>
           <p>Lịch sử các thao tác & thay đổi trên toàn hệ thống</p>
         </div>
       </div>
@@ -33,22 +36,22 @@
 
   <main class="nk-page-container">
 
-    <section class="stats-top-header">
+    <section class="nk-top-header">
       <div>
         <h2 style="font-size: 1.25rem; font-weight: 800;">Lịch Sử Thao Tác Hệ Thống</h2>
         <p style="font-size: 0.85rem; color: var(--text-sub);">Ghi lại 150 hành động gần nhất của người dùng</p>
       </div>
-      <div class="search-task-box" style="max-width: 320px;">
-        <span class="search-icon-task">🔍</span>
-        <input type="text" id="logSearchInput" class="search-task-input" placeholder="Lọc người dùng hoặc hành động..." oninput="handleLogSearch(this.value)">
+      <div class="c7-search-box" style="max-width: 340px;">
+        <span class="c7-search-icon">🔍</span>
+        <input type="text" id="logSearchInput" class="c7-search-input" placeholder="Lọc người dùng hoặc hành động..." oninput="handleLogSearch(this.value)">
       </div>
     </section>
 
     <section class="nk-table-card">
-      <table class="matrix-table">
+      <table class="c7-table">
         <thead>
           <tr>
-            <th style="width: 150px;">Thời gian</th>
+            <th style="width: 160px;">Thời gian</th>
             <th>Người thực hiện</th>
             <th>Chức vụ</th>
             <th>Hành động</th>

@@ -16,9 +16,12 @@
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <a href="../index.html" class="back-btn">←</a>
+        <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
         <div class="header-titles">
-          <h1>👨‍🎓 Hồ Sơ Học Sinh</h1>
+          <div class="header-title-row">
+            <span class="header-icon">👨‍🎓</span>
+            <span class="header-title-text">Hồ Sơ Học Sinh</span>
+          </div>
           <p>Danh bạ & thông tin chi tiết thành viên lớp 10C7</p>
         </div>
       </div>
@@ -35,9 +38,9 @@
 
     <!-- Top Action & Search Bar -->
     <section class="hs-top-bar">
-      <div class="search-task-box">
-        <span class="search-icon-task">🔍</span>
-        <input type="text" id="hsSearchInput" class="search-task-input" placeholder="Tìm kiếm theo tên, SĐT, Email..." oninput="handleStudentSearch(this.value)">
+      <div class="c7-search-box">
+        <span class="c7-search-icon">🔍</span>
+        <input type="text" id="hsSearchInput" class="c7-search-input" placeholder="Tìm kiếm theo tên, SĐT, Email..." oninput="handleStudentSearch(this.value)">
       </div>
 
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -48,7 +51,7 @@
           📥 Nhập CSV
         </button>
         <input type="file" id="csvFileInput" accept=".csv, .json" style="display: none;" onchange="handleCsvFile(event)">
-        <button class="btn-add-task" onclick="openAddStudentModal()">
+        <button class="c7-btn c7-btn-primary" onclick="openAddStudentModal()">
           <span>+</span> Thêm Học Sinh
         </button>
       </div>
@@ -56,7 +59,7 @@
 
     <!-- Students Table Card -->
     <section class="hs-table-card">
-      <table class="matrix-table">
+      <table class="c7-table">
         <thead>
           <tr>
             <th style="width: 50px;">STT</th>
@@ -66,7 +69,7 @@
             <th>Giới tính</th>
             <th>Liên hệ</th>
             <th>Tổ</th>
-            <th style="width: 120px;">Hành động</th>
+            <th style="width: 100px;">Hành động</th>
           </tr>
         </thead>
         <tbody id="hsStudentsTableBody">
@@ -79,10 +82,10 @@
 
   <!-- Modal: Add / Edit Student -->
   <div class="c7-dialog-overlay" id="hsStudentModalOverlay" style="display: none;">
-    <div class="c7-dialog-box" style="max-width: 650px; text-align: left;">
-      <h3 id="hsModalTitle" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;">➕ Thêm Học Sinh Mới</h3>
+    <div class="c7-dialog-box" style="max-width: 620px; text-align: left;">
+      <h3 id="hsModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">➕ Thêm Học Sinh Mới</h3>
       
-      <div style="display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; padding-right: 6px; margin-bottom: 20px;">
+      <div style="display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; padding-right: 6px; margin-bottom: 18px;">
         <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px;">
           <div>
             <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Họ và tên (*)</label>
@@ -94,7 +97,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px;">
           <div>
             <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Giới tính</label>
             <select id="selectStdGender" class="form-control-custom">
@@ -109,9 +112,10 @@
               <option value="monitor">⭐️ Lớp trưởng</option>
               <option value="secretary">🔥 Bí thư chi đoàn</option>
               <option value="vice_study">📚 Lớp phó học tập</option>
-              <option value="treasurer">💰 Thủ quỹ</option>
               <option value="vice_labor">🧹 Lớp phó lao động</option>
               <option value="vice_art">🎭 Lớp phó văn thể mỹ</option>
+              <option value="vice_subject">📝 Lớp phó bộ môn</option>
+              <option value="treasurer">💰 Thủ quỹ</option>
               <option value="group_leader">👥 Tổ trưởng</option>
             </select>
           </div>
