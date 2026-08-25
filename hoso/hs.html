@@ -5,12 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>10C7 AIO - Quản Lý Hồ Sơ Học Sinh</title>
+  <title>11C7 AIO - Quản Lý Hồ Sơ Học Sinh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style/hub.css?v=3.3.3">
-  <link rel="stylesheet" href="../style/hs.css?v=3.3.3">
+  <link rel="stylesheet" href="../style/hub.css?v=3.3.4">
+  <link rel="stylesheet" href="../style/hs.css?v=3.3.4">
 </head>
 <body>
 
@@ -23,7 +23,7 @@
             <span class="header-icon">👨‍🎓</span>
             <span class="header-title-text">Hồ Sơ Học Sinh</span>
           </div>
-          <p>Danh sách thông tin & liên lạc thành viên 10C7</p>
+          <p>Danh bạ & thông tin chi tiết thành viên lớp 11C7 (Năm học 2026-2027)</p>
         </div>
       </div>
       <div class="header-right">
@@ -37,23 +37,23 @@
 
   <main class="hs-page-container">
 
-    <!-- Top Action Bar -->
-    <section class="hs-action-bar">
+    <!-- Top Action & Search Bar -->
+    <section class="hs-top-bar">
       <div class="c7-search-box">
         <span class="c7-search-icon">🔍</span>
-        <input type="text" id="hsSearchInput" class="c7-search-input" placeholder="Tìm kiếm theo tên, SĐT, Email...">
+        <input type="text" id="hsSearchInput" class="c7-search-input" placeholder="Tìm kiếm theo tên, SĐT, Email, Lớp cũ..." oninput="handleStudentSearch(this.value)">
       </div>
 
-      <div class="hs-btn-group">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="c7-btn c7-btn-secondary" onclick="exportStudentsCsv()">
-          📥 Xuất CSV
+          📤 Xuất CSV
         </button>
         <button class="c7-btn c7-btn-secondary" onclick="triggerImportCsv()">
-          📤 Nhập CSV
+          📥 Nhập CSV
         </button>
-        <input type="file" id="hsCsvFileInput" accept=".csv" style="display: none;" onchange="handleCsvImport(event)">
-        <button class="c7-btn c7-btn-primary" id="btnOpenAddStudent" onclick="openAddStudentModal()">
-          ➕ Thêm Học Sinh
+        <input type="file" id="csvFileInput" accept=".csv, .json" style="display: none;" onchange="handleCsvFile(event)">
+        <button class="c7-btn c7-btn-primary" onclick="openAddStudentModal()">
+          <span>+</span> Thêm Học Sinh
         </button>
       </div>
     </section>
@@ -170,7 +170,7 @@
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
@@ -179,11 +179,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js?v=3.3.3"></script>
-  <script src="../script/firebase-utils.js?v=3.3.3"></script>
-  <script src="../script/students-list.js?v=3.3.3"></script>
-  <script src="../script/hub.js?v=3.3.3"></script>
-  <script src="../script/console.js?v=3.3.3"></script>
-  <script src="../script/hs.js?v=3.3.3"></script>
+  <script src="../script/firebase-config.js?v=3.3.4"></script>
+  <script src="../script/firebase-utils.js?v=3.3.4"></script>
+  <script src="../script/students-list.js?v=3.3.4"></script>
+  <script src="../script/hub.js?v=3.3.4"></script>
+  <script src="../script/console.js?v=3.3.4"></script>
+  <script src="../script/hs.js?v=3.3.4"></script>
 </body>
 </html>
