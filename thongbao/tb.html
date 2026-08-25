@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>10C7 AIO - Bảng Tin & Thông Báo Lớp</title>
+  <title>11C7 AIO - Bảng Tin & Thông Báo Lớp</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Quill Snow CSS -->
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-  <link rel="stylesheet" href="../style/hub.css">
-  <link rel="stylesheet" href="../style/tb.css">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css?v=3.3.0" rel="stylesheet">
+  <link rel="stylesheet" href="../style/hub.css?v=3.3.0">
+  <link rel="stylesheet" href="../style/tb.css?v=3.3.0">
 </head>
 <body>
 
@@ -113,7 +113,7 @@
   <div class="c7-dialog-overlay" id="notifDetailOverlay" style="display: none;">
     <div class="c7-dialog-box" style="max-width: 650px; text-align: left;">
       <h3 id="viewNotifModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px;">Tiêu đề thông báo</h3>
-      <div id="viewNotifModalMeta" style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 14px;"></div>
+      <div id=\"viewNotifModalMeta\" style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 14px;"></div>
       <div class="ql-editor" id="viewNotifModalBody" style="max-height: 60vh; overflow-y: auto; padding: 10px 0; border-top: 1px solid var(--input-border); line-height: 1.6;"></div>
       <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
         <button class="c7-btn c7-btn-primary" onclick="closeNotifDetailModal()">Đóng</button>
@@ -122,7 +122,7 @@
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
@@ -131,13 +131,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js"></script>
-  <script src="../script/firebase-utils.js"></script>
-  <script src="../script/students-list.js"></script>
-  <script src="../script/hub.js"></script>
-  <script src="../script/console.js"></script>
+  <script src="../script/firebase-config.js?v=3.3.0"></script>
+  <script src="../script/firebase-utils.js?v=3.3.0"></script>
+  <script src="../script/students-list.js?v=3.3.0"></script>
+  <script src="../script/hub.js?v=3.3.0"></script>
+  <script src="../script/console.js?v=3.3.0"></script>
   <!-- Quill JS -->
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-  <script src="../script/tb.js"></script>
+  <script src="../script/tb.js?v=3.3.0"></script>
 </body>
 </html>
