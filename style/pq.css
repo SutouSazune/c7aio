@@ -67,7 +67,8 @@
 
 .roles-matrix-container th:first-child {
   text-align: left !important;
-  min-width: 260px !important;
+  min-width: 320px !important;
+  width: 320px !important;
   padding-left: 18px !important;
   font-size: 0.88rem !important;
 }
@@ -81,6 +82,8 @@
 
 .roles-matrix-container td:first-child {
   text-align: left !important;
+  min-width: 320px !important;
+  width: 320px !important;
   padding-left: 18px !important;
 }
 
