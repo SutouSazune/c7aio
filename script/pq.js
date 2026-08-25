@@ -93,7 +93,7 @@ function renderRolesMatrix() {
     const roleControls = `
       <div style="display: inline-flex; gap: 6px; align-items: center; flex-shrink: 0; white-space: nowrap;">
         <button class="btn-action-pill" onclick="openEditRoleModal('${roleKey}')" title="Sửa tên / emoji / màu sắc">✏️ Sửa</button>
-        ${isCustom ? `<button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa chức vụ này">🗑️ Xóa</button>` : ''}
+        <button class="btn-action-pill danger" onclick="confirmDeleteRole('${roleKey}')" title="Xóa chức vụ này">🗑️ Xóa</button>
       </div>
     `;
 
@@ -155,7 +155,7 @@ function openEditRoleModal(roleKey) {
   const delBtn = document.getElementById('btnDeleteRoleTrigger');
   if (delBtn) {
     delBtn.style.display = 'inline-flex';
-    delBtn.textContent = isDefault ? '🔄 Đặt lại mặc định' : '🗑️ Xóa chức vụ';
+    delBtn.textContent = '🗑️ Xóa chức vụ';
   }
 
   const overlay = document.getElementById('roleModalOverlay');
@@ -204,7 +204,7 @@ async function submitRoleForm() {
 
   try {
     if (typeof saveSharedCustomRole === 'function') {
-      await saveSharedCustomRole(key, { name, color });
+      await saveSharedCustomRole(key, { name, color, deleted: false });
     }
 
     ROLES[key] = name;
@@ -222,30 +222,23 @@ async function submitRoleForm() {
 }
 
 function confirmDeleteRole(roleKey) {
-  const isDefault = typeof DEFAULT_ROLES !== 'undefined' && !!DEFAULT_ROLES[roleKey];
-  const title = isDefault ? 'Đặt lại chức vụ mặc định' : 'Xóa chức vụ';
-  const msg = isDefault 
-    ? `Khôi phục chức vụ "${ROLES[roleKey] || roleKey}" về tên và màu mặc định ban đầu?`
-    : `Bạn có chắc chắn muốn xóa chức vụ "${ROLES[roleKey] || roleKey}" không?`;
+  const roleName = ROLES[roleKey] || roleKey;
+  const title = 'Xóa chức vụ';
+  const msg = `Bạn có chắc chắn muốn xóa chức vụ "${roleName}" khỏi hệ thống không?`;
 
   showConfirm(title, msg, async () => {
     try {
-      if (typeof deleteSharedCustomRole === 'function') {
-        await deleteSharedCustomRole(roleKey);
+      if (typeof saveSharedCustomRole === 'function') {
+        await saveSharedCustomRole(roleKey, { deleted: true });
       }
-      if (isDefault) {
-        ROLES[roleKey] = DEFAULT_ROLES[roleKey];
-        ROLE_COLORS[roleKey] = DEFAULT_ROLE_COLORS[roleKey];
-      } else {
-        delete ROLES[roleKey];
-        delete ROLE_COLORS[roleKey];
-        delete ROLE_PERMISSIONS_CONFIG[roleKey];
-      }
+      delete ROLES[roleKey];
+      delete ROLE_COLORS[roleKey];
+      delete ROLE_PERMISSIONS_CONFIG[roleKey];
 
       renderRolesMatrix();
-      showToast(isDefault ? 'Đã đặt lại chức vụ mặc định!' : 'Đã xóa chức vụ thành công!', 'info');
+      showToast(`Đã xóa chức vụ "${roleName}" thành công!`, 'info');
     } catch (e) {
-      showToast('Lỗi khi xóa/đặt lại chức vụ: ' + e.message, 'error');
+      showToast('Lỗi khi xóa chức vụ: ' + e.message, 'error');
     }
   });
 }
