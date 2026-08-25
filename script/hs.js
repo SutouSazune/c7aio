@@ -153,10 +153,13 @@ function openAddStudentModal() {
 }
 
 function openEditStudentModal(studentId) {
-  const s = STUDENTS.find(std => std.id === studentId);
-  if (!s) return;
+  const s = STUDENTS.find(std => std.id == studentId);
+  if (!s) {
+    showToast('Không tìm thấy học sinh!', 'error');
+    return;
+  }
 
-  editingStudentId = studentId;
+  editingStudentId = s.id;
   document.getElementById('hsModalTitle').textContent = '✏️ Chỉnh Sửa Hồ Sơ Học Sinh';
   document.getElementById('inputStdName').value = s.name || '';
   document.getElementById('inputStdDob').value = s.dob || '';
@@ -201,7 +204,7 @@ async function submitStudentForm() {
     return;
   }
 
-  const isEdit = !!editingStudentId;
+  const isEdit = editingStudentId !== null && editingStudentId !== undefined;
   const studentData = {
     id: isEdit ? editingStudentId : Date.now(),
     name,
@@ -216,47 +219,59 @@ async function submitStudentForm() {
     address
   };
 
-  let updatedList = [...STUDENTS];
-  if (isEdit) {
-    const idx = updatedList.findIndex(s => s.id === editingStudentId);
-    if (idx !== -1) updatedList[idx] = studentData;
-  } else {
-    updatedList.push(studentData);
-  }
+  try {
+    let updatedList = [...STUDENTS];
+    if (isEdit) {
+      const idx = updatedList.findIndex(s => s.id == editingStudentId);
+      if (idx !== -1) {
+        updatedList[idx] = studentData;
+      } else {
+        updatedList.push(studentData);
+      }
+    } else {
+      updatedList.push(studentData);
+    }
 
-  STUDENTS = updatedList;
-  if (typeof saveSharedStudents === 'function') {
-    await saveSharedStudents(updatedList);
-  } else {
-    localStorage.setItem('c7aio_students_cache', JSON.stringify(updatedList));
-  }
+    STUDENTS = updatedList;
+    if (typeof saveSharedStudents === 'function') {
+      await saveSharedStudents(STUDENTS);
+    }
 
-  logActivity('Hồ sơ học sinh', `${isEdit ? 'Cập nhật' : 'Thêm mới'} học sinh: ${name}`);
-  showToast(`✅ Đã lưu thông tin học sinh: ${name}`, 'success');
-  closeStudentModal();
-  renderStudentsTable();
+    if (typeof logAction === 'function') {
+      logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (Lớp cũ: ${previousClass}, ${ROLES[role] || role})`);
+    }
+
+    showToast(isEdit ? 'Đã cập nhật hồ sơ!' : 'Đã thêm học sinh mới thành công!', 'success');
+  } catch (err) {
+    console.error('Lỗi khi lưu học sinh:', err);
+    showToast('Có lỗi xảy ra khi lưu: ' + err.message, 'error');
+  } finally {
+    closeStudentModal();
+    renderStudentsTable();
+  }
 }
 
 async function deleteStudentAction() {
-  if (!checkPermission('manage_students') || !editingStudentId) return;
+  if (editingStudentId === null || editingStudentId === undefined || !checkPermission('manage_students')) return;
 
-  const s = STUDENTS.find(std => std.id === editingStudentId);
-  if (!s) return;
-
-  showConfirm('Xóa học sinh', `Bạn có chắc chắn muốn xóa hồ sơ học sinh "${s.name}" không?`, async () => {
-    const updatedList = STUDENTS.filter(std => std.id !== editingStudentId);
-    STUDENTS = updatedList;
-
-    if (typeof saveSharedStudents === 'function') {
-      await saveSharedStudents(updatedList);
-    } else {
-      localStorage.setItem('c7aio_students_cache', JSON.stringify(updatedList));
+  const s = STUDENTS.find(std => std.id == editingStudentId);
+  showConfirm('Xác nhận xóa', `Bạn có chắc muốn xóa hồ sơ học sinh ${s ? s.name : ''}?`, async () => {
+    try {
+      STUDENTS = STUDENTS.filter(std => std.id != editingStudentId);
+      if (typeof saveSharedStudents === 'function') {
+        await saveSharedStudents(STUDENTS);
+      }
+      if (typeof logAction === 'function') {
+        logAction('Xóa học sinh', `Đã xóa: ${s ? s.name : editingStudentId}`);
+      }
+      showToast('Đã xóa hồ sơ học sinh!', 'success');
+    } catch (err) {
+      console.error('Lỗi khi xóa học sinh:', err);
+      showToast('Lỗi khi xóa: ' + err.message, 'error');
+    } finally {
+      closeStudentModal();
+      renderStudentsTable();
     }
-
-    logActivity('Hồ sơ học sinh', `Xóa học sinh: ${s.name}`);
-    showToast(`🗑️ Đã xóa học sinh: ${s.name}`, 'info');
-    closeStudentModal();
-    renderStudentsTable();
   });
 }
 
@@ -338,7 +353,9 @@ function handleCsvImport(e) {
         } else {
           localStorage.setItem('c7aio_students_cache', JSON.stringify(newStudents));
         }
-        logActivity('Hồ sơ học sinh', `Nhập ${newStudents.length} học sinh từ file CSV`);
+        if (typeof logAction === 'function') {
+          logAction('Hồ sơ học sinh', `Nhập ${newStudents.length} học sinh từ file CSV`);
+        }
         showToast(`✅ Đã nhập thành công ${newStudents.length} học sinh!`, 'success');
         renderStudentsTable();
       }

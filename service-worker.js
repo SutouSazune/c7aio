@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.2-clean';
+const CACHE_NAME = 'c7aio-v3.3.3-fix';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

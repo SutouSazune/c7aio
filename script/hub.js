@@ -39,6 +39,30 @@ var hubNotifications = [];
 var hubSchedules = {};
 var hubWeekMetadata = {};
 
+// Safe Activity Logger fallbacks
+window.logAction = window.logAction || function(action, detail) {
+  try {
+    const logs = JSON.parse(localStorage.getItem('c7aio_activity_logs') || '[]');
+    const user = (typeof getCurrentUser === 'function' ? getCurrentUser() : null) || { name: 'Người dùng' };
+    logs.unshift({
+      id: Date.now(),
+      action: action || 'Thao tác',
+      detail: detail || '',
+      user: user.name || 'Người dùng',
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('c7aio_activity_logs', JSON.stringify(logs.slice(0, 100)));
+  } catch (e) {
+    console.warn('logAction error:', e);
+  }
+};
+
+window.logActivity = window.logActivity || function(action, detail) {
+  if (typeof window.logAction === 'function') {
+    window.logAction(action, detail);
+  }
+};
+
 // ============= THEME ENGINE (DARK / LIGHT MODE) =============
 const ThemeEngine = {
   STORAGE_KEY: 'c7aio_theme',
@@ -48,361 +72,47 @@ const ThemeEngine = {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
     this.setTheme(initialTheme, false);
-    
-    window.addEventListener('DOMContentLoaded', () => {
-      this.injectThemeToggle();
+
+    // Watch system changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem(this.STORAGE_KEY)) {
+        this.setTheme(e.matches ? 'dark' : 'light', false);
+      }
     });
   },
 
   setTheme(theme, save = true) {
-    document.documentElement.setAttribute('data-theme', theme);
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+
     if (save) {
       localStorage.setItem(this.STORAGE_KEY, theme);
     }
-    const toggleIcon = document.getElementById('themeToggleIcon');
-    if (toggleIcon) {
-      toggleIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-    }
+    this.updateToggleIcon(theme);
   },
 
   toggle() {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-    this.setTheme(next, true);
-    if (typeof showToast === 'function') {
-      showToast(next === 'dark' ? '🌙 Đã bật chế độ Tối' : '☀️ Đã bật chế độ Sáng', 'info');
-    }
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const nextTheme = isDark ? 'light' : 'dark';
+    this.setTheme(nextTheme, true);
+    showToast(`Đã chuyển sang chế độ ${nextTheme === 'dark' ? 'Ban đêm (Dark)' : 'Ban ngày (Light)'}`, 'info');
   },
 
-  injectThemeToggle() {
-    if (document.getElementById('themeToggleBtn')) return;
-    const headerRight = document.querySelector('.header-right') || document.querySelector('.header-content');
-    if (!headerRight) return;
-
-    const btn = document.createElement('button');
-    btn.id = 'themeToggleBtn';
-    btn.className = 'theme-toggle-btn';
-    btn.title = 'Chuyển đổi giao diện Sáng / Tối';
-    btn.type = 'button';
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-    btn.innerHTML = `<span id="themeToggleIcon">${currentTheme === 'dark' ? '☀️' : '🌙'}</span>`;
-    btn.onclick = () => this.toggle();
-
-    if (headerRight.firstChild) {
-      headerRight.insertBefore(btn, headerRight.firstChild);
-    } else {
-      headerRight.appendChild(btn);
+  updateToggleIcon(theme) {
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+      btn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+      btn.title = theme === 'dark' ? 'Chuyển sang chế độ Sáng' : 'Chuyển sang chế độ Tối';
     }
   }
 };
 
-ThemeEngine.init();
-
-// ============= DATA LOADERS & REALTIME SYNC =============
-async function loadStats() {
-  if (typeof onSharedTasksChanged === 'function') {
-    onSharedTasksChanged((updatedTasks) => {
-      hubTasks = updatedTasks || [];
-      updateUIStats();
-      updateDashboardWidgets();
-    });
-  }
-
-  if (typeof onSharedNotificationsChanged === 'function') {
-    onSharedNotificationsChanged((notifs) => {
-      hubNotifications = notifs || [];
-      updateNotificationReminders(hubNotifications);
-      updateDashboardWidgets();
-    });
-  }
-
-  if (typeof onSharedSchedulesChanged === 'function') {
-    onSharedSchedulesChanged((data) => {
-      hubSchedules = data || {};
-      updateDashboardScheduleWidget();
-    });
-  }
-
-  if (typeof onSharedWeekMetadataChanged === 'function') {
-    onSharedWeekMetadataChanged((data) => {
-      hubWeekMetadata = data || {};
-      updateDashboardScheduleWidget();
-    });
-  }
-}
-
-function updateUIStats() {
-  const user = getCurrentUser();
-  if (!user) return;
-
-  const totalTasks = hubTasks.length;
-  const doneTasks = hubTasks.filter(t => {
-    if (t.completions) return t.completions[user.id];
-    return t.done;
-  }).length;
-  const openTasks = Math.max(0, totalTasks - doneTasks);
-
-  const totalEl = document.getElementById("totalTask");
-  if (totalEl) totalEl.innerText = totalTasks;
-  if (document.getElementById("doneTask")) document.getElementById("doneTask").innerText = doneTasks;
-  if (document.getElementById("openTask")) document.getElementById("openTask").innerText = openTasks;
-
-  const today = new Date();
-  const nearDeadlineTasks = hubTasks.filter(t => {
-    const isCompleted = t.completions ? t.completions[user.id] : t.done;
-    if (isCompleted) return false;
-    const deadlineDate = t.endTime ? new Date(t.endTime) : (t.deadline ? new Date(t.deadline) : null);
-    if (!deadlineDate || isNaN(deadlineDate.getTime())) return false;
-    const diffDays = (deadlineDate - today) / (1000 * 60 * 60 * 24);
-    return diffDays <= 3;
-  });
-
-  if (document.getElementById("nearDeadline")) {
-    document.getElementById("nearDeadline").innerText = nearDeadlineTasks.length;
-  }
-
-  updateRecentTasks(nearDeadlineTasks);
-}
-
-function updateRecentTasks(nearDeadlineTasks) {
-  const ul = document.getElementById("recentTasks");
-  const emptyState = document.getElementById("emptyState");
-  if (!ul || !emptyState) return;
-
-  ul.innerHTML = "";
-  if (!nearDeadlineTasks || nearDeadlineTasks.length === 0) {
-    emptyState.style.display = 'flex';
-    return;
-  }
-
-  emptyState.style.display = 'none';
-
-  nearDeadlineTasks.slice(0, 5).forEach(t => {
-    const deadline = t.endTime ? new Date(t.endTime) : new Date(t.deadline);
-    const today = new Date();
-    const daysLeft = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
-
-    let urgencyClass = 'soon';
-    let urgencyBadge = `⏳ Còn ${daysLeft} ngày`;
-
-    if (daysLeft < 0) {
-      urgencyClass = 'overdue';
-      urgencyBadge = '⚠️ Quá hạn';
-    } else if (daysLeft === 0) {
-      urgencyClass = 'urgent';
-      urgencyBadge = '🔥 Hôm nay';
-    } else if (daysLeft === 1) {
-      urgencyClass = 'urgent';
-      urgencyBadge = '🟠 Ngày mai';
-    }
-
-    const li = document.createElement('li');
-    li.className = `recent-item ${urgencyClass}`;
-    li.onclick = () => go('nhiemvu/nv.html');
-    li.innerHTML = `
-      <div class="recent-item-info">
-        <span class="recent-item-title">${escapeHtml(t.name)}</span>
-        <span class="recent-item-tag">${t.category || 'Nhiệm vụ'}</span>
-      </div>
-      <span class="recent-item-badge ${urgencyClass}">${urgencyBadge}</span>
-    `;
-    ul.appendChild(li);
-  });
-}
-
-function updateNotificationReminders(notifs) {
-  const badge = document.getElementById('notifBadge');
-  const ticker = document.getElementById('notifTicker');
-  const tickerText = document.getElementById('notifTickerText');
-
-  if (!notifs || notifs.length === 0) {
-    if (badge) badge.style.display = 'none';
-    if (ticker) ticker.style.display = 'none';
-    return;
-  }
-
-  const user = getCurrentUser();
-  const unreadCount = user ? notifs.filter(n => !(n.completions && n.completions[user.id])).length : notifs.length;
-
-  if (badge) {
-    if (unreadCount > 0) {
-      badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-      badge.style.display = 'flex';
-    } else {
-      badge.style.display = 'none';
-    }
-  }
-
-  if (ticker && tickerText) {
-    const latest = notifs[0];
-    tickerText.textContent = `📢 ${latest.message}`;
-    ticker.style.display = 'flex';
-    ticker.onclick = () => go('thongbao/tb.html');
-  }
-}
-
-// Widget thời khóa biểu hôm nay trên Dashboard
-function updateDashboardScheduleWidget() {
-  const container = document.getElementById('todayScheduleWidget');
-  if (!container) return;
-
-  const today = new Date();
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const dayDisplay = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-  const currentDayName = dayNames[today.getDay()];
-
-  // Tìm week key hiện tại
-  let currentWeekKey = 'week-1';
-  for (const [key, meta] of Object.entries(hubWeekMetadata)) {
-    if (meta.startDate) {
-      const start = new Date(meta.startDate);
-      const end = meta.endDate ? new Date(meta.endDate) : null;
-      if (meta.infinite || (end && today >= start && today <= end)) {
-        currentWeekKey = key;
-        break;
-      }
-    }
-  }
-
-  const weekSchedule = hubSchedules[currentWeekKey] || {};
-  const todayClasses = weekSchedule[currentDayName] || [];
-
-  let html = `
-    <div class="widget-header">
-      <h3>📅 Tiết học ${dayDisplay[today.getDay()]} (${today.getDate()}/${today.getMonth() + 1})</h3>
-      <a href="lich/lich.html" class="widget-link">Xem tuần →</a>
-    </div>
-  `;
-
-  if (todayClasses.length === 0) {
-    html += `
-      <div class="empty-widget">
-        <span>🏖️</span>
-        <p>Hôm nay không có tiết học nào. Nghỉ ngơi nhé!</p>
-      </div>
-    `;
-  } else {
-    html += `<div class="today-classes-list">`;
-    todayClasses.forEach(cls => {
-      const color = getSubjectColor(cls.name || cls.subject);
-      html += `
-        <div class="today-class-card" style="border-left-color: ${color}">
-          <div class="today-class-time">⏰ ${cls.time || 'Tiết'}</div>
-          <div class="today-class-details">
-            <span class="today-class-name">${escapeHtml(cls.name)}</span>
-            ${cls.subject ? `<span class="today-class-sub">${escapeHtml(cls.subject)}</span>` : ''}
-          </div>
-          <div class="today-class-room">📍 ${escapeHtml(cls.room || 'Phòng ?')}</div>
-        </div>
-      `;
-    });
-    html += `</div>`;
-  }
-
-  container.innerHTML = html;
-}
-
-function getSubjectColor(name) {
-  const n = (name || '').toLowerCase();
-  if (n.includes('toán')) return '#3b82f6';
-  if (n.includes('văn')) return '#ec4899';
-  if (n.includes('anh')) return '#8b5cf6';
-  if (n.includes('lý') || n.includes('vật lí')) return '#06b6d4';
-  if (n.includes('hóa')) return '#10b981';
-  if (n.includes('sinh')) return '#84cc16';
-  if (n.includes('sử')) return '#f59e0b';
-  if (n.includes('địa')) return '#d97706';
-  if (n.includes('tin')) return '#6366f1';
-  if (n.includes('thể dục') || n.includes('gdtc')) return '#ef4444';
-  if (n.includes('gdcd') || n.includes('kinh tế')) return '#14b8a6';
-  if (n.includes('chào cờ') || n.includes('sinh hoạt')) return '#e11d48';
-  return '#64748b';
-}
-
-function updateDashboardWidgets() {
-  updateDashboardScheduleWidget();
-  
-  // Update User Profile Card
-  const profileWidget = document.getElementById('userProfileWidget');
-  if (profileWidget) {
-    const user = getCurrentUser();
-    if (user) {
-      const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
-      const roleBadges = roles.map(r => `<span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}">${ROLES[r] || r}</span>`).join(' ');
-      const total = hubTasks.length;
-      const done = hubTasks.filter(t => t.completions && t.completions[user.id]).length;
-      const rate = total > 0 ? Math.round((done / total) * 100) : 100;
-
-      profileWidget.innerHTML = `
-        <div class="profile-card-inner">
-          <div class="profile-avatar" style="background: ${getAvatarGradient(user.name)}">
-            ${getInitials(user.name)}
-          </div>
-          <div class="profile-info">
-            <div class="profile-name">${escapeHtml(user.name)}</div>
-            <div class="profile-roles">${roleBadges}</div>
-            <div class="profile-progress-bar-wrap">
-              <div class="profile-progress-label">Tiến độ nhiệm vụ: <strong>${rate}%</strong> (${done}/${total})</div>
-              <div class="profile-progress-track">
-                <div class="profile-progress-fill" style="width: ${rate}%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-  }
-}
-
-function updateWelcomeMessage() {
-  const user = getCurrentUser();
-  if (user) {
-    const firstName = user.name.split(' ').pop();
-    const welcomeNameEl = document.getElementById('welcomeName');
-    if (welcomeNameEl) welcomeNameEl.textContent = firstName;
-    
-    const hour = new Date().getHours();
-    let greeting = 'Chúc bạn một ngày học tập hiệu quả và tràn đầy năng lượng!';
-    
-    if (hour < 12) {
-      greeting = '☀️ Buổi sáng tốt lành! Chúc bạn học tập thật hiệu quả.';
-    } else if (hour < 17) {
-      greeting = '🌤️ Buổi chiều năng động! Hãy hoàn thành các mục tiêu hôm nay.';
-    } else if (hour < 22) {
-      greeting = '🌆 Buổi tối an lành! Nhớ kiểm tra lại bài tập trước khi ngủ nhé.';
-    } else {
-      greeting = '🌙 Đã khuya rồi, hãy nghỉ ngơi sớm để nạp lại năng lượng nhé!';
-    }
-    
-    const welcomeMsgEl = document.getElementById('welcomeMessage');
-    if (welcomeMsgEl) welcomeMsgEl.textContent = greeting;
-  }
-}
-
-function updateOnlineStatus() {
-  const statusEl = document.getElementById('onlineStatus');
-  if (!statusEl) return;
-  if (navigator.onLine) {
-    statusEl.innerHTML = '🟢 Trực tuyến';
-    statusEl.style.color = '#10b981';
-  } else {
-    statusEl.innerHTML = '🔴 Ngoại tuyến (Đã lưu cache)';
-    statusEl.style.color = '#ef4444';
-  }
-}
-
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// ============= GLOBAL TOAST & DIALOG SYSTEM =============
-window.showToast = function(message, type = 'info') {
+// ============= TOAST NOTIFICATION SYSTEM =============
+function showToast(message, type = 'info', duration = 3200) {
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');
@@ -410,12 +120,18 @@ window.showToast = function(message, type = 'info') {
     document.body.appendChild(container);
   }
 
+  const icons = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
+  };
+
   const toast = document.createElement('div');
   toast.className = `toast-card ${type}`;
-  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
   toast.innerHTML = `
-    <span class="toast-icon">${icon}</span>
-    <span class="toast-msg">${message}</span>
+    <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
+    <span class="toast-message">${escapeHtml(message)}</span>
   `;
 
   container.appendChild(toast);
@@ -425,83 +141,283 @@ window.showToast = function(message, type = 'info') {
     setTimeout(() => {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
     }, 300);
-  }, 3500);
-};
+  }, duration);
+}
 
-window.showDialog = function(title, message, icon = 'ℹ️') {
-  const existing = document.querySelector('.c7-dialog-overlay');
-  if (existing) existing.remove();
-
+// ============= CUSTOM MODAL DIALOGS =============
+function showConfirm(title, message, onConfirm, onCancel) {
   const overlay = document.createElement('div');
   overlay.className = 'c7-dialog-overlay';
   overlay.innerHTML = `
     <div class="c7-dialog-box">
-      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">${icon}</div>
-      <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${title}</h3>
-      <p style="color: var(--text-sub); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">${message}</p>
-      <button class="c7-btn c7-btn-primary" style="width: 100%;" onclick="this.closest('.c7-dialog-overlay').remove()">Đã hiểu</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-};
-
-window.showConfirm = function(title, message, onConfirm) {
-  const existing = document.querySelector('.c7-dialog-overlay');
-  if (existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.className = 'c7-dialog-overlay';
-  overlay.innerHTML = `
-    <div class="c7-dialog-box">
-      <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">❓</div>
-      <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">${title}</h3>
-      <p style="color: var(--text-sub); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">${message}</p>
-      <div style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button class="c7-btn c7-btn-secondary" id="dlgBtnCancel">Hủy bỏ</button>
-        <button class="c7-btn c7-btn-danger" id="dlgBtnConfirm">Xác nhận</button>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 8px;">${escapeHtml(title)}</h3>
+      <p style="color: var(--text-sub); margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5;">${escapeHtml(message)}</p>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="c7-btn c7-btn-secondary" id="dialogCancelBtn">Hủy bỏ</button>
+        <button class="c7-btn c7-btn-danger" id="dialogConfirmBtn">Xác nhận</button>
       </div>
     </div>
   `;
+
   document.body.appendChild(overlay);
 
-  document.getElementById('dlgBtnConfirm').onclick = () => {
-    overlay.remove();
-    if (typeof onConfirm === 'function') onConfirm();
+  overlay.querySelector('#dialogCancelBtn').onclick = () => {
+    document.body.removeChild(overlay);
+    if (onCancel) onCancel();
   };
-  document.getElementById('dlgBtnCancel').onclick = () => overlay.remove();
-};
 
-// Check Admin and Management Buttons
-function checkAdminButtons() {
+  overlay.querySelector('#dialogConfirmBtn').onclick = () => {
+    document.body.removeChild(overlay);
+    if (onConfirm) onConfirm();
+  };
+}
+
+// ============= AUTH & USER HEADER STATE =============
+function initHubUser() {
   const user = getCurrentUser();
-  if (!user) return;
+  const headerRight = document.querySelector('.header-right');
+  const greetingEl = document.getElementById('userNameGreeting');
+  const logoutBtn = document.getElementById('headerLogoutBtn');
 
-  const canManageStudents = checkPermission('manage_students');
-  const canManageRoles = checkPermission('manage_roles');
-  const canViewLogs = checkPermission('view_logs');
+  // Inject Theme Toggle Button if missing
+  if (headerRight && !document.getElementById('themeToggleBtn')) {
+    const themeBtn = document.createElement('button');
+    themeBtn.id = 'themeToggleBtn';
+    themeBtn.className = 'theme-toggle-btn';
+    themeBtn.onclick = () => ThemeEngine.toggle();
+    headerRight.prepend(themeBtn);
+    ThemeEngine.updateToggleIcon(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+  }
 
-  if (canManageStudents) {
-    const btn = document.getElementById('btnNavStudents');
-    if (btn) btn.style.display = 'flex';
-  }
-  if (canManageRoles) {
-    const btn = document.getElementById('btnNavRoles');
-    if (btn) btn.style.display = 'flex';
-  }
-  if (canViewLogs) {
-    const btn = document.getElementById('btnNavLogs');
-    if (btn) btn.style.display = 'flex';
+  if (user) {
+    if (greetingEl) greetingEl.textContent = user.name;
+    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+
+    // Inject user badge bubble
+    if (headerRight && !document.getElementById('headerUserBadge')) {
+      const userBadge = document.createElement('div');
+      userBadge.id = 'headerUserBadge';
+      userBadge.className = 'header-user-bubble';
+      userBadge.innerHTML = `
+        <div class="header-avatar-circle" style="background: ${getAvatarGradient(user.name)}">${getInitials(user.name)}</div>
+        <span class="header-user-name">${escapeHtml(user.name)}</span>
+      `;
+      headerRight.insertBefore(userBadge, logoutBtn);
+    }
+
+    renderProfileCard(user);
+  } else {
+    // If not logged in and on protected page
+    const pathname = window.location.pathname;
+    if (!pathname.endsWith('login.html') && !pathname.endsWith('login') && !pathname.endsWith('404.html')) {
+      // Allow browsing or redirect if necessary
+    }
   }
 }
 
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const swPath = buildUrl('service-worker.js');
-    navigator.serviceWorker.register(swPath).then(reg => {
-      console.log('✅ Service Worker registered:', reg.scope);
-    }).catch(err => {
-      console.log('ℹ️ SW info:', err.message);
-    });
+function renderProfileCard(user) {
+  const card = document.getElementById('profileCardWidget');
+  if (!card) return;
+
+  card.style.display = 'flex';
+  const avatar = document.getElementById('profileWidgetAvatar');
+  const nameEl = document.getElementById('profileWidgetName');
+  const rolesEl = document.getElementById('profileWidgetRoles');
+
+  if (avatar) {
+    avatar.textContent = getInitials(user.name);
+    avatar.style.background = getAvatarGradient(user.name);
+  }
+
+  if (nameEl) nameEl.textContent = user.name;
+
+  if (rolesEl) {
+    const userRoles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+    rolesEl.innerHTML = userRoles.map(r => `
+      <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#64748b'};">
+        ${ROLES[r] || r}
+      </span>
+    `).join(' ');
+  }
+
+  updateProfileTaskProgress(user);
+}
+
+function updateProfileTaskProgress(user) {
+  if (!user || !hubTasks) return;
+
+  const userGroup = user.group || 1;
+  const userRoles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+
+  const relevantTasks = hubTasks.filter(t => {
+    if (t.assigneeType === 'all') return true;
+    if (t.assigneeType === 'group' && parseInt(t.assigneeValue) === userGroup) return true;
+    if (t.assigneeType === 'student' && t.assigneeValue === user.name) return true;
+    return false;
+  });
+
+  const total = relevantTasks.length;
+  const done = relevantTasks.filter(t => t.status === 'completed').length;
+  const percent = total > 0 ? Math.round((done / total) * 100) : 100;
+
+  const percentEl = document.getElementById('profileTaskPercent');
+  const fractionEl = document.getElementById('profileTaskFraction');
+  const barEl = document.getElementById('profileTaskProgressBar');
+
+  if (percentEl) percentEl.textContent = `${percent}%`;
+  if (fractionEl) fractionEl.textContent = `(${done}/${total})`;
+  if (barEl) barEl.style.width = `${percent}%`;
+}
+
+function logoutUserAction() {
+  showConfirm('Đăng xuất tài khoản', 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?', () => {
+    logoutUser();
+    showToast('Đã đăng xuất tài khoản thành công!', 'info');
+    setTimeout(() => {
+      window.location.href = buildUrl('login.html');
+    }, 600);
   });
 }
+
+// ============= DASHBOARD WIDGETS RENDERING =============
+function renderDashboardStats(tasks) {
+  if (!tasks) return;
+  hubTasks = tasks;
+
+  const total = tasks.length;
+  const pending = tasks.filter(t => t.status !== 'completed').length;
+  const done = tasks.filter(t => t.status === 'completed').length;
+
+  const today = new Date().toISOString().split('T')[0];
+  const urgent = tasks.filter(t => t.priority === 'urgent' && t.status !== 'completed').length;
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+
+  setVal('statTotalTasks', total);
+  setVal('statPendingTasks', pending);
+  setVal('statDoneTasks', done);
+  setVal('statUrgentTasks', urgent);
+
+  const currentUser = getCurrentUser();
+  if (currentUser) updateProfileTaskProgress(currentUser);
+
+  renderRecentTasks(tasks);
+}
+
+function renderRecentTasks(tasks) {
+  const container = document.getElementById('recentTasksContainer');
+  if (!container) return;
+
+  if (!tasks || tasks.length === 0) {
+    container.innerHTML = `<div class="empty-state-card">🎉 Tuyệt vời! Hiện chưa có nhiệm vụ nào tồn đọng.</div>`;
+    return;
+  }
+
+  const sorted = [...tasks].sort((a, b) => new Date(b.createdAt || b.deadline || 0) - new Date(a.createdAt || a.deadline || 0)).slice(0, 4);
+
+  container.innerHTML = sorted.map(t => {
+    const isDone = t.status === 'completed';
+    const isUrgent = t.priority === 'urgent';
+    const badgeClass = isDone ? 'done' : (isUrgent ? 'urgent' : 'pending');
+    const badgeText = isDone ? 'Đã xong' : (isUrgent ? 'Khẩn cấp' : 'Đang làm');
+
+    return `
+      <div class="recent-item" onclick="go('nhiemvu/nv.html')">
+        <div class="recent-item-left">
+          <div class="recent-item-icon ${isDone ? 'done' : ''}">${isDone ? '✅' : (isUrgent ? '⚡' : '📌')}</div>
+          <div class="recent-item-details">
+            <h5 class="recent-item-title ${isDone ? 'completed-text' : ''}">${escapeHtml(t.title)}</h5>
+            <span class="recent-item-meta">📅 Hạn: ${formatDateIsoToVn(t.deadline || '')} • 👤 Giao cho: ${getAssigneeLabel(t)}</span>
+          </div>
+        </div>
+        <span class="recent-item-badge ${badgeClass}">${badgeText}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function getAssigneeLabel(task) {
+  if (task.assigneeType === 'all') return 'Toàn lớp';
+  if (task.assigneeType === 'group') return `Tổ ${task.assigneeValue}`;
+  return task.assigneeValue || 'Cá nhân';
+}
+
+function renderTodaySchedule(schedules) {
+  const container = document.getElementById('todayScheduleContainer');
+  const dayTitleEl = document.getElementById('todayDayOfWeek');
+  if (!container) return;
+
+  hubSchedules = schedules;
+
+  const now = new Date();
+  const dayIndex = now.getDay(); // 0 is Sunday, 1 is Monday...
+  const dayMap = {
+    1: 'Thứ 2',
+    2: 'Thứ 3',
+    3: 'Thứ 4',
+    4: 'Thứ 5',
+    5: 'Thứ 6',
+    6: 'Thứ 7',
+    0: 'Chủ Nhật'
+  };
+
+  const dayNumber = dayIndex === 0 ? 8 : (dayIndex + 1); // 2..7, 8 for Sunday
+  if (dayTitleEl) dayTitleEl.textContent = dayMap[dayIndex] || 'Hôm nay';
+
+  if (dayIndex === 0) {
+    container.innerHTML = `<div class="empty-state-card">🏖️ Hôm nay là Chủ Nhật! Chúc bạn có một ngày nghỉ ngơi thư giãn.</div>`;
+    return;
+  }
+
+  const todayClasses = (schedules && schedules[dayNumber]) || [];
+
+  if (todayClasses.length === 0) {
+    container.innerHTML = `<div class="empty-state-card">✨ Hôm nay không có tiết học nào trên thời khóa biểu.</div>`;
+    return;
+  }
+
+  const sortedClasses = [...todayClasses].sort((a, b) => (parseInt(a.period) || 0) - (parseInt(b.period) || 0));
+
+  container.innerHTML = sortedClasses.map(c => `
+    <div class="today-class-card">
+      <div class="today-class-time">Tiết ${c.period}</div>
+      <div class="today-class-details">
+        <span class="today-class-name">${escapeHtml(c.subject)}</span>
+        <span class="today-class-room">🚪 ${escapeHtml(c.room || 'Lớp 10C7')} ${c.teacher ? '• 👩‍🏫 ' + escapeHtml(c.teacher) : ''}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Security Helper: Escape HTML
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Global Lifecycle Initializer
+window.addEventListener('DOMContentLoaded', () => {
+  ThemeEngine.init();
+  initHubUser();
+
+  // Bind Realtime Firebase data listeners if available
+  if (typeof onSharedTasksChanged === 'function') {
+    onSharedTasksChanged(tasks => renderDashboardStats(tasks));
+  }
+
+  if (typeof onSharedTimetableChanged === 'function') {
+    onSharedTimetableChanged(schedules => renderTodaySchedule(schedules));
+  }
+
+  // Register PWA Service Worker
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register(buildUrl('service-worker.js'))
+      .then(reg => console.log('✅ Service Worker registered:', reg.scope))
+      .catch(err => console.warn('SW registration warning:', err));
+  }
+});
