@@ -1,39 +1,32 @@
-// C7AIO Firebase Configuration & Shared State Management
-// Firebase 9 Compat Architecture
-
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDummyKeyForC7AIO-ConfigSafe",
-  authDomain: "c7aio-hub.firebaseapp.com",
-  databaseURL: "https://c7aio-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "c7aio-hub",
-  storageBucket: "c7aio-hub.appspot.com",
-  messagingSenderId: "1029384756",
-  appId: "1:1029384756:web:abcdef123456"
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBXkiJDkHeTSjztzXd3SlbCr64mVl8Ulv8",
+  authDomain: "c7aio-26d04.firebaseapp.com",
+  databaseURL: "https://c7aio-26d04-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "c7aio-26d04",
+  storageBucket: "c7aio-26d04.firebasestorage.app",
+  messagingSenderId: "195002194470",
+  appId: "1:195002194470:web:b2091db3b69e6ce116a4e7",
+  measurementId: "G-KWSG5GJMTH"
 };
 
-let isFirebaseInitialized = false;
-let databaseRef = null;
+const isConfigured = firebaseConfig.apiKey && firebaseConfig.databaseURL;
 
-try {
-  if (typeof firebase !== 'undefined') {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(FIREBASE_CONFIG);
+if (!isConfigured) {
+  console.error("❌ CHƯA CẤU HÌNH FIREBASE: Vui lòng cập nhật file script/firebase-config.js");
+}
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+  
+  const testDb = firebase.database();
+  testDb.ref(".info/connected").on("value", (snap) => {
+    if (snap.val() === true) {
+      console.log("🟢 Đã kết nối tới Firebase Realtime Database thành công!");
+    } else if (isConfigured) {
+      console.log("⚪ Đang thử kết nối tới Firebase...");
     }
-    databaseRef = firebase.database();
-    isFirebaseInitialized = true;
-    console.log('🔥 [Firebase] Khởi tạo thành công Firebase Database');
-  } else {
-    console.warn('⚠️ [Firebase] Thư viện SDK chưa được nạp, hệ thống sẽ chạy ở chế độ Local Storage');
-  }
-} catch (error) {
-  console.warn('⚠️ [Firebase] Khởi tạo thất bại, tự động chuyển sang Offline LocalStorage Fallback', error);
-  isFirebaseInitialized = false;
+  });
 }
 
-function getDatabaseRef() {
-  return (isFirebaseInitialized && databaseRef) ? databaseRef : null;
-}
-
-function isRealtimeConnected() {
-  return isFirebaseInitialized && databaseRef !== null;
-}
+console.log('📚 Firebase Config loaded');
