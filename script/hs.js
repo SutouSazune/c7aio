@@ -57,7 +57,7 @@ function renderStudentsTable() {
   if (list.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
           Không tìm thấy học sinh nào phù hợp.
         </td>
       </tr>
@@ -102,7 +102,7 @@ function renderStudentsTable() {
         <td>
           <div style="display: flex; gap: 6px;">
             ${canEdit ? `
-              <button class="btn-task-action" onclick="openEditStudentModal(${s.id})">✏️ Sửa</button>
+              <button class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️ Sửa</button>
             ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Xem</span>'}
           </div>
         </td>
@@ -291,7 +291,6 @@ function handleCsvFile(e) {
         }
       }
 
-      // Parse CSV
       const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
       if (lines.length <= 1) {
         showToast('File CSV không có dữ liệu!', 'warning');

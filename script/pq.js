@@ -46,11 +46,11 @@ function renderRolesMatrix() {
   const permKeys = Object.keys(PERMISSIONS);
 
   let html = `
-    <table class="matrix-table">
+    <table class="c7-table">
       <thead>
         <tr>
-          <th>Chức vụ & Thành viên nắm giữ</th>
-          ${permKeys.map(p => `<th style="font-size: 0.8rem; max-width: 140px;">${PERMISSIONS[p]}</th>`).join('')}
+          <th style="min-width: 220px;">Chức vụ & Thành viên đảm nhiệm</th>
+          ${permKeys.map(p => `<th style="font-size: 0.85rem; text-align: center; max-width: 140px;">${PERMISSIONS[p]}</th>`).join('')}
         </tr>
       </thead>
       <tbody>
@@ -63,13 +63,15 @@ function renderRolesMatrix() {
     });
 
     const holdersHtml = holders.length > 0
-      ? `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-sub);">${holders.map(h => `<div>👤 ${escapeHtml(h.name)}</div>`).join('')}</div>`
+      ? `<div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;">
+           ${holders.map(h => `<span class="role-holder-chip">👤 ${escapeHtml(h.name)}</span>`).join('')}
+         </div>`
       : `<div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">(Chưa có thành viên)</div>`;
 
     html += `
       <tr>
-        <td style="vertical-align: top;">
-          <div style="font-weight: 800; color: ${ROLE_COLORS[roleKey] || 'var(--primary)'}; font-size: 0.95rem;">
+        <td style="vertical-align: top; padding: 14px 16px;">
+          <div class="role-title-tag" style="color: ${ROLE_COLORS[roleKey] || 'var(--primary)'};">
             ${ROLES[roleKey]}
           </div>
           ${holdersHtml}
@@ -79,8 +81,8 @@ function renderRolesMatrix() {
     permKeys.forEach(permKey => {
       const hasPerm = (ROLE_PERMISSIONS_CONFIG[roleKey] || []).includes(permKey);
       html += `
-        <td style="text-align: center;">
-          <input type="checkbox" class="perm-checkbox-custom perm-box" data-role="${roleKey}" data-perm="${permKey}" ${hasPerm ? 'checked' : ''}>
+        <td style="text-align: center; vertical-align: middle;">
+          <input type="checkbox" class="perm-checkbox-custom perm-box" data-role="${roleKey}" data-perm="${permKey}" ${hasPerm ? 'checked' : ''} title="${ROLES[roleKey]} - ${PERMISSIONS[permKey]}">
         </td>
       `;
     });

@@ -31,6 +31,14 @@ function handleLogSearch(query) {
   renderLogs();
 }
 
+function getActionBadgeClass(action) {
+  const a = (action || '').toLowerCase();
+  if (a.includes('thêm') || a.includes('tạo') || a.includes('giao')) return 'create';
+  if (a.includes('sửa') || a.includes('cập nhật')) return 'update';
+  if (a.includes('xóa') || a.includes('hủy')) return 'delete';
+  return 'default';
+}
+
 function renderLogs() {
   const tbody = document.getElementById('logsTableBody');
   if (!tbody) return;
@@ -46,7 +54,7 @@ function renderLogs() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
           Không có nhật ký hoạt động nào.
         </td>
       </tr>
@@ -57,14 +65,15 @@ function renderLogs() {
   tbody.innerHTML = filtered.map(log => {
     const d = new Date(log.timestamp);
     const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    const badgeClass = getActionBadgeClass(log.action);
 
     return `
       <tr>
         <td style="color: var(--text-sub); white-space: nowrap; font-size: 0.85rem;">🕒 ${timeStr}</td>
         <td><strong>${escapeHtml(log.user || 'Unknown')}</strong></td>
         <td><span class="user-role-pill" style="background: #6366f1; font-size: 0.75rem;">${escapeHtml(log.role || 'Khách')}</span></td>
-        <td style="color: var(--primary); font-weight: 700;">${escapeHtml(log.action || '')}</td>
-        <td style="color: var(--text-sub); font-size: 0.85rem;">${escapeHtml(log.detail || '')}</td>
+        <td><span class="log-action-badge ${badgeClass}">${escapeHtml(log.action || '')}</span></td>
+        <td style="color: var(--text-sub); font-size: 0.88rem;">${escapeHtml(log.detail || '')}</td>
       </tr>
     `;
   }).join('');
