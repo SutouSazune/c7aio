@@ -1,47 +1,598 @@
 /**
- * C7AIO Developer Console & Diagnostic Tools
- * Quản lý trạng thái kết nối, Cache LocalStorage, Debug Realtime Firebase
+ * C7AIO Automation Engine & Console API Suite
+ * Cung cấp API lập trình toàn cục (window.C7_CONSOLE & window.C7_BOT)
+ * Phục vụ AI Agent / Automation Tools tự động bóc tách tin nhắn & nạp dữ liệu Firebase an toàn
+ * @version 3.4.0
  */
 
-const C7_CONSOLE = {
-  version: '3.0.0-figma-pro',
-  initialized: true,
+(function() {
+  'use strict';
 
-  info() {
-    const user = getCurrentUser();
-    console.group('%c🚀 C7AIO Platform Diagnostics', 'color: #6366f1; font-weight: bold; font-size: 14px;');
-    console.log('%cPhiên bản UI/UX:', 'font-weight: bold;', this.version);
-    console.log('%cNgười dùng hiện tại:', 'font-weight: bold;', user ? `${user.name} (${user.role})` : 'Chưa đăng nhập');
-    console.log('%cThời gian đăng nhập:', 'font-weight: bold;', getLoginTime() || 'N/A');
-    console.log('%cQuyền quản trị Admin:', 'font-weight: bold;', isAdmin() ? 'Có' : 'Không');
-    console.log('%cFirebase Realtime:', 'font-weight: bold;', isRealtimeConnected() ? '🟢 Đã kết nối' : '🔴 Ngoại tuyến');
-    console.groupEnd();
-  },
+  // --- HELPER UTILITIES ---
+  const DAY_KEY_MAP = {
+    't2': 'monday', '2': 'monday', 'thu2': 'monday', 'thuhai': 'monday', 'monday': 'monday', 'mon': 'monday',
+    't3': 'tuesday', '3': 'tuesday', 'thu3': 'tuesday', 'thuba': 'tuesday', 'tuesday': 'tuesday', 'tue': 'tuesday',
+    't4': 'wednesday', '4': 'wednesday', 'thu4': 'wednesday', 'thutu': 'wednesday', 'wednesday': 'wednesday', 'wed': 'wednesday',
+    't5': 'thursday', '5': 'thursday', 'thu5': 'thursday', 'thunam': 'thursday', 'thursday': 'thursday', 'thu': 'thursday',
+    't6': 'friday', '6': 'friday', 'thu6': 'friday', 'thusau': 'friday', 'friday': 'friday', 'fri': 'friday',
+    't7': 'saturday', '7': 'saturday', 'thu7': 'saturday', 'thubay': 'saturday', 'saturday': 'saturday', 'sat': 'saturday',
+    'cn': 'sunday', 'chunhat': 'sunday', 'sunday': 'sunday', 'sun': 'sunday'
+  };
 
-  dumpStorage() {
-    console.group('📦 C7AIO LocalStorage Dump');
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('c7aio_')) {
-        console.log(`%c${key}:`, 'color: #06b6d4; font-weight: bold;', JSON.parse(localStorage.getItem(key)));
-      }
-    }
-    console.groupEnd();
-  },
-
-  clearAllData() {
-    if (confirm('CẢNH BÁO: Hành động này sẽ xóa toàn bộ dữ liệu tạm trên trình duyệt! Bạn có chắc không?')) {
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('c7aio_')) keysToRemove.push(key);
-      }
-      keysToRemove.forEach(k => localStorage.removeItem(k));
-      console.log('🧹 Đã xóa toàn bộ bộ nhớ đệm C7AIO!');
-      window.location.reload();
-    }
+  function normalizeDayKey(rawDay) {
+    if (!rawDay) return null;
+    const clean = String(rawDay).toLowerCase().replace(/[\s_\-]/g, '');
+    return DAY_KEY_MAP[clean] || (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].includes(clean) ? clean : null);
   }
-};
 
-window.C7_CONSOLE = C7_CONSOLE;
-console.log('%c[C7AIO Hub]%c Đã tải hệ thống v3.0.0. Nhập %cC7_CONSOLE.info()%c để xem thông số.', 'color: #6366f1; font-weight: bold;', 'color: inherit;', 'color: #06b6d4; font-weight: bold;', 'color: inherit;');
+  function generateUniqueId(prefix = '') {
+    return prefix + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+  }
+
+  function normalizeDate(dateInput) {
+    if (!dateInput) return null;
+    if (dateInput instanceof Date && !isNaN(dateInput)) {
+      return dateInput.toISOString();
+    }
+
+    const str = String(dateInput).trim();
+    if (!str) return null;
+
+    // Định dạng YYYY-MM-DD HH:mm hoặc YYYY-MM-DD HH:mm:ss
+    const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+    if (ymdMatch) {
+      const [, y, m, d, h = '23', min = '59', s = '59'] = ymdMatch;
+      const parsed = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), parseInt(s));
+      return isNaN(parsed) ? null : parsed.toISOString();
+    }
+
+    // Định dạng DD/MM/YYYY HH:mm hoặc DD-MM-YYYY
+    const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+    if (dmyMatch) {
+      const [, d, m, y, h = '23', min = '59', s = '59'] = dmyMatch;
+      const parsed = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(h), parseInt(min), parseInt(s));
+      return isNaN(parsed) ? null : parsed.toISOString();
+    }
+
+    // Cố gắng parse tự nhiên
+    const dObj = new Date(str);
+    return isNaN(dObj.getTime()) ? null : dObj.toISOString();
+  }
+
+  function autoFormatDescription(text) {
+    if (!text) return '';
+    let content = String(text).trim();
+    if (!content) return '';
+
+    // Nếu đã chứa thẻ HTML (như <p>, <div>, <ul>, <br>), giữ nguyên
+    if (/<[a-z][\s\S]*>/i.test(content)) {
+      return content;
+    }
+
+    // Tự động convert raw URLs thành thẻ <a>
+    const urlPattern = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
+    content = content.replace(urlPattern, url => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--primary, #6366f1); text-decoration: underline; word-break: break-all;">${url}</a>`;
+    });
+
+    // Chuyển dòng xuống thành <p> hoặc <br>
+    const paragraphs = content.split(/\n\s*\n/);
+    if (paragraphs.length > 1) {
+      return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+    }
+
+    return `<p>${content.replace(/\n/g, '<br>')}</p>`;
+  }
+
+  function getLocalTasks() {
+    return JSON.parse(localStorage.getItem('c7aio_tasks_cache') || '[]');
+  }
+
+  function getLocalNotifications() {
+    return JSON.parse(localStorage.getItem('c7aio_notifications_cache') || '[]');
+  }
+
+  function getLocalSchedules() {
+    return JSON.parse(localStorage.getItem('c7aio_schedules_cache') || '{}');
+  }
+
+  function getLocalWeekMetadata() {
+    return JSON.parse(localStorage.getItem('c7aio_weekMetadata_cache') || '{}');
+  }
+
+  // ================= MAIN CONTROLLER OBJECT =================
+  const C7_ENGINE = {
+    version: '3.4.0',
+
+    // ================= 1. TASKS MANAGEMENT =================
+    /**
+     * Thêm nhiệm vụ mới vào Firebase & Cache
+     * @param {Object} payload 
+     * @returns {Promise<{success: boolean, taskId?: string, task?: Object, error?: string}>}
+     */
+    async addTask(payload = {}) {
+      try {
+        if (!payload || !payload.name) {
+          throw new Error('Thiếu tên nhiệm vụ (payload.name là bắt buộc)!');
+        }
+
+        const taskId = payload.id ? String(payload.id) : generateUniqueId('task_');
+        const taskObj = {
+          id: taskId,
+          name: String(payload.name).trim(),
+          category: payload.category ? String(payload.category).trim() : 'Bài tập',
+          priority: payload.priority === 'Khẩn cấp' ? 'Khẩn cấp' : 'Bình thường',
+          deadline: normalizeDate(payload.deadline),
+          description: autoFormatDescription(payload.description || ''),
+          assignedStudents: Array.isArray(payload.assignedStudents) ? payload.assignedStudents : [],
+          tags: Array.isArray(payload.tags) ? payload.tags : [],
+          completions: payload.completions && typeof payload.completions === 'object' ? payload.completions : {},
+          createdAt: payload.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (typeof saveSharedTask === 'function') {
+          await saveSharedTask(taskObj);
+        } else {
+          const current = getLocalTasks();
+          current.unshift(taskObj);
+          localStorage.setItem('c7aio_tasks_cache', JSON.stringify(current));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Thêm nhiệm vụ', `Tên: ${taskObj.name} (Hạn: ${taskObj.deadline || 'Không giới hạn'})`);
+        }
+
+        console.log('✅ [C7_CONSOLE] Đã thêm nhiệm vụ thành công:', taskObj.name, `(ID: ${taskId})`);
+        return { success: true, taskId, task: taskObj };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi addTask:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Cập nhật nhiệm vụ đã có mà không mất dữ liệu completions
+     */
+    async updateTask(taskId, updateData = {}) {
+      try {
+        if (!taskId) throw new Error('Cần cung cấp taskId!');
+        const tasks = getLocalTasks();
+        const existing = tasks.find(t => String(t.id) === String(taskId)) || {};
+
+        const merged = {
+          ...existing,
+          ...updateData,
+          id: String(taskId),
+          name: updateData.name !== undefined ? String(updateData.name).trim() : (existing.name || ''),
+          category: updateData.category !== undefined ? String(updateData.category).trim() : (existing.category || 'Bài tập'),
+          priority: updateData.priority !== undefined ? (updateData.priority === 'Khẩn cấp' ? 'Khẩn cấp' : 'Bình thường') : (existing.priority || 'Bình thường'),
+          deadline: updateData.deadline !== undefined ? normalizeDate(updateData.deadline) : (existing.deadline || null),
+          description: updateData.description !== undefined ? autoFormatDescription(updateData.description) : (existing.description || ''),
+          assignedStudents: Array.isArray(updateData.assignedStudents) ? updateData.assignedStudents : (existing.assignedStudents || []),
+          tags: Array.isArray(updateData.tags) ? updateData.tags : (existing.tags || []),
+          completions: updateData.completions || existing.completions || {},
+          updatedAt: new Date().toISOString()
+        };
+
+        if (typeof saveSharedTask === 'function') {
+          await saveSharedTask(merged);
+        } else {
+          const idx = tasks.findIndex(t => String(t.id) === String(taskId));
+          if (idx !== -1) tasks[idx] = merged;
+          else tasks.unshift(merged);
+          localStorage.setItem('c7aio_tasks_cache', JSON.stringify(tasks));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Sửa nhiệm vụ', `ID: ${taskId} - ${merged.name}`);
+        }
+
+        console.log('✅ [C7_CONSOLE] Đã cập nhật nhiệm vụ:', taskId);
+        return { success: true, taskId, task: merged };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi updateTask:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Xóa nhiệm vụ
+     */
+    async deleteTask(taskId) {
+      try {
+        if (!taskId) throw new Error('Cần cung cấp taskId!');
+        if (typeof deleteSharedTask === 'function') {
+          await deleteSharedTask(String(taskId));
+        } else {
+          const tasks = getLocalTasks().filter(t => String(t.id) !== String(taskId));
+          localStorage.setItem('c7aio_tasks_cache', JSON.stringify(tasks));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Xóa nhiệm vụ', `ID: ${taskId}`);
+        }
+
+        console.log('🗑️ [C7_CONSOLE] Đã xóa nhiệm vụ:', taskId);
+        return { success: true, taskId };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi deleteTask:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    getTasks() {
+      return getLocalTasks();
+    },
+
+    // ================= 2. NOTIFICATIONS MANAGEMENT =================
+    /**
+     * Thêm thông báo mới
+     * @param {Object} payload 
+     * @returns {Promise<{success: boolean, notifId?: string, notification?: Object, error?: string}>}
+     */
+    async addNotification(payload = {}) {
+      try {
+        if (!payload || !payload.message) {
+          throw new Error('Thiếu tiêu đề thông báo (payload.message là bắt buộc)!');
+        }
+
+        const notifId = payload.id ? String(payload.id) : generateUniqueId('notif_');
+        const notifObj = {
+          id: notifId,
+          message: String(payload.message).trim(),
+          content: autoFormatDescription(payload.content || ''),
+          type: ['info', 'warning', 'success', 'error'].includes(payload.type) ? payload.type : 'info',
+          pinned: Boolean(payload.pinned),
+          completions: payload.completions && typeof payload.completions === 'object' ? payload.completions : {},
+          createdAt: payload.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (typeof saveSharedNotification === 'function') {
+          await saveSharedNotification(notifObj);
+        } else {
+          const current = getLocalNotifications();
+          current.unshift(notifObj);
+          localStorage.setItem('c7aio_notifications_cache', JSON.stringify(current));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Thêm thông báo', `Tiêu đề: ${notifObj.message}`);
+        }
+
+        console.log('✅ [C7_CONSOLE] Đã thêm thông báo:', notifObj.message, `(ID: ${notifId})`);
+        return { success: true, notifId, notification: notifObj };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi addNotification:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Cập nhật thông báo
+     */
+    async updateNotification(notifId, updateData = {}) {
+      try {
+        if (!notifId) throw new Error('Cần cung cấp notifId!');
+        const notifs = getLocalNotifications();
+        const existing = notifs.find(n => String(n.id) === String(notifId)) || {};
+
+        const merged = {
+          ...existing,
+          ...updateData,
+          id: String(notifId),
+          message: updateData.message !== undefined ? String(updateData.message).trim() : (existing.message || ''),
+          content: updateData.content !== undefined ? autoFormatDescription(updateData.content) : (existing.content || ''),
+          type: updateData.type !== undefined && ['info', 'warning', 'success', 'error'].includes(updateData.type) ? updateData.type : (existing.type || 'info'),
+          pinned: updateData.pinned !== undefined ? Boolean(updateData.pinned) : Boolean(existing.pinned),
+          completions: updateData.completions || existing.completions || {},
+          updatedAt: new Date().toISOString()
+        };
+
+        if (typeof saveSharedNotification === 'function') {
+          await saveSharedNotification(merged);
+        } else {
+          const idx = notifs.findIndex(n => String(n.id) === String(notifId));
+          if (idx !== -1) notifs[idx] = merged;
+          else notifs.unshift(merged);
+          localStorage.setItem('c7aio_notifications_cache', JSON.stringify(notifs));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Sửa thông báo', `ID: ${notifId} - ${merged.message}`);
+        }
+
+        console.log('✅ [C7_CONSOLE] Đã cập nhật thông báo:', notifId);
+        return { success: true, notifId, notification: merged };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi updateNotification:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Xóa thông báo
+     */
+    async deleteNotification(notifId) {
+      try {
+        if (!notifId) throw new Error('Cần cung cấp notifId!');
+        if (typeof deleteSharedNotification === 'function') {
+          await deleteSharedNotification(String(notifId));
+        } else {
+          const notifs = getLocalNotifications().filter(n => String(n.id) !== String(notifId));
+          localStorage.setItem('c7aio_notifications_cache', JSON.stringify(notifs));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Xóa thông báo', `ID: ${notifId}`);
+        }
+
+        console.log('🗑️ [C7_CONSOLE] Đã xóa thông báo:', notifId);
+        return { success: true, notifId };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi deleteNotification:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Bật / Tắt ghim thông báo
+     */
+    async togglePin(notifId) {
+      try {
+        const notifs = getLocalNotifications();
+        const target = notifs.find(n => String(n.id) === String(notifId));
+        if (!target) throw new Error('Không tìm thấy thông báo ID: ' + notifId);
+        const newPinned = !target.pinned;
+        return await this.updateNotification(notifId, { pinned: newPinned });
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi togglePin:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    getNotifications() {
+      return getLocalNotifications();
+    },
+
+    // ================= 3. SCHEDULES & WEEK METADATA =================
+    /**
+     * Cập nhật thời khóa biểu theo thứ hoặc toàn bộ tuần
+     * @param {Object} scheduleData Object chứa các ngày (monday, tuesday, T2, T3...)
+     * @param {string} weekKey Mặc định 'week-1'
+     */
+    async updateSchedule(scheduleData = {}, weekKey = 'week-1') {
+      try {
+        if (!scheduleData || typeof scheduleData !== 'object') {
+          throw new Error('Dữ liệu thời khóa biểu không hợp lệ!');
+        }
+
+        const allSchedules = getLocalSchedules();
+        if (!allSchedules[weekKey]) {
+          allSchedules[weekKey] = {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+          };
+        }
+
+        const currentWeekSchedule = allSchedules[weekKey];
+
+        // Chuẩn hóa và ghép các ngày
+        Object.entries(scheduleData).forEach(([rawKey, periods]) => {
+          const normDay = normalizeDayKey(rawKey);
+          if (normDay && Array.isArray(periods)) {
+            currentWeekSchedule[normDay] = periods.map(p => ({
+              name: p.name || p.subject || 'Tiết học',
+              subject: p.subject || p.name || '',
+              time: p.time || '',
+              room: p.room || 'P.204',
+              note: p.note || ''
+            }));
+          }
+        });
+
+        allSchedules[weekKey] = currentWeekSchedule;
+
+        if (typeof saveSharedSchedules === 'function') {
+          await saveSharedSchedules(allSchedules);
+        } else {
+          localStorage.setItem('c7aio_schedules_cache', JSON.stringify(allSchedules));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Cập nhật TKB', `Tuần: ${weekKey}`);
+        }
+
+        console.log('✅ [C7_CONSOLE] Đã cập nhật TKB thành công cho:', weekKey);
+        return { success: true, weekKey, schedule: currentWeekSchedule };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi updateSchedule:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Cập nhật Metadata tuần học (Tên tuần, Ngày bắt đầu - kết thúc, Học kỳ, Năm học)
+     */
+    async setWeekMetadata({ week = 1, name = '', startDate = '', endDate = '', semester = 'HK1', academicYear = '2026-2027' } = {}) {
+      try {
+        const weekKey = typeof week === 'number' ? `week-${week}` : (String(week).startsWith('week-') ? week : `week-${week}`);
+        const allMeta = getLocalWeekMetadata();
+
+        allMeta[weekKey] = {
+          ...(allMeta[weekKey] || {}),
+          name: name || `Tuần ${String(week).replace(/\D/g, '') || '1'}`,
+          startDate: startDate || (allMeta[weekKey] ? allMeta[weekKey].startDate : ''),
+          endDate: endDate || (allMeta[weekKey] ? allMeta[weekKey].endDate : ''),
+          semester,
+          academicYear,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (typeof saveSharedWeekMetadata === 'function') {
+          await saveSharedWeekMetadata(allMeta);
+        } else {
+          localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(allMeta));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Cập nhật Metadata Tuần', `${weekKey}: ${allMeta[weekKey].name}`);
+        }
+
+        console.log('✅ [C7_CONSOLE] Đã cập nhật thông tin tuần:', weekKey);
+        return { success: true, weekKey, metadata: allMeta[weekKey] };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi setWeekMetadata:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    getSchedule(weekKey = 'week-1') {
+      const all = getLocalSchedules();
+      return all[weekKey] || null;
+    },
+
+    // ================= 4. BATCH INGESTION (NẠP HÀNG LOẠT TRONG 1 LỆNH) =================
+    /**
+     * Nạp toàn bộ Nhiệm vụ, Thông báo và Lịch học từ 1 đoạn trích xuất duy nhất
+     * @param {Object} batchPayload 
+     * @param {Array} batchPayload.tasks Danh sách nhiệm vụ
+     * @param {Array} batchPayload.notifications Danh sách thông báo
+     * @param {Object} batchPayload.schedules Dữ liệu TKB theo ngày
+     * @param {Object} batchPayload.weekMetadata Thông tin tuần
+     * @param {string} batchPayload.weekKey Tuần áp dụng (Mặc định 'week-1')
+     */
+    async ingestBatch(batchPayload = {}) {
+      console.log('🚀 [C7_CONSOLE] Bắt đầu nạp hàng loạt (Batch Ingestion)...');
+      const results = {
+        status: 'pending',
+        addedTasks: 0,
+        addedNotifications: 0,
+        updatedSchedule: false,
+        updatedWeekMeta: false,
+        taskIds: [],
+        notificationIds: [],
+        errors: []
+      };
+
+      try {
+        const { tasks = [], notifications = [], schedules = null, weekMetadata = null, weekKey = 'week-1' } = batchPayload;
+
+        // 1. Nạp Tasks
+        if (Array.isArray(tasks) && tasks.length > 0) {
+          for (const t of tasks) {
+            const res = await this.addTask(t);
+            if (res.success) {
+              results.addedTasks++;
+              results.taskIds.push(res.taskId);
+            } else {
+              results.errors.push(`Task [${t.name}]: ${res.error}`);
+            }
+          }
+        }
+
+        // 2. Nạp Notifications
+        if (Array.isArray(notifications) && notifications.length > 0) {
+          for (const n of notifications) {
+            const res = await this.addNotification(n);
+            if (res.success) {
+              results.addedNotifications++;
+              results.notificationIds.push(res.notifId);
+            } else {
+              results.errors.push(`Notif [${n.message}]: ${res.error}`);
+            }
+          }
+        }
+
+        // 3. Cập nhật Schedule
+        if (schedules && typeof schedules === 'object') {
+          const res = await this.updateSchedule(schedules, weekKey);
+          if (res.success) {
+            results.updatedSchedule = true;
+          } else {
+            results.errors.push(`Schedule: ${res.error}`);
+          }
+        }
+
+        // 4. Cập nhật Week Metadata
+        if (weekMetadata && typeof weekMetadata === 'object') {
+          const res = await this.setWeekMetadata({ ...weekMetadata, week: weekMetadata.week || weekKey });
+          if (res.success) {
+            results.updatedWeekMeta = true;
+          } else {
+            results.errors.push(`WeekMeta: ${res.error}`);
+          }
+        }
+
+        results.status = results.errors.length === 0 ? 'success' : 'partial_success';
+
+        if (typeof logAction === 'function') {
+          logAction(
+            'Batch Ingestion hoàn tất',
+            `Thêm: ${results.addedTasks} nhiệm vụ, ${results.addedNotifications} thông báo, TKB: ${results.updatedSchedule ? 'Có' : 'Không'}`
+          );
+        }
+
+        console.log('🎉 [C7_CONSOLE] Batch Ingestion hoàn tất:', results);
+        return results;
+      } catch (err) {
+        console.error('💥 [C7_CONSOLE] Batch Ingestion thất bại:', err);
+        results.status = 'failed';
+        results.errors.push(err.message);
+        return results;
+      }
+    },
+
+    // ================= 5. DIAGNOSTICS & HELP =================
+    help() {
+      console.log(`
+%c🎓 C7AIO Automation API Suite (v${this.version})
+%cCác lệnh có sẵn trên console (window.C7_CONSOLE hoặc window.C7_BOT):
+
+1. Nhiệm vụ (Tasks):
+   • C7_CONSOLE.addTask({ name, category, priority, deadline, description, assignedStudents, tags })
+   • C7_CONSOLE.updateTask(taskId, updateData)
+   • C7_CONSOLE.deleteTask(taskId)
+   • C7_CONSOLE.getTasks()
+
+2. Thông báo (Notifications):
+   • C7_CONSOLE.addNotification({ message, content, type, pinned })
+   • C7_CONSOLE.updateNotification(notifId, updateData)
+   • C7_CONSOLE.deleteNotification(notifId)
+   • C7_CONSOLE.togglePin(notifId)
+   • C7_CONSOLE.getNotifications()
+
+3. Thời khóa biểu (Schedules):
+   • C7_CONSOLE.updateSchedule({ T2: [...], T3: [...] }, 'week-1')
+   • C7_CONSOLE.setWeekMetadata({ week: 1, name: 'Tuần 1', startDate: '2026-08-24', endDate: '2026-08-30' })
+   • C7_CONSOLE.getSchedule('week-1')
+
+4. Nạp hàng loạt (Batch Ingestion):
+   • C7_CONSOLE.ingestBatch({ tasks: [...], notifications: [...], schedules: {...}, weekMetadata: {...} })
+
+Xem tài liệu chi tiết tại AUTOMATION_API.md
+      `, 'font-size: 14px; font-weight: bold; color: #6366f1;', 'font-size: 12px; color: #22c55e;');
+      return 'Nhập C7_CONSOLE.help() để xem lại danh sách lệnh.';
+    },
+
+    info() {
+      const tasks = getLocalTasks();
+      const notifs = getLocalNotifications();
+      const students = typeof STUDENTS !== 'undefined' ? STUDENTS.length : 41;
+      return {
+        version: this.version,
+        totalStudents: students,
+        totalTasks: tasks.length,
+        totalNotifications: notifs.length,
+        firebaseConnected: typeof window.db !== 'undefined' || typeof firebase !== 'undefined'
+      };
+    }
+  };
+
+  // Bind to Global Window Scope with multiple Aliases for flexibility
+  window.C7_CONSOLE = C7_ENGINE;
+  window.C7_BOT = C7_ENGINE;
+  window.C7Console = C7_ENGINE;
+
+  console.log(`🤖 [C7AIO Automation API v${C7_ENGINE.version}] Loaded. Type C7_CONSOLE.help() for instructions.`);
+})();
