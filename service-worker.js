@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.3.13-student-multi-roles';
+const CACHE_NAME = 'c7aio-v3.4.0-automation-api';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -48,44 +48,41 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            console.log('🗑️ Deleting old cache:', key);
-            return caches.delete(key);
-          }
-        })
+        cacheNames
+          .filter(cacheName => cacheName !== CACHE_NAME)
+          .map(cacheName => {
+            console.log('🗑️ Xóa cache cũ:', cacheName);
+            return caches.delete(cacheName);
+          })
       );
-    }).then(() => self.clients.claim())
+    })
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  
-  // Ignore Firebase Realtime Database and external CDN calls
-  const url = new URL(event.request.url);
-  if (url.origin.includes('firebaseio.com') || 
-      url.origin.includes('googleapis.com') ||
-      url.origin.includes('gstatic.com')) {
-    return;
-  }
+  const { request } = event;
+  if (request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        // Fetch in background to update cache (Stale-While-Revalidate)
-        fetch(event.request).then(networkResponse => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, networkResponse);
-            });
+    fetch(request)
+      .then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(request).then(cachedResponse => {
+          if (cachedResponse) return cachedResponse;
+          if (request.destination === 'document') {
+            return caches.match('./index.html');
           }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(event.request);
-    })
+          return new Response('Offline', { status: 503, statusText: 'Offline' });
+        });
+      })
   );
 });
