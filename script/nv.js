@@ -92,22 +92,21 @@ function getFilteredTasks() {
   const threeDaysLater = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
 
   if (currentFilter === 'pending') {
-    list = list.filter(t => !(t.completions && t.completions[currentUser.id]));
+    list = list.filter(t => !(t.isGlobalCompleted || (t.completions && t.completions[currentUser.id])));
   } else if (currentFilter === 'completed') {
-    list = list.filter(t => t.completions && t.completions[currentUser.id]);
+    list = list.filter(t => t.isGlobalCompleted || (t.completions && t.completions[currentUser.id]));
   } else if (currentFilter === 'urgent') {
     list = list.filter(t => {
       if (t.priority === 'Khẩn cấp') return true;
-      if (t.deadline && new Date(t.deadline) <= threeDaysLater && !(t.completions && t.completions[currentUser.id])) return true;
+      if (t.deadline && new Date(t.deadline) <= threeDaysLater && !(t.isGlobalCompleted || (t.completions && t.completions[currentUser.id]))) return true;
       return false;
     });
   }
 
   if (searchQuery) {
     list = list.filter(t => 
-      t.name.toLowerCase().includes(searchQuery) ||
-      (t.category && t.category.toLowerCase().includes(searchQuery)) ||
-      (t.description && t.description.toLowerCase().includes(searchQuery))
+      (t.name || '').toLowerCase().includes(searchQuery) ||
+      (t.description || '').toLowerCase().includes(searchQuery)
     );
   }
 
@@ -133,12 +132,13 @@ function renderTasks() {
   }
 
   container.innerHTML = list.map(t => {
-    const isCompleted = t.completions && t.completions[currentUser.id];
+    const isCompleted = t.isGlobalCompleted || (t.completions && t.completions[currentUser.id]);
     const deadlineFormatted = t.deadline ? new Date(t.deadline).toLocaleString('vi-VN') : 'Không giới hạn';
     const isOverdue = t.deadline && new Date(t.deadline) < new Date() && !isCompleted;
     
     const assignedCount = (t.assignedStudents && t.assignedStudents.length > 0) ? t.assignedStudents.length : STUDENTS.length;
-    const completedCount = t.completions ? Object.values(t.completions).filter(Boolean).length : 0;
+    let completedCount = t.completions ? Object.values(t.completions).filter(Boolean).length : 0;
+    if (t.isGlobalCompleted) completedCount = assignedCount;
     
     const isAssigned = currentUser.id !== 0 && (!t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(currentUser.id));
 
@@ -177,15 +177,18 @@ function renderTasks() {
             </div>
           ` : ''}
 
-          <div class="task-actions-row">
-            <button class="btn-action-pill" onclick="toggleTaskCheck('${t.id}')">
-              ${isCompleted ? '↩️ Làm lại' : '✅ Đã nộp'}
-            </button>
-            ${checkPermission('manage_tasks') ? `
-              <button class="btn-action-pill" onclick="editTask('${t.id}')">✏️ Sửa</button>
-              <button class="btn-action-pill danger" onclick="deleteTaskAction('${t.id}')">🗑️ Xóa</button>
-            ` : ''}
-          </div>
+            <div class="task-actions-row">
+              ${isAssigned ? `<button class="btn-action-pill" onclick="toggleTaskCheck('${t.id}')">
+                ${isCompleted ? '🔙 Làm lại' : '✓ Đã nộp'}
+              </button>` : ''}
+              ${checkPermission('manage_tasks') ? `
+                <button class="btn-action-pill ${t.isGlobalCompleted ? 'success' : ''}" onclick="toggleGlobalCompletion('${t.id}')" style="${t.isGlobalCompleted ? 'background: var(--success); color: white; border-color: var(--success);' : ''}">
+                  ${t.isGlobalCompleted ? '✅ Mở lại nhiệm vụ' : '☑️ Đóng (Hoàn thành chung)'}
+                </button>
+                <button class="btn-action-pill" onclick="editTask('${t.id}')">✏️ Sửa</button>
+                <button class="btn-action-pill danger" onclick="deleteTaskAction('${t.id}')">🗑️ Xóa</button>
+              ` : ''}
+            </div>
         </div>
       </div>
     `;
@@ -206,6 +209,19 @@ async function toggleTaskCheck(taskId) {
     await updateSharedTaskCompletion(task.id, task.completions);
   }
   showToast(task.completions[currentUser.id] ? '🎉 Đã hoàn thành nhiệm vụ!' : 'Đã chuyển nhiệm vụ về đang làm', 'info');
+}
+
+async function toggleGlobalCompletion(taskId) {
+  const task = tasks.find(t => String(t.id) === String(taskId));
+  if (!task) return;
+
+  task.isGlobalCompleted = !task.isGlobalCompleted;
+  
+  renderTasks();
+  if (typeof saveSharedTask === 'function') {
+    await saveSharedTask(task);
+  }
+  showToast(task.isGlobalCompleted ? 'Đã đóng nhiệm vụ (Tất cả tính là hoàn thành)!' : 'Đã mở lại nhiệm vụ!', 'info');
 }
 
 function openTaskModal(isEdit = false) {
@@ -345,6 +361,7 @@ async function saveTaskForm() {
     description: (description === '<p><br></p>') ? '' : description,
     assignedStudents: checkedStudentIds.length === STUDENTS.length ? [] : checkedStudentIds,
     completions: isEdit ? (tasks.find(t => String(t.id) === String(editingTaskId))?.completions || {}) : {},
+    isGlobalCompleted: isEdit ? (tasks.find(t => String(t.id) === String(editingTaskId))?.isGlobalCompleted || false) : false,
     createdAt: isEdit ? (tasks.find(t => String(t.id) === String(editingTaskId))?.createdAt || new Date().toISOString()) : new Date().toISOString()
   };
 
