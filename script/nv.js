@@ -110,6 +110,18 @@ function getFilteredTasks() {
     );
   }
 
+  // Sắp xếp: Khẩn cấp -> Hạn nộp gần nhất -> Mới tạo nhất
+  list.sort((a, b) => {
+    if (a.priority === 'Khẩn cấp' && b.priority !== 'Khẩn cấp') return -1;
+    if (a.priority !== 'Khẩn cấp' && b.priority === 'Khẩn cấp') return 1;
+
+    if (a.deadline && b.deadline) return new Date(a.deadline) - new Date(b.deadline);
+    if (a.deadline && !b.deadline) return -1;
+    if (!a.deadline && b.deadline) return 1;
+
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  });
+
   return list;
 }
 
