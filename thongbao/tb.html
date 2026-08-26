@@ -1,16 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>10C7 AIO - Bảng Thông Báo</title>
+  <title>11C7 AIO - Bảng Tin & Thông Báo Lớp</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style/hub.css?v=3.3.3">
-  <link rel="stylesheet" href="../style/tb.css?v=3.3.3">
+  <!-- Quill Snow CSS -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css?v=3.4.0" rel="stylesheet">
+  <link rel="stylesheet" href="../style/hub.css?v=3.4.0">
+  <link rel="stylesheet" href="../style/tb.css?v=3.4.0">
 </head>
 <body>
 
@@ -21,9 +23,9 @@
         <div class="header-titles">
           <div class="header-title-row">
             <span class="header-icon">🔔</span>
-            <span class="header-title-text">Bảng Thông Báo</span>
+            <span class="header-title-text">Bảng Tin & Thông Báo</span>
           </div>
-          <p>Tin tức, kế hoạch tuần & nhắc nhở từ cán sự lớp</p>
+          <p>Tin tức, lịch kiểm tra & thông báo quan trọng</p>
         </div>
       </div>
       <div class="header-right">
@@ -35,76 +37,93 @@
     </div>
   </header>
 
-  <main class="tb-page-container">
+  <main class="notif-page-container">
 
-    <!-- Top Action Bar -->
-    <section class="tb-action-bar">
+    <!-- Top Controls Bar -->
+    <section class="notif-top-bar">
       <div class="c7-search-box">
         <span class="c7-search-icon">🔍</span>
-        <input type="text" id="tbSearchInput" class="c7-search-input" placeholder="Tìm kiếm tin tức, thông báo...">
+        <input type="text" id="notifSearchInput" class="c7-search-input" placeholder="Tìm kiếm thông báo..." oninput="handleNotifSearch(this.value)">
       </div>
-      <div>
-        <button class="c7-btn c7-btn-primary" id="btnOpenAddNotif" onclick="openAddNotifModal()">
-          ➕ Đăng Thông Báo
+
+      <div class="filter-pills">
+        <button class="filter-pill-btn active" data-filter="all" onclick="setNotifFilter('all')">Tất cả</button>
+        <button class="filter-pill-btn" data-filter="info" onclick="setNotifFilter('info')">ℹ️ Thông tin</button>
+        <button class="filter-pill-btn" data-filter="warning" onclick="setNotifFilter('warning')">⚠️ Cảnh báo</button>
+        <button class="filter-pill-btn" data-filter="success" onclick="setNotifFilter('success')">✅ Quan trọng</button>
+        <button class="filter-pill-btn" data-filter="unread" onclick="setNotifFilter('unread')">📩 Chưa đọc</button>
+      </div>
+
+      <div id="adminNotifBtnArea" style="display: none;">
+        <button class="c7-btn c7-btn-primary" onclick="openNotifModal()">
+          <span>+</span> Đăng Thông Báo
         </button>
       </div>
     </section>
 
-    <!-- Notifications List Grid -->
-    <section class="tb-posts-grid" id="notificationsContainer">
+    <!-- Notification List -->
+    <section class="notif-list-wrapper" id="notifListContainer">
       <!-- Rendered by tb.js -->
     </section>
 
   </main>
 
-  <!-- Modal: Add / Edit Notification -->
+  <!-- Modal: Create / Edit Notification -->
   <div class="c7-dialog-overlay" id="notifModalOverlay" style="display: none;">
-    <div class="c7-dialog-box" style="max-width: 560px; text-align: left;">
-      <h3 id="notifModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">➕ Đăng Thông Báo Mới</h3>
+    <div class="c7-dialog-box" style="max-width: 650px; text-align: left;">
+      <h3 id="notifModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">📢 Đăng Thông Báo Mới</h3>
       
       <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
         <div>
           <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tiêu đề thông báo (*)</label>
-          <input type="text" id="inputNotifTitle" class="form-control-custom" placeholder="vd: Kế hoạch ngoại khóa cuối tuần, Nhắc đóng quỹ lớp...">
-        </div>
-
-        <div>
-          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Nội dung chi tiết (*)</label>
-          <textarea id="inputNotifContent" class="form-control-custom" rows="4" placeholder="Nội dung thông báo đến toàn thể các bạn..."></textarea>
+          <input type="text" id="inputNotifTitle" class="form-control-custom" placeholder="vd: Thông báo nộp bài thu hoạch GDQP...">
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
             <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phân loại</label>
-            <select id="selectNotifCategory" class="form-control-custom">
-              <option value="general">📢 Thông báo chung</option>
-              <option value="urgent">⚡ Khẩn cấp / Chú ý</option>
-              <option value="study">📚 Học tập / Kiểm tra</option>
-              <option value="activity">🎉 Hoạt động / Phong trào</option>
+            <select id="selectNotifType" class="form-control-custom">
+              <option value="info">ℹ️ Thông tin chung</option>
+              <option value="warning">⚠️ Cảnh báo / Nhắc nhở</option>
+              <option value="success">✅ Quan trọng / Ưu tiên</option>
+              <option value="error">❌ Khẩn cấp / Bắt buộc</option>
             </select>
           </div>
-          <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ghim lên đầu bảng</label>
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
-              <input type="checkbox" id="checkNotifPinned" style="width: 18px; height: 18px; accent-color: var(--primary);">
-              <label for="checkNotifPinned" style="font-size: 0.9rem; font-weight: 600; cursor: pointer;">Ghim ưu tiên</label>
-            </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding-top: 24px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+              <input type="checkbox" id="checkNotifPin" style="width: 18px; height: 18px; accent-color: var(--primary);">
+              <span>📌 Ghim lên đầu</span>
+            </label>
           </div>
+        </div>
+
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Nội dung chi tiết</label>
+          <div id="notif-editor-container" style="height: 180px; background: var(--bg-surface);"></div>
         </div>
       </div>
 
-      <div style="display: flex; justify-content: space-between; gap: 10px;">
-        <button class="c7-btn c7-btn-danger" id="btnDeleteNotifTrigger" style="display: none;" onclick="deleteNotifAction()">Xóa thông báo</button>
-        <div style="display: flex; gap: 8px; margin-left: auto;">
-          <button class="c7-btn c7-btn-secondary" onclick="closeNotifModal()">Hủy bỏ</button>
-          <button class="c7-btn c7-btn-primary" onclick="submitNotifAction()">Đăng Thông Báo</button>
-        </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="c7-btn c7-btn-secondary" onclick="closeNotifModal()">Hủy bỏ</button>
+        <button class="c7-btn c7-btn-primary" onclick="submitNotifForm()">Đăng Thông Báo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: View Notification Detail -->
+  <div class="c7-dialog-overlay" id="notifDetailOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 650px; text-align: left;">
+      <h3 id="viewNotifModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px;">Tiêu đề thông báo</h3>
+      <div id="viewNotifModalMeta" style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 14px;"></div>
+      <div class="ql-editor" id="viewNotifModalBody" style="max-height: 60vh; overflow-y: auto; padding: 10px 0; border-top: 1px solid var(--input-border); line-height: 1.6;"></div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+        <button class="c7-btn c7-btn-primary" onclick="closeNotifDetailModal()">Đóng</button>
       </div>
     </div>
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
@@ -113,11 +132,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js?v=3.3.3"></script>
-  <script src="../script/firebase-utils.js?v=3.3.3"></script>
-  <script src="../script/students-list.js?v=3.3.3"></script>
-  <script src="../script/hub.js?v=3.3.3"></script>
-  <script src="../script/console.js?v=3.3.3"></script>
-  <script src="../script/tb.js?v=3.3.3"></script>
+  <script src="../script/firebase-config.js?v=3.4.0"></script>
+  <script src="../script/firebase-utils.js?v=3.4.0"></script>
+  <script src="../script/students-list.js?v=3.4.0"></script>
+  <script src="../script/hub.js?v=3.4.0"></script>
+  <script src="../script/console.js?v=3.4.0"></script>
+  <!-- Quill JS -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="../script/tb.js?v=3.4.0"></script>
 </body>
 </html>

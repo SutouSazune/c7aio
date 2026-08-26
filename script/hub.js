@@ -68,15 +68,13 @@ const ThemeEngine = {
   STORAGE_KEY: 'c7aio_theme',
   
   init() {
-    const saved = localStorage.getItem(this.STORAGE_KEY);
+    const savedTheme = localStorage.getItem(this.STORAGE_KEY);
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial = saved || (prefersDark ? 'dark' : 'light');
-    this.setTheme(initial, false);
-
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (!localStorage.getItem(this.STORAGE_KEY)) {
-        this.setTheme(e.matches ? 'dark' : 'light', false);
-      }
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    this.setTheme(initialTheme, false);
+    
+    window.addEventListener('DOMContentLoaded', () => {
+      this.injectThemeToggle();
     });
   },
 
