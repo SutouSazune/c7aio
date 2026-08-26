@@ -139,6 +139,8 @@ function renderTasks() {
     
     const assignedCount = (t.assignedStudents && t.assignedStudents.length > 0) ? t.assignedStudents.length : STUDENTS.length;
     const completedCount = t.completions ? Object.values(t.completions).filter(Boolean).length : 0;
+    
+    const isAssigned = currentUser.id !== 0 && (!t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(currentUser.id));
 
     const priorityBadge = t.priority === 'Khẩn cấp' 
       ? '<span class="task-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">🔥 Khẩn cấp</span>'
@@ -146,9 +148,12 @@ function renderTasks() {
 
     return `
       <div class="task-item-card ${isCompleted ? 'completed' : ''}">
-        <button class="btn-task-check ${isCompleted ? 'checked' : ''}" onclick="toggleTaskCheck('${t.id}')" title="${isCompleted ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành'}">
-          ${isCompleted ? '✓' : ''}
-        </button>
+        ${isAssigned ? 
+          `<button class="btn-task-check ${isCompleted ? 'checked' : ''}" onclick="toggleTaskCheck('${t.id}')" title="${isCompleted ? 'Đã hoàn thành' : 'Đánh dấu hoàn thành'}">
+            ${isCompleted ? '✓' : ''}
+          </button>` : 
+          `<div style="width: 32px; height: 32px; flex-shrink: 0;"></div>`
+        }
 
         <div class="task-details-col">
           <div class="task-title-row">
