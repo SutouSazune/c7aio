@@ -1,31 +1,60 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>404 - Không Tìm Thấy Trang | 10C7 AIO</title>
+  <title>11C7 AIO - Lỗi 404</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='60' font-size='80' text-anchor='middle'>❌</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/hub.css?v=3.3.3">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/hub.css?v=3.4.0">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    .error-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 3rem 2rem;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      animation: popIn 0.4s var(--ease-spring);
+    }
+    .error-icon {
+      font-size: 4.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .error-code {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+  </style>
 </head>
-<body class="error-body">
-
-  <div class="error-container">
-    <div class="error-card">
-      <div class="error-code">404</div>
-      <h2>Trang Không Tồn Tại</h2>
-      <p>Liên kết bạn truy cập có thể đã bị thay đổi hoặc không có trong hệ thống C7AIO.</p>
-      <div style="margin-top: 24px;">
-        <button class="c7-btn c7-btn-primary" onclick="go('index.html')">
-          🏠 Quay Về Trang Chủ
-        </button>
-      </div>
+<body>
+  <div class="error-card">
+    <div class="error-icon">🔍</div>
+    <div class="error-code">404</div>
+    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;">Không Tìm Thấy Trang</h2>
+    <p style="color: var(--text-sub); font-size: 0.95rem; margin-bottom: 24px;">Trang bạn yêu cầu không tồn tại hoặc đã được chuyển sang đường dẫn khác.</p>
+    <div style="display: flex; gap: 10px; justify-content: center;">
+      <a href="./index.html" class="c7-btn c7-btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">🏠 Về Trang Chủ</a>
+      <button class="c7-btn c7-btn-secondary" onclick="window.history.back()">↩️ Quay lại</button>
     </div>
   </div>
-
-  <script src="script/hub.js?v=3.3.3"></script>
 </body>
 </html>

@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>10C7 AIO - Thời Khóa Biểu</title>
+  <title>11C7 AIO - Thời Khóa Biểu & Lịch Học</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style/hub.css?v=3.3.3">
-  <link rel="stylesheet" href="../style/lich.css?v=3.3.3">
+  <link rel="stylesheet" href="../style/hub.css?v=3.4.0">
+  <link rel="stylesheet" href="../style/lich.css?v=3.4.0">
 </head>
 <body>
 
@@ -21,9 +21,9 @@
         <div class="header-titles">
           <div class="header-title-row">
             <span class="header-icon">📅</span>
-            <span class="header-title-text">Thời Khóa Biểu</span>
+            <span class="header-title-text">Thời Khóa Biểu Lớp</span>
           </div>
-          <p>Lịch học & phòng học chi tiết tuần</p>
+          <p>Lịch học, phòng học & môn học theo tuần</p>
         </div>
       </div>
       <div class="header-right">
@@ -35,97 +35,179 @@
     </div>
   </header>
 
-  <main class="lich-page-container">
+  <main class="schedule-page-container">
 
-    <!-- Top Action & Info Bar -->
-    <section class="lich-top-bar">
-      <div class="lich-meta-info">
-        <h3 id="currentWeekTitle" style="font-weight: 800; font-size: 1.15rem;">📅 Thời Khóa Biểu Tuần</h3>
-        <p id="currentWeekDateRange" style="color: var(--text-sub); font-size: 0.85rem;">Từ Thứ 2 đến Thứ 7</p>
-      </div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button class="c7-btn c7-btn-secondary" id="btnExportTimetable" onclick="exportTimetableJson()">
-          📥 Xuất Lịch
+    <!-- Top Schedule Action Card -->
+    <section class="schedule-header-card">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span class="current-week-tag" id="currentWeekBanner">🗓️ Đang hiển thị: Tuần 1</span>
+        <button class="c7-btn c7-btn-secondary" onclick="jumpToToday()">
+          📍 Hôm nay
         </button>
-        <button class="c7-btn c7-btn-primary" id="btnOpenAddClass" onclick="openAddClassModal()">
-          ➕ Thêm Tiết Học
+        <button class="c7-btn c7-btn-secondary" onclick="window.print()">
+          🖨️ In / Xuất PDF
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;" id="adminScheduleButtons">
+        <button class="c7-btn c7-btn-primary" id="btnAddClassTrigger" style="display: none;" onclick="openAddClassModal()">
+          + Thêm Tiết Học
+        </button>
+        <button class="c7-btn c7-btn-secondary" id="btnManageWeekTrigger" style="display: none;" onclick="openWeekManagementModal()">
+          ⚙️ Quản Lý Tuần
         </button>
       </div>
     </section>
 
-    <!-- Timetable Grid -->
-    <section class="timetable-card-container">
-      <div class="timetable-grid" id="timetableGrid">
+    <!-- Calendar Month Navigator -->
+    <section class="calendar-card">
+      <div class="calendar-top-bar">
+        <button class="month-nav-btn" onclick="prevMonth()">←</button>
+        <h2 id="calendarMonthTitle" style="font-size: 1.2rem; font-weight: 800;">Tháng 8, 2026</h2>
+        <button class="month-nav-btn" onclick="nextMonth()">→</button>
+      </div>
+
+      <div class="calendar-weekdays-row">
+        <div>CN</div>
+        <div>T2</div>
+        <div>T3</div>
+        <div>T4</div>
+        <div>T5</div>
+        <div>T6</div>
+        <div>T7</div>
+      </div>
+
+      <div class="calendar-matrix" id="calendarMatrix">
         <!-- Rendered by lich.js -->
       </div>
     </section>
 
+    <!-- Week Selector Bar -->
+    <section>
+      <div class="week-chips-bar" id="weekChipsBar">
+        <!-- Rendered by lich.js -->
+      </div>
+    </section>
+
+    <!-- Weekly Timetable Grid -->
+    <section class="timetable-grid-week" id="timetableGrid">
+      <!-- Rendered by lich.js -->
+    </section>
+
   </main>
 
-  <!-- Modal: Add / Edit Class Session -->
+  <!-- Modal: Add / Edit Class -->
   <div class="c7-dialog-overlay" id="classModalOverlay" style="display: none;">
-    <div class="c7-dialog-box" style="max-width: 520px; text-align: left;">
+    <div class="c7-dialog-box" style="max-width: 540px; text-align: left;">
       <h3 id="classModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">➕ Thêm Tiết Học Mới</h3>
       
-      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Thứ trong tuần</label>
-            <select id="selectClassDay" class="form-control-custom">
-              <option value="2">Thứ 2</option>
-              <option value="3">Thứ 3</option>
-              <option value="4">Thứ 4</option>
-              <option value="5">Thứ 5</option>
-              <option value="6">Thứ 6</option>
-              <option value="7">Thứ 7</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tiết học</label>
-            <select id="selectClassPeriod" class="form-control-custom">
-              <option value="1">Tiết 1 (07:15 - 08:00)</option>
-              <option value="2">Tiết 2 (08:05 - 08:50)</option>
-              <option value="3">Tiết 3 (09:05 - 09:50)</option>
-              <option value="4">Tiết 4 (09:55 - 10:40)</option>
-              <option value="5">Tiết 5 (10:45 - 11:30)</option>
-            </select>
+      <div style="display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; padding-right: 4px; margin-bottom: 18px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Môn học (*)</label>
+          <input type="text" id="inputClassName" class="form-control-custom" placeholder="vd: Toán, Ngữ văn, Tiếng Anh...">
+          <div class="subject-quick-tags">
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Toán')">Toán</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Ngữ văn')">Ngữ văn</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Tiếng Anh')">Tiếng Anh</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Vật lí')">Vật lí</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Hóa học')">Hóa học</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Sinh học')">Sinh học</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Lịch sử')">Lịch sử</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Địa lí')">Địa lí</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Tin học')">Tin học</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('GDQP & AN')">GDQP</button>
+            <button type="button" class="subject-tag-btn" onclick="pickSubjectTag('Thể dục')">Thể dục</button>
           </div>
         </div>
 
         <div>
-          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Môn học (*)</label>
-          <input type="text" id="inputClassSubject" class="form-control-custom" placeholder="vd: Toán, Ngữ Văn, Tiếng Anh...">
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phân môn / Ghi chú</label>
+          <input type="text" id="inputClassSubject" class="form-control-custom" placeholder="vd: Đại số, Hình học, Đọc hiểu...">
         </div>
 
-        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Thứ trong tuần</label>
+          <select id="selectClassDay" class="form-control-custom">
+            <option value="monday">Thứ Hai</option>
+            <option value="tuesday">Thứ Ba</option>
+            <option value="wednesday">Thứ Tư</option>
+            <option value="thursday">Thứ Năm</option>
+            <option value="friday">Thứ Sáu</option>
+            <option value="saturday">Thứ Bảy</option>
+            <option value="sunday">Chủ Nhật</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Chọn tiết học (1-10)</label>
+          <div class="period-picker-grid" id="periodPickerButtons">
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(1)">Tiết 1</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(2)">Tiết 2</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(3)">Tiết 3</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(4)">Tiết 4</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(5)">Tiết 5</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(6)">Tiết 6</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(7)">Tiết 7</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(8)">Tiết 8</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(9)">Tiết 9</button>
+            <button type="button" class="period-picker-btn" onclick="selectPeriodNum(10)">Tiết 10</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Giáo viên bộ môn</label>
-            <input type="text" id="inputClassTeacher" class="form-control-custom" placeholder="vd: Cô Nguyễn...">
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Thời gian</label>
+            <input type="text" id="inputClassTime" class="form-control-custom" placeholder="vd: 07:00 - 07:45">
           </div>
           <div>
             <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phòng học</label>
-            <input type="text" id="inputClassRoom" class="form-control-custom" placeholder="vd: P.302">
+            <input type="text" id="inputClassRoom" class="form-control-custom" placeholder="vd: P.204">
           </div>
         </div>
+      </div>
 
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="c7-btn c7-btn-secondary" onclick="closeClassModal()">Hủy bỏ</button>
+        <button class="c7-btn c7-btn-primary" onclick="submitClassForm()">Lưu Tiết Học</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Manage Weeks -->
+  <div class="c7-dialog-overlay" id="weekModalOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 500px; text-align: left;">
+      <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">⚙️ Quản Lý Tuần Học</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
         <div>
-          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ghi chú thêm</label>
-          <input type="text" id="inputClassNote" class="form-control-custom" placeholder="vd: Mang theo SGK tập 2...">
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tên tuần</label>
+          <input type="text" id="inputWeekName" class="form-control-custom" placeholder="vd: Tuần 1, Tuần 2, Tuần Ôn Thi...">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày bắt đầu</label>
+            <input type="date" id="inputWeekStartDate" class="form-control-custom">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày kết thúc</label>
+            <input type="date" id="inputWeekEndDate" class="form-control-custom">
+          </div>
         </div>
       </div>
 
       <div style="display: flex; justify-content: space-between; gap: 10px;">
-        <button class="c7-btn c7-btn-danger" id="btnDeleteClassTrigger" style="display: none;" onclick="deleteClassSession()">Xóa tiết</button>
-        <div style="display: flex; gap: 8px; margin-left: auto;">
-          <button class="c7-btn c7-btn-secondary" onclick="closeClassModal()">Hủy bỏ</button>
-          <button class="c7-btn c7-btn-primary" onclick="submitClassSession()">Lưu Lịch</button>
+        <button class="c7-btn c7-btn-danger" onclick="deleteCurrentWeekAction()">Xóa tuần này</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="c7-btn c7-btn-secondary" onclick="closeWeekModal()">Đóng</button>
+          <button class="c7-btn c7-btn-primary" onclick="submitWeekMetadata()">Lưu cấu hình</button>
         </div>
       </div>
     </div>
   </div>
 
   <footer class="footer">
-    <p>&copy; 2026 Lớp 10C7. C7AIO Hub.</p>
+    <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
   </footer>
 
   <!-- Firebase SDKs -->
@@ -134,11 +216,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js?v=3.3.3"></script>
-  <script src="../script/firebase-utils.js?v=3.3.3"></script>
-  <script src="../script/students-list.js?v=3.3.3"></script>
-  <script src="../script/hub.js?v=3.3.3"></script>
-  <script src="../script/console.js?v=3.3.3"></script>
-  <script src="../script/lich.js?v=3.3.3"></script>
+  <script src="../script/firebase-config.js?v=3.4.0"></script>
+  <script src="../script/firebase-utils.js?v=3.4.0"></script>
+  <script src="../script/students-list.js?v=3.4.0"></script>
+  <script src="../script/hub.js?v=3.4.0"></script>
+  <script src="../script/console.js?v=3.4.0"></script>
+  <script src="../script/lich.js?v=3.4.0"></script>
 </body>
 </html>
