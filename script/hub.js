@@ -159,8 +159,17 @@ function updateUIStats() {
   const user = getCurrentUser();
   if (!user) return;
 
-  const totalTasks = hubTasks.length;
-  const doneTasks = hubTasks.filter(t => {
+  const isAdm = (user.id === 0 || user.role === 'admin' || (Array.isArray(user.role) && user.role.includes('admin')));
+
+  const assignedTasks = hubTasks.filter(t => {
+    if (isAdm) return true;
+    if (!t.assignedStudents || t.assignedStudents.length === 0) return true;
+    return t.assignedStudents.includes(user.id);
+  });
+
+  const totalTasks = assignedTasks.length;
+  const doneTasks = assignedTasks.filter(t => {
+    if (t.isGlobalCompleted) return true;
     if (t.completions) return t.completions[user.id];
     return t.done;
   }).length;
@@ -172,8 +181,8 @@ function updateUIStats() {
   if (document.getElementById("openTask")) document.getElementById("openTask").innerText = openTasks;
 
   const today = new Date();
-  const nearDeadlineTasks = hubTasks.filter(t => {
-    const isCompleted = t.completions ? t.completions[user.id] : t.done;
+  const nearDeadlineTasks = assignedTasks.filter(t => {
+    const isCompleted = t.isGlobalCompleted || (t.completions ? t.completions[user.id] : t.done);
     if (isCompleted) return false;
     const deadlineDate = t.endTime ? new Date(t.endTime) : (t.deadline ? new Date(t.deadline) : null);
     if (!deadlineDate || isNaN(deadlineDate.getTime())) return false;
@@ -351,10 +360,18 @@ function updateDashboardWidgets() {
   if (profileWidget) {
     const user = getCurrentUser();
     if (user) {
+      const isAdm = (user.id === 0 || user.role === 'admin' || (Array.isArray(user.role) && user.role.includes('admin')));
+      const assignedTasks = hubTasks.filter(t => {
+        if (isAdm) return true;
+        if (!t.assignedStudents || t.assignedStudents.length === 0) return true;
+        return t.assignedStudents.includes(user.id);
+      });
+
       const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
       const roleBadges = roles.map(r => `<span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}">${ROLES[r] || r}</span>`).join(' ');
-      const total = hubTasks.length;
-      const done = hubTasks.filter(t => t.completions && t.completions[user.id]).length;
+      
+      const total = assignedTasks.length;
+      const done = assignedTasks.filter(t => t.isGlobalCompleted || (t.completions && t.completions[user.id])).length;
       const rate = total > 0 ? Math.round((done / total) * 100) : 100;
 
       profileWidget.innerHTML = `
