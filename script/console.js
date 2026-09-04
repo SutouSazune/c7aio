@@ -129,7 +129,7 @@
 
   // ================= MAIN CONTROLLER OBJECT =================
   const C7_ENGINE = {
-    version: '3.4.2',
+    version: '3.5.0',
 
     // ================= 1. TASKS MANAGEMENT =================
     /**
@@ -733,7 +733,114 @@
       return this.getAcademicYearInfo(targetDate);
     },
 
-    // ================= 4. BATCH INGESTION (NẠP HÀNG LOẠT TRONG 1 LỆNH) =================
+    // ================= 5. SCHEDULE EVENTS API (THÔNG BÁO THAY ĐỔI LỊCH) =================
+    /**
+     * Thêm sự kiện thay đổi lịch vào tuần học
+     * @param {Object} payload
+     * @param {string} payload.weekKey Mã tuần ('week-1', 'week-2', ...)
+     * @param {string} [payload.day] Ngày áp dụng ('monday', 'tuesday', ...)
+     * @param {number|null} [payload.periodIndex] Index của tiết học (0-based, null = cả ngày)
+     * @param {string} [payload.type] 'schedule_change' | 'day_off' | 'extra_class' | 'room_change' | 'info'
+     * @param {string} payload.title Nội dung thay đổi
+     * @param {string} [payload.note] Ghi chú thêm
+     * @param {string} [payload.severity] 'info' | 'warning' | 'danger'
+     */
+    addScheduleEvent(payload = {}) {
+      try {
+        const { weekKey = 'week-1', day = '', periodIndex = null, type = 'schedule_change', title, note = '', severity = 'info' } = payload;
+        if (!title) throw new Error('Thiếu title (nội dung thay đổi)!');
+
+        const eventsRaw = localStorage.getItem('c7aio_schedule_events');
+        const events = JSON.parse(eventsRaw || '{}');
+        if (!Array.isArray(events[weekKey])) events[weekKey] = [];
+
+        const eventId = 'evt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const newEvent = {
+          id: eventId,
+          type, severity, title, note, day,
+          periodIndex: (periodIndex !== null && periodIndex !== undefined) ? parseInt(periodIndex) : null,
+          weekKey,
+          createdAt: new Date().toISOString(),
+          createdBy: 'API'
+        };
+        events[weekKey].push(newEvent);
+        localStorage.setItem('c7aio_schedule_events', JSON.stringify(events));
+
+        // Sync to in-memory if on schedule page
+        if (typeof window !== 'undefined' && typeof window.scheduleEvents !== 'undefined') {
+          window.scheduleEvents = events;
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('API: Thêm thông báo đổi lịch', `${weekKey}: ${title}`);
+        }
+
+        console.log('✅ [C7_CONSOLE] Đã thêm sự kiện đổi lịch:', eventId);
+        return { success: true, eventId, event: newEvent };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi addScheduleEvent:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Lấy danh sách sự kiện thay đổi lịch của một tuần
+     * @param {string} weekKey Mã tuần ('week-1', 'week-2', ...)
+     */
+    getScheduleEvents(weekKey = 'week-1') {
+      try {
+        const events = JSON.parse(localStorage.getItem('c7aio_schedule_events') || '{}');
+        const weekEvents = Array.isArray(events[weekKey]) ? events[weekKey] : [];
+        return { success: true, weekKey, count: weekEvents.length, events: weekEvents };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Xóa một sự kiện thay đổi lịch theo ID
+     * @param {string} weekKey Mã tuần
+     * @param {string} eventId ID sự kiện
+     */
+    deleteScheduleEvent(weekKey, eventId) {
+      try {
+        const events = JSON.parse(localStorage.getItem('c7aio_schedule_events') || '{}');
+        if (!Array.isArray(events[weekKey])) return { success: false, error: 'Tuần không tồn tại hoặc không có sự kiện' };
+        const before = events[weekKey].length;
+        events[weekKey] = events[weekKey].filter(e => e.id !== eventId);
+        localStorage.setItem('c7aio_schedule_events', JSON.stringify(events));
+        if (typeof window !== 'undefined' && typeof window.scheduleEvents !== 'undefined') {
+          window.scheduleEvents = events;
+        }
+        const deleted = before > events[weekKey].length;
+        console.log(deleted ? '✅ Đã xóa sự kiện' : '⚠️ Không tìm thấy sự kiện', eventId);
+        return { success: deleted, eventId };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Xóa toàn bộ sự kiện thay đổi lịch của một tuần
+     * @param {string} weekKey Mã tuần
+     */
+    clearScheduleEvents(weekKey = 'week-1') {
+      try {
+        const events = JSON.parse(localStorage.getItem('c7aio_schedule_events') || '{}');
+        const count = Array.isArray(events[weekKey]) ? events[weekKey].length : 0;
+        events[weekKey] = [];
+        localStorage.setItem('c7aio_schedule_events', JSON.stringify(events));
+        if (typeof window !== 'undefined' && typeof window.scheduleEvents !== 'undefined') {
+          window.scheduleEvents = events;
+        }
+        console.log(`✅ [C7_CONSOLE] Đã xóa ${count} sự kiện của ${weekKey}`);
+        return { success: true, weekKey, cleared: count };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    },
+
+    // ================= 6. BATCH INGESTION (NẠP HÀNG LOẠT TRONG 1 LỆNH) =================
     /**
      * Nạp toàn bộ Nhiệm vụ, Thông báo và Lịch học từ 1 đoạn trích xuất duy nhất
      * @param {Object} batchPayload 
@@ -857,7 +964,16 @@
    • C7_CONSOLE.setAcademicYear('2026-2027') // Đổi niên khóa ('2025-2026', '2026-2027', '2027-2028')
    • C7_CONSOLE.getWeekCount('2026-09-08') // Đếm tuần học tính từ Khai giảng (05/09)
 
-4. Nạp hàng loạt (Batch Ingestion):
+5. Thông báo Thay đổi Lịch (Schedule Events):
+   • C7_CONSOLE.addScheduleEvent({ weekKey: 'week-1', day: 'monday', periodIndex: 0, type: 'schedule_change', title: 'Đổi phòng Toán → P.301', severity: 'warning' })
+       type: 'schedule_change' | 'day_off' | 'extra_class' | 'room_change' | 'info'
+       severity: 'info' | 'warning' | 'danger'
+       periodIndex: 0-based (Tiết 1=0, Tiết 2=1, ...) hoặc null = cả ngày
+   • C7_CONSOLE.getScheduleEvents('week-1') // Lấy danh sách sự kiện theo tuần
+   • C7_CONSOLE.deleteScheduleEvent('week-1', 'evt_xxx') // Xóa sự kiện theo ID
+   • C7_CONSOLE.clearScheduleEvents('week-1') // Xóa hết sự kiện của tuần
+
+6. Nạp hàng loạt (Batch Ingestion):
    • C7_CONSOLE.ingestBatch({ tasks: [...], notifications: [...], schedules: {...}, weekMetadata: {...} })
 
 Xem tài liệu chi tiết tại AUTOMATION_API.md

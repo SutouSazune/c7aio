@@ -56,13 +56,19 @@
           </select>
         </div>
 
-        <!-- View Mode Switcher -->
+        <!-- View Mode Switcher (4 modes) -->
         <div class="view-mode-toggle-group">
           <button type="button" class="view-mode-pill-btn active" id="btnViewWeek" onclick="switchScheduleViewMode('week')">
-            📋 Cả tuần
+            📋 Tuần
           </button>
           <button type="button" class="view-mode-pill-btn" id="btnViewDay" onclick="switchScheduleViewMode('day')">
-            📅 Ngày đã chọn
+            📅 Ngày
+          </button>
+          <button type="button" class="view-mode-pill-btn" id="btnViewMonth" onclick="switchScheduleViewMode('month')">
+            🗓️ Tháng
+          </button>
+          <button type="button" class="view-mode-pill-btn" id="btnViewYear" onclick="switchScheduleViewMode('year')">
+            📆 Năm
           </button>
         </div>
 
@@ -122,6 +128,16 @@
     <!-- Weekly Timetable Grid -->
     <section class="timetable-grid-week" id="timetableGrid">
       <!-- Rendered by lich.js -->
+    </section>
+
+    <!-- Month View (🗓️ Tháng) -->
+    <section id="monthViewContainer" style="display: none;">
+      <!-- Rendered dynamically by lich.js -->
+    </section>
+
+    <!-- Year View (📆 Năm) -->
+    <section id="yearViewContainer" style="display: none;">
+      <!-- Rendered dynamically by lich.js -->
     </section>
 
   </main>
@@ -248,6 +264,89 @@
     </div>
   </div>
 
+  <!-- Modal: Schedule Change Event (Thông báo đổi lịch) -->
+  <div class="c7-dialog-overlay" id="eventModalOverlay" style="display: none;">
+    <div class="c7-dialog-box" style="max-width: 500px; text-align: left;">
+      <h3 id="eventModalTitle" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 14px;">📢 Thông Báo Thay Đổi Lịch</h3>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; padding-right: 4px; margin-bottom: 18px;">
+        <!-- Type -->
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Loại thay đổi</label>
+          <select id="inputEventType" class="form-control-custom">
+            <option value="schedule_change">🔄 Đổi lịch / Hoán tiết</option>
+            <option value="day_off">🚫 Nghỉ học (cả ngày / buổi)</option>
+            <option value="extra_class">➕ Thêm tiết phụ đạo</option>
+            <option value="room_change">🚪 Đổi phòng học</option>
+            <option value="info">📋 Thông báo khác</option>
+          </select>
+        </div>
+
+        <!-- Severity -->
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Mức độ ưu tiên</label>
+          <select id="inputEventSeverity" class="form-control-custom">
+            <option value="info">ℹ️ Thông báo thường</option>
+            <option value="warning">⚠️ Cần chú ý</option>
+            <option value="danger">🔴 Quan trọng / Khẩn</option>
+          </select>
+        </div>
+
+        <!-- Title -->
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Nội dung thay đổi (*)</label>
+          <input type="text" id="inputEventTitle" class="form-control-custom" placeholder="vd: Đổi phòng Toán → P.301, Hoán tiết Lí ↔ Văn...">
+        </div>
+
+        <!-- Note -->
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ghi chú thêm</label>
+          <input type="text" id="inputEventNote" class="form-control-custom" placeholder="vd: GV thông báo qua Zalo lúc 7h sáng">
+        </div>
+
+        <!-- Day & Period -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày áp dụng</label>
+            <select id="inputEventDay" class="form-control-custom">
+              <option value="">-- Cả tuần --</option>
+              <option value="monday">Thứ Hai</option>
+              <option value="tuesday">Thứ Ba</option>
+              <option value="wednesday">Thứ Tư</option>
+              <option value="thursday">Thứ Năm</option>
+              <option value="friday">Thứ Sáu</option>
+              <option value="saturday">Thứ Bảy</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tiết bị ảnh hưởng</label>
+            <select id="inputEventPeriod" class="form-control-custom">
+              <option value="">-- Tất cả tiết --</option>
+              <option value="0">Tiết 1</option>
+              <option value="1">Tiết 2</option>
+              <option value="2">Tiết 3</option>
+              <option value="3">Tiết 4</option>
+              <option value="4">Tiết 5</option>
+              <option value="5">Tiết 6</option>
+              <option value="6">Tiết 7</option>
+              <option value="7">Tiết 8</option>
+              <option value="8">Tiết 9</option>
+              <option value="9">Tiết 10</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; gap: 10px; align-items: center;">
+        <button class="c7-btn c7-btn-danger" id="btnDeleteEvent" style="display:none;" onclick="deleteCurrentEvent()">🗑️ Xóa</button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="c7-btn c7-btn-secondary" onclick="closeEventModal()">Hủy bỏ</button>
+          <button class="c7-btn c7-btn-primary" onclick="submitEventForm()">💾 Lưu thông báo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
     <p>&copy; 2026 Lớp 11C7. C7AIO Hub.</p>
   </footer>
@@ -258,11 +357,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/firebase-config.js?v=3.4.2"></script>
-  <script src="../script/firebase-utils.js?v=3.4.2"></script>
-  <script src="../script/students-list.js?v=3.4.2"></script>
-  <script src="../script/hub.js?v=3.4.2"></script>
-  <script src="../script/console.js?v=3.4.2"></script>
-  <script src="../script/lich.js?v=3.4.2"></script>
+  <script src="../script/firebase-config.js?v=3.5.0"></script>
+  <script src="../script/firebase-utils.js?v=3.5.0"></script>
+  <script src="../script/students-list.js?v=3.5.0"></script>
+  <script src="../script/hub.js?v=3.5.0"></script>
+  <script src="../script/console.js?v=3.5.0"></script>
+  <script src="../script/lich.js?v=3.5.0"></script>
 </body>
 </html>

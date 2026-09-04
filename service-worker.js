@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.4.2-academic-year-counter';
+const CACHE_NAME = 'c7aio-v3.5.0-schedule-events-views';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

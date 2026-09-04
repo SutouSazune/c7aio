@@ -5,13 +5,16 @@
 
 let schedules = JSON.parse(localStorage.getItem('c7aio_schedules_cache')) || {};
 let weekMetadata = JSON.parse(localStorage.getItem('c7aio_weekMetadata_cache')) || {};
+let scheduleEvents = JSON.parse(localStorage.getItem('c7aio_schedule_events') || '{}');
 let currentDate = new Date();
 let selectedDate = new Date();
 let currentWeekKey = 'week-1';
-let scheduleViewMode = 'week'; // 'week' hoặc 'day'
-let selectedClassFilter = '11C7'; // Lọc theo lớp riêng, mặc định 11C7
+let scheduleViewMode = 'week'; // 'week' | 'day' | 'month' | 'year'
+let selectedClassFilter = '11C7';
 let editingClassDay = null;
 let editingClassIndex = null;
+let editingEventWeekKey = null;
+let editingEventId = null;
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const DAY_LABELS = {
@@ -224,6 +227,43 @@ window.C7_ACADEMIC_YEARS = ACADEMIC_YEARS;
 window.getActiveAcademicYear = getActiveAcademicYear;
 window.switchAcademicYear = switchAcademicYear;
 window.getAcademicProgress = getAcademicProgress;
+
+// ============= SCHEDULE EVENTS HELPERS =============
+function saveScheduleEvents() {
+  localStorage.setItem('c7aio_schedule_events', JSON.stringify(scheduleEvents));
+}
+
+function getEventsForWeek(weekKey) {
+  return Array.isArray(scheduleEvents[weekKey]) ? scheduleEvents[weekKey] : [];
+}
+
+function getEventsForDayInWeek(weekKey, day) {
+  return getEventsForWeek(weekKey).filter(e => !e.day || e.day === day);
+}
+
+function getEventsForDate(dateKey) {
+  // Find which weekKey owns this date
+  for (const [wKey, meta] of Object.entries(weekMetadata)) {
+    if (meta && meta.startDate && meta.endDate && dateKey >= meta.startDate && dateKey <= meta.endDate) {
+      const dayDate = parseLocalDate(dateKey);
+      const dayName = getDayNameFromDate(dayDate);
+      return getEventsForDayInWeek(wKey, dayName);
+    }
+  }
+  return [];
+}
+
+function generateEventId() {
+  return 'evt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+const EVENT_TYPE_ICONS = {
+  schedule_change: '🔄',
+  day_off: '🚫',
+  extra_class: '➕',
+  room_change: '🚪',
+  info: '📋'
+};
 
 window.addEventListener('load', () => {
   const user = getCurrentUser();
@@ -451,31 +491,32 @@ function renderAll() {
   populateClassFilterOptions();
   renderCalendar();
   renderWeekChips();
-  renderDayView();
-  renderTimetable();
   updateCurrentWeekBanner();
 
-  // Đồng bộ trạng thái hiển thị viewMode
+  // Sync 4 view mode buttons
+  ['week', 'day', 'month', 'year'].forEach(m => {
+    const btn = document.getElementById(`btnView${m.charAt(0).toUpperCase() + m.slice(1)}`);
+    if (btn) btn.classList.toggle('active', scheduleViewMode === m);
+  });
+
   const weekGrid = document.getElementById('timetableGrid');
   const dayCard = document.getElementById('dayViewContainer');
-  const btnWeek = document.getElementById('btnViewWeek');
-  const btnDay = document.getElementById('btnViewDay');
+  const monthCard = document.getElementById('monthViewContainer');
+  const yearCard = document.getElementById('yearViewContainer');
 
-  if (btnWeek) btnWeek.classList.toggle('active', scheduleViewMode === 'week');
-  if (btnDay) btnDay.classList.toggle('active', scheduleViewMode === 'day');
+  if (weekGrid) weekGrid.style.display = scheduleViewMode === 'week' ? 'grid' : 'none';
+  if (dayCard) dayCard.style.display = scheduleViewMode === 'day' ? 'flex' : 'none';
+  if (monthCard) monthCard.style.display = scheduleViewMode === 'month' ? 'block' : 'none';
+  if (yearCard) yearCard.style.display = scheduleViewMode === 'year' ? 'block' : 'none';
 
-  if (scheduleViewMode === 'day') {
-    if (weekGrid) weekGrid.style.display = 'none';
-    if (dayCard) dayCard.style.display = 'flex';
-  } else {
-    if (weekGrid) weekGrid.style.display = 'grid';
-    if (dayCard) dayCard.style.display = 'none';
-  }
+  if (scheduleViewMode === 'day') renderDayView();
+  else if (scheduleViewMode === 'week') renderTimetable();
+  else if (scheduleViewMode === 'month') renderMonthView();
+  else if (scheduleViewMode === 'year') renderYearView();
 }
 
 function switchScheduleViewMode(mode) {
   scheduleViewMode = mode;
-  // Đảm bảo khi chuyển sang chế độ ngày, selectedDate luôn thuộc tuần đang xem
   if (mode === 'day') {
     const meta = weekMetadata[currentWeekKey] || {};
     if (meta.startDate && meta.endDate) {
@@ -591,7 +632,6 @@ function renderCalendar() {
     const dateKey = toDateStringKey(dateObj);
     const cell = document.createElement('div');
     cell.className = 'cal-day-cell';
-    cell.textContent = d;
 
     const isToday = (dateKey === todayStr);
     const isSelected = (dateKey === selectedStr);
@@ -599,7 +639,45 @@ function renderCalendar() {
     if (isToday) cell.classList.add('today');
     if (isSelected) cell.classList.add('selected');
 
-    // Click ngày nào thì cập nhật selectedDate và chuyển chế độ xem ngày
+    // Number span
+    const numSpan = document.createElement('span');
+    numSpan.className = 'cal-day-num';
+    numSpan.textContent = d;
+    cell.appendChild(numSpan);
+
+    // Dots row
+    const dotRow = document.createElement('div');
+    dotRow.className = 'cal-dot-row';
+
+    // Class dot
+    const targetWeekKey = getWeekKeyForDate(dateObj);
+    let hasClasses = false;
+    if (targetWeekKey) {
+      const targetSchedule = getEffectiveSchedule(targetWeekKey);
+      const dayName = getDayNameFromDate(dateObj);
+      let dayClasses = targetSchedule[dayName] || [];
+      if (selectedClassFilter) {
+        dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
+      }
+      hasClasses = dayClasses.length > 0;
+    }
+    if (hasClasses) {
+      const dot = document.createElement('span');
+      dot.className = 'cal-class-dot';
+      dotRow.appendChild(dot);
+    }
+
+    // Event dot (orange - schedule changes)
+    const dayEvents = getEventsForDate(dateKey);
+    if (dayEvents.length > 0) {
+      const eDot = document.createElement('span');
+      eDot.className = 'cal-event-dot';
+      eDot.title = dayEvents.map(e => e.title).join('; ');
+      dotRow.appendChild(eDot);
+    }
+
+    cell.appendChild(dotRow);
+
     cell.onclick = () => {
       selectedDate = dateObj;
       currentDate = new Date(selectedDate);
@@ -608,34 +686,21 @@ function renderCalendar() {
       renderAll();
     };
 
-    // Kiểm tra tiết học theo đúng tuần chứa ngày này (chỉ vẽ chấm nếu ngày này thuộc tuần học có TKB)
-    const targetWeekKey = getWeekKeyForDate(dateObj);
-    let dayClasses = [];
-    if (targetWeekKey) {
-      const targetSchedule = getEffectiveSchedule(targetWeekKey);
-      const dayName = getDayNameFromDate(dateObj);
-      dayClasses = targetSchedule[dayName] || [];
-      if (selectedClassFilter) {
-        dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
-      }
-    }
-    if (dayClasses.length > 0) {
-      const dot = document.createElement('span');
-      dot.className = 'cal-class-dot';
-      cell.appendChild(dot);
-    }
-
     matrix.appendChild(cell);
   }
 
-  // Next month padding (lấp đầy ô cuối tuần cho đẹp mắt)
+  // Next month padding
   const totalRendered = startingDay + daysInMonth;
   const nextPadding = (7 - (totalRendered % 7)) % 7;
   for (let n = 1; n <= nextPadding; n++) {
     const nextDate = new Date(year, month + 1, n);
     const cell = document.createElement('div');
     cell.className = 'cal-day-cell other-month';
-    cell.textContent = n;
+    const numSpan = document.createElement('span');
+    numSpan.className = 'cal-day-num';
+    numSpan.textContent = n;
+    cell.appendChild(numSpan);
+    cell.appendChild(document.createElement('div')); // empty dot row
     cell.onclick = () => {
       selectedDate = nextDate;
       currentDate = new Date(selectedDate);
@@ -766,6 +831,9 @@ function renderDayView() {
     ? classesWithIndex.filter(c => !c.className || c.className === selectedClassFilter)
     : classesWithIndex;
 
+  // Events cho ngày này
+  const dayEventsAll = matchedWeekKey ? getEventsForDayInWeek(matchedWeekKey, dayName) : [];
+
   let emptyMessageTitle = 'Không có tiết học';
   let emptyMessageDesc = 'Hôm nay không có tiết học hoặc chưa được xếp thời khóa biểu!';
 
@@ -782,6 +850,24 @@ function renderDayView() {
     </div>
   ` : '';
 
+  // Event banners HTML
+  const eventBannersHtml = dayEventsAll.length > 0
+    ? `<div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">` +
+      dayEventsAll.map(ev => {
+        const icon = EVENT_TYPE_ICONS[ev.type] || '📋';
+        const sev = ev.severity || 'info';
+        const canManage = checkPermission('manage_schedule');
+        return `
+          <div class="event-banner ${sev}">
+            <span class="event-banner-icon">${icon}</span>
+            <div class="event-banner-body">
+              <div class="event-banner-title">${escapeHtml(ev.title)}</div>
+              ${ev.note ? `<div class="event-banner-note">${escapeHtml(ev.note)}</div>` : ''}
+            </div>
+            ${canManage ? `<button class="btn-action-pill" style="flex-shrink:0;font-size:0.7rem;" onclick="editEvent('${matchedWeekKey}','${ev.id}')">✏️</button>` : ''}
+          </div>`;
+      }).join('') + `</div>` : '';
+
   const classesHtml = classes.length === 0
     ? `<div class="empty-widget" style="padding: 2.5rem 1rem; text-align: center; color: var(--text-sub); width: 100%;">
         <span style="font-size: 2.8rem;">${isBeforeSemester ? '⏳' : '🏖️'}</span>
@@ -791,6 +877,16 @@ function renderDayView() {
       </div>`
     : `<div class="day-classes-list-grid" style="width: 100%;">` + classes.map(c => {
         const color = getSubjectColor(c.name || c.subject);
+        // Find events for this specific period
+        const periodEvents = matchedWeekKey
+          ? getEventsForWeek(matchedWeekKey).filter(e =>
+              (!e.day || e.day === dayName) &&
+              (e.periodIndex === null || e.periodIndex === undefined || e.periodIndex === c.originalIndex)
+            )
+          : [];
+        const periodBadges = periodEvents.map(ev =>
+          `<span class="event-inline-badge ${ev.severity === 'danger' ? 'danger' : ''}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</span>`
+        ).join('');
         return `
           <div class="day-class-card-detailed" style="border-left-color: ${color}">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
@@ -799,10 +895,12 @@ function renderDayView() {
             </div>
             <div class="class-card-name" style="font-size: 1.05rem;">${escapeHtml(c.name || '')}</div>
             ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
+            ${periodBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;">${periodBadges}</div>` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
               <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
               ${checkPermission('manage_schedule') ? `
                 <div style="display: flex; gap: 6px;">
+                  <button class="btn-add-event" onclick="openEventModal('${matchedWeekKey}', '${dayName}', ${c.originalIndex})">📢 Đổi lịch</button>
                   <button class="btn-action-pill" onclick="editClass('${dayName}', ${c.originalIndex})">✏️ Sửa</button>
                   <button class="btn-action-pill danger" onclick="deleteClass('${dayName}', ${c.originalIndex})">🗑️ Xóa</button>
                 </div>
@@ -821,7 +919,7 @@ function renderDayView() {
           ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700;">Hôm nay</span>' : ''}
           ${selectedClassFilter ? `<span class="class-card-grade-badge" style="font-size: 0.75rem;">Lớp ${escapeHtml(selectedClassFilter)}</span>` : ''}
         </div>
-        <span style="font-size: 0.85rem; color: var(--text-sub);">Thời khóa biểu chi tiết trong ngày • <strong>${classes.length}</strong> tiết học</span>
+        <span style="font-size: 0.85rem; color: var(--text-sub);">Thời khóa biểu chi tiết trong ngày • <strong>${classes.length}</strong> tiết học${dayEventsAll.length > 0 ? ` • <span style="color:#f97316;font-weight:700;">${dayEventsAll.length} thông báo thay đổi</span>` : ''}</span>
       </div>
 
       <div class="day-view-nav-buttons">
@@ -838,9 +936,13 @@ function renderDayView() {
           <button class="c7-btn c7-btn-primary" onclick="openAddClassForCurrentDay('${dayName}')">
             + Thêm tiết ngày này
           </button>
+          <button class="c7-btn c7-btn-secondary" style="border-color:#f97316;color:#f97316;" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', null)">
+            📢 Thêm thông báo đổi lịch
+          </button>
         ` : ''}
       </div>
     </div>
+    ${eventBannersHtml}
     ${classesHtml}
   `;
 }
@@ -861,6 +963,14 @@ function nextDay() {
 
 function openAddClassForCurrentDay(dayName) {
   openAddClassModal(dayName);
+}
+
+function prevMonth() {
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+}
+
+function nextMonth() {
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
 }
 
 // ============= TIMETABLE VIEW (Cả tuần) =============
@@ -1129,3 +1239,278 @@ async function deleteCurrentWeekAction() {
     renderAll();
   });
 }
+
+// ============= MONTH VIEW =============
+function renderMonthView() {
+  const container = document.getElementById('monthViewContainer');
+  if (!container) return;
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const weekDayLabels = ['CN','T2','T3','T4','T5','T6','T7'];
+  const today = new Date();
+  const todayStr = toDateStringKey(today);
+  const selectedStr = toDateStringKey(selectedDate);
+
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startDow = firstDay.getDay(); // 0=CN
+
+  // Subject color palette for mini chips
+  const CHIP_COLORS = ['#6366f1','#22c55e','#f97316','#ec4899','#06b6d4','#a855f7','#eab308'];
+
+  let cells = '';
+
+  // Prev month padding
+  for (let i = startDow - 1; i >= 0; i--) {
+    cells += `<div class="month-cell other-month"></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d);
+    const dateKey = toDateStringKey(dateObj);
+    const dayName = getDayNameFromDate(dateObj);
+    const isToday = dateKey === todayStr;
+    const isSelected = dateKey === selectedStr;
+    const wKey = getWeekKeyForDate(dateObj);
+
+    let classChips = '';
+    if (wKey) {
+      const sched = getEffectiveSchedule(wKey);
+      let dayList = (sched[dayName] || []);
+      if (selectedClassFilter) dayList = dayList.filter(c => !c.className || c.className === selectedClassFilter);
+      const MAX_SHOW = 2;
+      dayList.slice(0, MAX_SHOW).forEach((c, i) => {
+        const col = CHIP_COLORS[i % CHIP_COLORS.length];
+        classChips += `<div class="month-class-chip" style="background:${col};">${escapeHtml(c.name || '')}</div>`;
+      });
+      if (dayList.length > MAX_SHOW) {
+        classChips += `<div class="month-more-badge">+${dayList.length - MAX_SHOW} tiết</div>`;
+      }
+    }
+
+    const dayEvents = getEventsForDate(dateKey);
+    let eventChips = '';
+    dayEvents.slice(0, 1).forEach(ev => {
+      eventChips += `<div class="month-event-chip">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</div>`;
+    });
+    if (dayEvents.length > 1) {
+      eventChips += `<div class="month-more-badge" style="color:#f97316;">+${dayEvents.length-1}</div>`;
+    }
+
+    cells += `
+      <div class="month-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}"
+           onclick="selectedDate=new Date(${year},${month},${d});currentDate=new Date(selectedDate);resolveWeekFromDate(selectedDate);scheduleViewMode='day';renderAll();">
+        <div class="month-cell-num">${d}</div>
+        <div class="month-cell-class-chips">${classChips}${eventChips}</div>
+      </div>`;
+  }
+
+  // Next padding
+  const total = startDow + daysInMonth;
+  for (let n = 1; n <= (7 - (total % 7)) % 7; n++) {
+    cells += `<div class="month-cell other-month"></div>`;
+  }
+
+  container.innerHTML = `
+    <div class="month-view-container">
+      <div class="month-view-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="month-nav-btn" onclick="prevMonth();scheduleViewMode='month';renderAll();">←</button>
+          <h2 style="font-size:1.2rem;font-weight:800;">${monthNames[month]}, ${year}</h2>
+          <button class="month-nav-btn" onclick="nextMonth();scheduleViewMode='month';renderAll();">→</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:0.78rem;color:var(--text-sub);">
+            <span style="display:inline-block;width:10px;height:10px;background:#6366f1;border-radius:2px;margin-right:4px;"></span>Tiết học
+            <span style="display:inline-block;width:10px;height:10px;background:rgba(249,115,22,0.2);border-radius:2px;margin-left:8px;margin-right:4px;border:1px solid #f97316;"></span>Đổi lịch
+          </span>
+        </div>
+      </div>
+      <div class="month-view-weekdays">${weekDayLabels.map(l => `<div>${l}</div>`).join('')}</div>
+      <div class="month-view-grid">${cells}</div>
+    </div>
+  `;
+}
+
+// ============= YEAR VIEW =============
+function renderYearView() {
+  const container = document.getElementById('yearViewContainer');
+  if (!container) return;
+
+  const ay = getActiveAcademicYear();
+  const year = currentDate.getFullYear();
+  const today = new Date();
+  const todayStr = toDateStringKey(today);
+  const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+  let monthCards = '';
+
+  for (let m = 0; m < 12; m++) {
+    const targetYear = m >= 8 ? year : year + 1; // Năm học: T9 năm N - T5 năm N+1
+    // Heuristic: nếu tháng >= 9 → thuộc năm "year", nếu < 6 → thuộc "year+1"
+    const realYear = (m >= 8) ? parseInt(ay.id.split('-')[0]) : parseInt(ay.id.split('-')[1]);
+    const firstDay = new Date(realYear, m, 1);
+    const daysInMonth = new Date(realYear, m + 1, 0).getDate();
+    const startDow = firstDay.getDay();
+    const isCurrentMonth = (today.getMonth() === m && today.getFullYear() === realYear);
+
+    let miniCells = '';
+    // weekday header
+    for (let h = 0; h < 7; h++) miniCells += `<div class="year-mini-day" style="font-size:0.45rem;color:var(--text-muted);font-weight:700;">${['S','M','T','W','T','F','S'][h]}</div>`;
+    // empty padding
+    for (let pad = 0; pad < startDow; pad++) miniCells += `<div class="year-mini-day"></div>`;
+
+    let classDays = 0, eventDays = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(realYear, m, d);
+      const dateKey = toDateStringKey(dateObj);
+      const dayName = getDayNameFromDate(dateObj);
+      const wKey = getWeekKeyForDate(dateObj);
+      const isToday = dateKey === todayStr;
+      let classes = 'year-mini-day';
+      let hasC = false, hasE = false;
+      if (wKey) {
+        const sched = getEffectiveSchedule(wKey);
+        hasC = (sched[dayName] || []).length > 0;
+        hasE = getEventsForDate(dateKey).length > 0;
+      }
+      if (isToday) classes += ' is-today';
+      else if (hasE) { classes += ' has-event'; eventDays++; }
+      else if (hasC) { classes += ' has-class'; classDays++; }
+      miniCells += `<div class="${classes}" title="${dateKey}">${d}</div>`;
+    }
+
+    monthCards += `
+      <div class="year-month-card ${isCurrentMonth ? 'active-month' : ''}"
+           onclick="currentDate=new Date(${realYear},${m},1);scheduleViewMode='month';renderAll();">
+        <div class="year-month-name">${monthNames[m]} ${realYear}</div>
+        <div class="year-month-mini-cal">${miniCells}</div>
+        <div class="year-month-stats">
+          <span>📅 ${classDays} ngày học</span>
+          ${eventDays > 0 ? `<span style="color:#f97316;">📢 ${eventDays} đổi lịch</span>` : '<span style="opacity:0.5;">Chưa có đổi lịch</span>'}
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = `
+    <div class="year-view-container">
+      <div class="year-view-title">📆 Niên khóa ${ay.label} — Tổng quan 12 tháng</div>
+      <div class="year-view-grid">${monthCards}</div>
+    </div>
+  `;
+}
+
+// ============= EVENT MODAL FUNCTIONS =============
+function openEventModal(weekKey, day, periodIndex) {
+  if (!checkPermission('manage_schedule')) return;
+  editingEventWeekKey = weekKey || currentWeekKey;
+  editingEventId = null;
+
+  document.getElementById('eventModalTitle').textContent = '📢 Thêm Thông Báo Thay Đổi Lịch';
+  document.getElementById('inputEventType').value = 'schedule_change';
+  document.getElementById('inputEventSeverity').value = 'info';
+  document.getElementById('inputEventTitle').value = '';
+  document.getElementById('inputEventNote').value = '';
+  document.getElementById('inputEventDay').value = day || '';
+  document.getElementById('inputEventPeriod').value = (periodIndex !== null && periodIndex !== undefined) ? String(periodIndex) : '';
+
+  const deleteBtn = document.getElementById('btnDeleteEvent');
+  if (deleteBtn) deleteBtn.style.display = 'none';
+
+  document.getElementById('eventModalOverlay').style.display = 'flex';
+}
+
+function editEvent(weekKey, eventId) {
+  if (!checkPermission('manage_schedule')) return;
+  const events = getEventsForWeek(weekKey);
+  const ev = events.find(e => e.id === eventId);
+  if (!ev) return;
+
+  editingEventWeekKey = weekKey;
+  editingEventId = eventId;
+
+  document.getElementById('eventModalTitle').textContent = '✏️ Chỉnh Sửa Thông Báo Đổi Lịch';
+  document.getElementById('inputEventType').value = ev.type || 'schedule_change';
+  document.getElementById('inputEventSeverity').value = ev.severity || 'info';
+  document.getElementById('inputEventTitle').value = ev.title || '';
+  document.getElementById('inputEventNote').value = ev.note || '';
+  document.getElementById('inputEventDay').value = ev.day || '';
+  document.getElementById('inputEventPeriod').value = (ev.periodIndex !== null && ev.periodIndex !== undefined) ? String(ev.periodIndex) : '';
+
+  const deleteBtn = document.getElementById('btnDeleteEvent');
+  if (deleteBtn) deleteBtn.style.display = 'block';
+
+  document.getElementById('eventModalOverlay').style.display = 'flex';
+}
+
+function closeEventModal() {
+  document.getElementById('eventModalOverlay').style.display = 'none';
+  editingEventWeekKey = null;
+  editingEventId = null;
+}
+
+async function submitEventForm() {
+  const title = document.getElementById('inputEventTitle').value.trim();
+  if (!title) {
+    showToast('Vui lòng nhập nội dung thay đổi!', 'warning');
+    return;
+  }
+
+  const weekKey = editingEventWeekKey || currentWeekKey;
+  const type = document.getElementById('inputEventType').value;
+  const severity = document.getElementById('inputEventSeverity').value;
+  const note = document.getElementById('inputEventNote').value.trim();
+  const day = document.getElementById('inputEventDay').value;
+  const periodVal = document.getElementById('inputEventPeriod').value;
+  const periodIndex = periodVal !== '' ? parseInt(periodVal) : null;
+
+  if (!scheduleEvents[weekKey]) scheduleEvents[weekKey] = [];
+
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+
+  if (editingEventId) {
+    // Edit existing
+    const idx = scheduleEvents[weekKey].findIndex(e => e.id === editingEventId);
+    if (idx !== -1) {
+      scheduleEvents[weekKey][idx] = {
+        ...scheduleEvents[weekKey][idx],
+        type, severity, title, note, day, periodIndex,
+        updatedAt: new Date().toISOString()
+      };
+    }
+  } else {
+    // New event
+    scheduleEvents[weekKey].push({
+      id: generateEventId(),
+      type, severity, title, note, day, periodIndex,
+      weekKey,
+      createdAt: new Date().toISOString(),
+      createdBy: user ? user.name : 'Admin'
+    });
+  }
+
+  saveScheduleEvents();
+  if (typeof logAction === 'function') {
+    logAction('Thêm thông báo đổi lịch', `${weekKey}: ${title}`);
+  }
+
+  showToast('Đã lưu thông báo thay đổi lịch!', 'success');
+  closeEventModal();
+  renderAll();
+}
+
+function deleteCurrentEvent() {
+  if (!editingEventWeekKey || !editingEventId) return;
+  showConfirm('Xóa thông báo', 'Bạn có chắc muốn xóa thông báo đổi lịch này không?', () => {
+    if (scheduleEvents[editingEventWeekKey]) {
+      scheduleEvents[editingEventWeekKey] = scheduleEvents[editingEventWeekKey].filter(e => e.id !== editingEventId);
+    }
+    saveScheduleEvents();
+    showToast('Đã xóa thông báo!', 'success');
+    closeEventModal();
+    renderAll();
+  });
+}
+
