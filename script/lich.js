@@ -121,22 +121,108 @@ function initDefaultScheduleIfEmpty() {
       endDate: '2026-08-30'
     };
   }
+
+  ensureSemesterWeeksMetadata();
+}
+
+function ensureSemesterWeeksMetadata() {
+  const baseStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate) ? weekMetadata['week-1'].startDate : '2026-08-24';
+  const startD = parseLocalDate(baseStart);
+
+  // Sinh thông tin tuần tự động cho tối thiểu 10 tuần (đặc biệt là Tuần 8)
+  for (let i = 1; i <= 10; i++) {
+    const wKey = `week-${i}`;
+    if (!weekMetadata[wKey] || !weekMetadata[wKey].startDate) {
+      const s = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + (i - 1) * 7);
+      const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
+      weekMetadata[wKey] = {
+        name: `Tuần ${i}`,
+        className: '11C7',
+        startDate: toDateStringKey(s),
+        endDate: toDateStringKey(e),
+        ...(weekMetadata[wKey] || {})
+      };
+    }
+  }
+}
+
+function getEffectiveSchedule(weekKey) {
+  if (schedules[weekKey]) {
+    const hasAnyPeriod = DAYS.some(d => Array.isArray(schedules[weekKey][d]) && schedules[weekKey][d].length > 0);
+    if (hasAnyPeriod) return schedules[weekKey];
+  }
+  // Tự động kế thừa thời khóa biểu từ Tuần 1 để các tuần chưa cài riêng (như Tuần 8) luôn có dữ liệu hiển thị
+  return schedules['week-1'] || {};
+}
+
+// --- DATE UTILITIES (TRÁNH LỖI LỆCH MÚI GIỜ & ĐỒNG BỘ TUẦN / NGÀY) ---
+function toDateStringKey(d) {
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseLocalDate(str) {
+  if (!str) return new Date();
+  if (str instanceof Date) return new Date(str.getFullYear(), str.getMonth(), str.getDate());
+  const parts = String(str).split('T')[0].split(/[-/]/);
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    return new Date(y, m, d);
+  }
+  return new Date(str);
+}
+
+function getWeekKeyForDate(date) {
+  const dateKey = toDateStringKey(date);
+  if (!dateKey) return null;
+  for (const [key, meta] of Object.entries(weekMetadata)) {
+    if (meta && meta.startDate && meta.endDate) {
+      if (dateKey >= meta.startDate && dateKey <= meta.endDate) {
+        return key;
+      }
+    }
+  }
+  return null;
+}
+
+function getDateForDayInWeek(weekKey, dayName) {
+  const meta = weekMetadata[weekKey] || {};
+  const dayIndex = DAYS.indexOf(dayName);
+  if (dayIndex === -1) return new Date(selectedDate);
+
+  if (meta.startDate) {
+    const sDate = parseLocalDate(meta.startDate);
+    return new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate() + dayIndex);
+  }
+
+  // Fallback: tính theo ngày trong tuần chứa selectedDate
+  const currDayName = getDayNameFromDate(selectedDate);
+  const currDayIdx = DAYS.indexOf(currDayName);
+  const diff = dayIndex - (currDayIdx !== -1 ? currDayIdx : 0);
+  return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + diff);
 }
 
 function resolveInitialWeek() {
   const today = new Date();
-  for (const [key, meta] of Object.entries(weekMetadata)) {
-    if (meta.startDate && meta.endDate) {
-      const s = new Date(meta.startDate);
-      const e = new Date(meta.endDate);
-      if (today >= s && today <= e) {
-        currentWeekKey = key;
-        return;
-      }
-    }
+  const matchedKey = getWeekKeyForDate(today);
+  if (matchedKey) {
+    currentWeekKey = matchedKey;
+    return;
   }
   const keys = Object.keys(schedules);
   if (keys.length > 0) currentWeekKey = keys[0];
+}
+
+function resolveWeekFromDate(date) {
+  const matchedKey = getWeekKeyForDate(date);
+  if (matchedKey) {
+    currentWeekKey = matchedKey;
+  }
 }
 
 function renderAll() {
@@ -167,6 +253,18 @@ function renderAll() {
 
 function switchScheduleViewMode(mode) {
   scheduleViewMode = mode;
+  // Đảm bảo khi chuyển sang chế độ ngày, selectedDate luôn thuộc tuần đang xem
+  if (mode === 'day') {
+    const meta = weekMetadata[currentWeekKey] || {};
+    if (meta.startDate && meta.endDate) {
+      const dateKey = toDateStringKey(selectedDate);
+      if (dateKey < meta.startDate || dateKey > meta.endDate) {
+        const currDayName = getDayNameFromDate(selectedDate);
+        selectedDate = getDateForDayInWeek(currentWeekKey, currDayName);
+        currentDate = new Date(selectedDate);
+      }
+    }
+  }
   renderAll();
 }
 
@@ -213,7 +311,10 @@ function updateCurrentWeekBanner() {
     const title = meta.name || currentWeekKey;
     const classBadge = meta.className ? ` • Lớp ${meta.className}` : '';
     const dateRange = (meta.startDate && meta.endDate) ? ` (${meta.startDate} → ${meta.endDate})` : '';
-    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${title}</strong>${classBadge}${dateRange}`;
+    const modeBadge = scheduleViewMode === 'day' 
+      ? ` • Xem: <strong>${DAY_LABELS[getDayNameFromDate(selectedDate)]}</strong>` 
+      : ` • Xem: <strong>Cả tuần</strong>`;
+    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${escapeHtml(title)}</strong>${classBadge}${dateRange}${modeBadge}`;
   }
 }
 
@@ -238,47 +339,78 @@ function renderCalendar() {
   // Prev month padding
   const prevMonthLast = new Date(year, month, 0).getDate();
   for (let i = startingDay - 1; i >= 0; i--) {
+    const prevDate = new Date(year, month - 1, prevMonthLast - i);
     const cell = document.createElement('div');
     cell.className = 'cal-day-cell other-month';
     cell.textContent = prevMonthLast - i;
+    cell.onclick = () => {
+      selectedDate = prevDate;
+      currentDate = new Date(selectedDate);
+      resolveWeekFromDate(selectedDate);
+      switchScheduleViewMode('day');
+    };
     matrix.appendChild(cell);
   }
 
   // Current month days
   const today = new Date();
+  const todayStr = toDateStringKey(today);
+  const selectedStr = toDateStringKey(selectedDate);
+
   for (let d = 1; d <= daysInMonth; d++) {
     const dateObj = new Date(year, month, d);
+    const dateKey = toDateStringKey(dateObj);
     const cell = document.createElement('div');
     cell.className = 'cal-day-cell';
     cell.textContent = d;
 
-    const isToday = dateObj.toDateString() === today.toDateString();
-    const isSelected = dateObj.toDateString() === selectedDate.toDateString();
+    const isToday = (dateKey === todayStr);
+    const isSelected = (dateKey === selectedStr);
 
     if (isToday) cell.classList.add('today');
     if (isSelected) cell.classList.add('selected');
 
-    // Click ngày nào thì lập tức hiện TKB của ngày đó!
+    // Click ngày nào thì cập nhật selectedDate và chuyển chế độ xem ngày
     cell.onclick = () => {
       selectedDate = dateObj;
+      currentDate = new Date(selectedDate);
       resolveWeekFromDate(selectedDate);
-      switchScheduleViewMode('day');
+      scheduleViewMode = 'day';
+      renderAll();
     };
 
-    // Check if day has classes in current active schedule
+    // Kiểm tra tiết học theo đúng tuần chứa ngày này
+    const targetWeekKey = getWeekKeyForDate(dateObj) || currentWeekKey;
+    const targetSchedule = getEffectiveSchedule(targetWeekKey);
     const dayName = getDayNameFromDate(dateObj);
-    const weekSchedule = schedules[currentWeekKey] || {};
-    let dayClasses = weekSchedule[dayName] || [];
+    let dayClasses = targetSchedule[dayName] || [];
     if (selectedClassFilter) {
       dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
     }
-
     if (dayClasses.length > 0) {
       const dot = document.createElement('span');
       dot.className = 'cal-class-dot';
       cell.appendChild(dot);
     }
 
+    matrix.appendChild(cell);
+  }
+
+  // Next month padding (lấp đầy ô cuối tuần cho đẹp mắt)
+  const totalRendered = startingDay + daysInMonth;
+  const nextPadding = (7 - (totalRendered % 7)) % 7;
+  for (let n = 1; n <= nextPadding; n++) {
+    const nextDate = new Date(year, month + 1, n);
+    const cell = document.createElement('div');
+    cell.className = 'cal-day-cell other-month';
+    cell.textContent = n;
+    cell.onclick = () => {
+      selectedDate = nextDate;
+      currentDate = new Date(selectedDate);
+      resolveWeekFromDate(selectedDate);
+      scheduleViewMode = 'day';
+      renderAll();
+    };
     matrix.appendChild(cell);
   }
 }
@@ -294,24 +426,12 @@ function nextMonth() {
 }
 
 function jumpToToday() {
-  currentDate = new Date();
-  selectedDate = new Date();
+  const now = new Date();
+  currentDate = new Date(now);
+  selectedDate = new Date(now);
   resolveWeekFromDate(selectedDate);
   renderAll();
   showToast('📍 Đã chuyển đến ngày hôm nay', 'info');
-}
-
-function resolveWeekFromDate(date) {
-  for (const [key, meta] of Object.entries(weekMetadata)) {
-    if (meta.startDate && meta.endDate) {
-      const s = new Date(meta.startDate);
-      const e = new Date(meta.endDate);
-      if (date >= s && date <= e) {
-        currentWeekKey = key;
-        return;
-      }
-    }
-  }
 }
 
 function getDayNameFromDate(date) {
@@ -324,10 +444,16 @@ function renderWeekChips() {
   const container = document.getElementById('weekChipsBar');
   if (!container) return;
 
-  const weeks = Object.keys(schedules);
-  container.innerHTML = weeks.map(wKey => {
+  const allKeys = Array.from(new Set([...Object.keys(schedules), ...Object.keys(weekMetadata)]));
+  allKeys.sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.replace(/\D/g, '')) || 0;
+    return numA - numB;
+  });
+
+  container.innerHTML = allKeys.map(wKey => {
     const meta = weekMetadata[wKey] || {};
-    const name = meta.name || wKey;
+    const name = meta.name || (`Tuần ${wKey.replace(/\D/g, '')}`);
     const isActive = wKey === currentWeekKey;
     return `
       <button class="week-chip-btn ${isActive ? 'active' : ''}" onclick="selectWeekKey('${wKey}')">
@@ -343,6 +469,10 @@ function renderWeekChips() {
 
 function selectWeekKey(wKey) {
   currentWeekKey = wKey;
+  // Đồng bộ selectedDate với tuần mới
+  const currDayName = getDayNameFromDate(selectedDate);
+  selectedDate = getDateForDayInWeek(wKey, currDayName);
+  currentDate = new Date(selectedDate);
   renderAll();
 }
 
@@ -374,17 +504,20 @@ function renderDayView() {
   if (!container) return;
 
   const dayName = getDayNameFromDate(selectedDate);
-  const weekSchedule = schedules[currentWeekKey] || {};
-  let classes = weekSchedule[dayName] || [];
+  const weekSchedule = getEffectiveSchedule(currentWeekKey);
+  const rawClasses = weekSchedule[dayName] || [];
 
-  // Lọc theo lớp riêng nếu có
-  if (selectedClassFilter) {
-    classes = classes.filter(c => !c.className || c.className === selectedClassFilter);
-  }
+  // Gắn originalIndex để sửa/xóa chuẩn xác kể cả khi đang lọc lớp
+  const classesWithIndex = rawClasses.map((c, originalIndex) => ({ ...c, originalIndex }));
+  let classes = selectedClassFilter
+    ? classesWithIndex.filter(c => !c.className || c.className === selectedClassFilter)
+    : classesWithIndex;
 
   const today = new Date();
-  const isToday = selectedDate.toDateString() === today.toDateString();
+  const isToday = toDateStringKey(selectedDate) === toDateStringKey(today);
   const dateStr = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
+  const currentWeekMeta = weekMetadata[currentWeekKey] || {};
+  const weekTitle = currentWeekMeta.name || currentWeekKey;
 
   const classesHtml = classes.length === 0
     ? `<div class="empty-widget" style="padding: 2.5rem 1rem; text-align: center; color: var(--text-sub); width: 100%;">
@@ -392,7 +525,7 @@ function renderDayView() {
         <h4 style="font-size: 1.1rem; margin: 8px 0 4px; color: var(--text-main);">Không có tiết học</h4>
         <p style="font-size: 0.85rem;">Hôm nay không có tiết học hoặc chưa được xếp thời khóa biểu!</p>
       </div>`
-    : `<div class="day-classes-list-grid" style="width: 100%;">` + classes.map((c, idx) => {
+    : `<div class="day-classes-list-grid" style="width: 100%;">` + classes.map(c => {
         const color = getSubjectColor(c.name || c.subject);
         return `
           <div class="day-class-card-detailed" style="border-left-color: ${color}">
@@ -406,8 +539,8 @@ function renderDayView() {
               <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
               ${checkPermission('manage_schedule') ? `
                 <div style="display: flex; gap: 6px;">
-                  <button class="btn-action-pill" onclick="editClass('${dayName}', ${idx})">✏️ Sửa</button>
-                  <button class="btn-action-pill danger" onclick="deleteClass('${dayName}', ${idx})">🗑️ Xóa</button>
+                  <button class="btn-action-pill" onclick="editClass('${dayName}', ${c.originalIndex})">✏️ Sửa</button>
+                  <button class="btn-action-pill danger" onclick="deleteClass('${dayName}', ${c.originalIndex})">🗑️ Xóa</button>
                 </div>
               ` : ''}
             </div>
@@ -420,6 +553,7 @@ function renderDayView() {
       <div class="day-view-title-block">
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0;">📅 ${DAY_LABELS[dayName]} (${dateStr})</h3>
+          <span style="background: rgba(99, 102, 241, 0.15); color: var(--primary); border-radius: 99px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;">${escapeHtml(weekTitle)}</span>
           ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700;">Hôm nay</span>' : ''}
           ${selectedClassFilter ? `<span class="class-card-grade-badge" style="font-size: 0.75rem;">Lớp ${escapeHtml(selectedClassFilter)}</span>` : ''}
         </div>
@@ -448,21 +582,21 @@ function renderDayView() {
 }
 
 function prevDay() {
-  selectedDate = new Date(selectedDate.getTime() - 24 * 60 * 60 * 1000);
+  selectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() - 1);
+  currentDate = new Date(selectedDate);
   resolveWeekFromDate(selectedDate);
   renderAll();
 }
 
 function nextDay() {
-  selectedDate = new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000);
+  selectedDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + 1);
+  currentDate = new Date(selectedDate);
   resolveWeekFromDate(selectedDate);
   renderAll();
 }
 
 function openAddClassForCurrentDay(dayName) {
-  openAddClassModal();
-  const selectDay = document.getElementById('selectClassDay');
-  if (selectDay && dayName) selectDay.value = dayName;
+  openAddClassModal(dayName);
 }
 
 // ============= TIMETABLE VIEW (Cả tuần) =============
@@ -470,24 +604,32 @@ function renderTimetable() {
   const container = document.getElementById('timetableGrid');
   if (!container) return;
 
-  const weekSchedule = schedules[currentWeekKey] || {};
-  const todayDayName = getDayNameFromDate(new Date());
+  const weekSchedule = getEffectiveSchedule(currentWeekKey);
+  const today = new Date();
+  const todayKey = toDateStringKey(today);
+  const selectedKey = toDateStringKey(selectedDate);
   const selectedDayName = getDayNameFromDate(selectedDate);
 
   container.innerHTML = DAYS.map(day => {
-    let classes = weekSchedule[day] || [];
+    // Lấy ngày thực tế của thứ này trong tuần hiện tại
+    const dayDate = getDateForDayInWeek(currentWeekKey, day);
+    const dayDateKey = toDateStringKey(dayDate);
+    const dateFormatted = `${dayDate.getDate().toString().padStart(2, '0')}/${(dayDate.getMonth() + 1).toString().padStart(2, '0')}`;
 
-    // Lọc theo lớp riêng nếu được chọn
-    if (selectedClassFilter) {
-      classes = classes.filter(c => !c.className || c.className === selectedClassFilter);
-    }
+    // Chỉ đánh dấu hôm nay nếu ngày của cột đúng là ngày hôm nay
+    const isToday = (dayDateKey === todayKey);
+    // Đánh dấu cột được chọn: nếu ngày trùng với selectedDate HOẶC nếu tuần chưa có ngày thì dựa theo thứ
+    const isSelected = (dayDateKey === selectedKey) || (!weekMetadata[currentWeekKey]?.startDate && day === selectedDayName);
 
-    const isToday = (day === todayDayName);
-    const isSelected = (day === selectedDayName);
+    const rawClasses = weekSchedule[day] || [];
+    const classesWithIndex = rawClasses.map((c, originalIndex) => ({ ...c, originalIndex }));
+    let classes = selectedClassFilter
+      ? classesWithIndex.filter(c => !c.className || c.className === selectedClassFilter)
+      : classesWithIndex;
 
     const classesHtml = classes.length === 0
       ? '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 14px 0;">Không có tiết học</div>'
-      : classes.map((c, idx) => {
+      : classes.map(c => {
           const color = getSubjectColor(c.name || c.subject);
           return `
             <div class="class-card-item" style="border-left-color: ${color}">
@@ -500,8 +642,8 @@ function renderTimetable() {
               <div class="class-card-room">📍 ${escapeHtml(c.room || 'Chưa rõ')}</div>
               ${checkPermission('manage_schedule') ? `
                 <div style="display: flex; gap: 6px; margin-top: 6px;">
-                  <button class="btn-action-pill" onclick="editClass('${day}', ${idx})">✏️ Sửa</button>
-                  <button class="btn-action-pill danger" onclick="deleteClass('${day}', ${idx})">🗑️ Xóa</button>
+                  <button class="btn-action-pill" onclick="editClass('${day}', ${c.originalIndex})">✏️ Sửa</button>
+                  <button class="btn-action-pill danger" onclick="deleteClass('${day}', ${c.originalIndex})">🗑️ Xóa</button>
                 </div>
               ` : ''}
             </div>
@@ -510,9 +652,9 @@ function renderTimetable() {
 
     return `
       <div class="day-timetable-col ${isToday ? 'is-today-col' : ''} ${isSelected ? 'is-selected-col' : ''}">
-        <div class="day-col-header" style="cursor: pointer;" onclick="selectDayColumn('${day}')" title="Click để xem chi tiết ngày này">
+        <div class="day-col-header" style="cursor: pointer;" onclick="selectDayColumn('${day}')" title="Click để xem chi tiết ${DAY_LABELS[day]}">
           <div class="day-col-title">
-            <span>${DAY_LABELS[day]}</span>
+            <span>${DAY_LABELS[day]} <small style="font-size: 0.8rem; font-weight: 500; opacity: 0.8;">(${dateFormatted})</small></span>
             ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 6px; font-size: 0.7rem; font-weight: 700;">Hôm nay</span>' : ''}
           </div>
           <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết 🔍</span>
@@ -526,17 +668,13 @@ function renderTimetable() {
 }
 
 function selectDayColumn(day) {
-  const dayIndex = DAYS.indexOf(day);
-  const meta = weekMetadata[currentWeekKey] || {};
-  if (meta.startDate) {
-    const s = new Date(meta.startDate);
-    selectedDate = new Date(s.getTime() + dayIndex * 24 * 60 * 60 * 1000);
-  }
+  selectedDate = getDateForDayInWeek(currentWeekKey, day);
+  currentDate = new Date(selectedDate);
   switchScheduleViewMode('day');
 }
 
 // ============= CLASS MODAL & FORM =============
-function openAddClassModal() {
+function openAddClassModal(defaultDay = null) {
   editingClassDay = null;
   editingClassIndex = null;
   document.getElementById('classModalTitle').textContent = '➕ Thêm Tiết Học Mới';
@@ -546,6 +684,11 @@ function openAddClassModal() {
   if (gradeInput) gradeInput.value = selectedClassFilter || '11C7';
   document.getElementById('inputClassTime').value = '';
   document.getElementById('inputClassRoom').value = 'P.204';
+
+  const targetDay = defaultDay || getDayNameFromDate(selectedDate) || 'monday';
+  const selectDay = document.getElementById('selectClassDay');
+  if (selectDay) selectDay.value = targetDay;
+
   document.querySelectorAll('.period-picker-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('classModalOverlay').style.display = 'flex';
 }
@@ -568,7 +711,7 @@ function selectPeriodNum(periodNum) {
 }
 
 function editClass(day, index) {
-  const weekSchedule = schedules[currentWeekKey] || {};
+  const weekSchedule = getEffectiveSchedule(currentWeekKey);
   const c = weekSchedule[day] ? weekSchedule[day][index] : null;
   if (!c) return;
 
@@ -613,7 +756,8 @@ async function submitClassForm() {
   }
 
   if (!schedules[currentWeekKey]) {
-    schedules[currentWeekKey] = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
+    const base = getEffectiveSchedule(currentWeekKey);
+    schedules[currentWeekKey] = JSON.parse(JSON.stringify(base));
   }
   if (!schedules[currentWeekKey][day]) schedules[currentWeekKey][day] = [];
 
@@ -647,6 +791,10 @@ async function deleteClass(day, index) {
   if (!checkPermission('manage_schedule')) return;
 
   showConfirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xóa tiết học này không?', async () => {
+    if (!schedules[currentWeekKey]) {
+      const base = getEffectiveSchedule(currentWeekKey);
+      schedules[currentWeekKey] = JSON.parse(JSON.stringify(base));
+    }
     if (schedules[currentWeekKey] && schedules[currentWeekKey][day]) {
       schedules[currentWeekKey][day].splice(index, 1);
       if (typeof saveSharedSchedules === 'function') {
