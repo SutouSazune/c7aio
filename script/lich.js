@@ -37,6 +37,194 @@ const PERIOD_TIMES = {
   10: '16:30 - 17:15'
 };
 
+// ============= CẤU HÌNH NIÊN KHÓA & BỘ ĐẾM TUẦN HỌC (LỚP 10 - 11 - 12) =============
+const ACADEMIC_YEARS = {
+  '2025-2026': {
+    id: '2025-2026',
+    grade: '10C7',
+    label: 'Lớp 10 (2025 - 2026)',
+    openingDate: '2025-09-05',
+    startDate: '2025-09-08',
+    endDate: '2026-05-31',
+    totalWeeks: 35,
+    semester1Weeks: 18
+  },
+  '2026-2027': {
+    id: '2026-2027',
+    grade: '11C7',
+    label: 'Lớp 11 (2026 - 2027)',
+    openingDate: '2026-09-05',
+    startDate: '2026-09-07',
+    endDate: '2027-05-31',
+    totalWeeks: 35,
+    semester1Weeks: 18
+  },
+  '2027-2028': {
+    id: '2027-2028',
+    grade: '12C7',
+    label: 'Lớp 12 (2027 - 2028)',
+    openingDate: '2027-09-05',
+    startDate: '2027-09-06',
+    endDate: '2028-05-31',
+    totalWeeks: 35,
+    semester1Weeks: 18
+  }
+};
+
+let currentAcademicYearKey = localStorage.getItem('c7aio_academic_year') || '2026-2027';
+
+function getActiveAcademicYear() {
+  return ACADEMIC_YEARS[currentAcademicYearKey] || ACADEMIC_YEARS['2026-2027'];
+}
+
+function switchAcademicYear(yearKey) {
+  if (!ACADEMIC_YEARS[yearKey]) return;
+  currentAcademicYearKey = yearKey;
+  localStorage.setItem('c7aio_academic_year', yearKey);
+  const ay = getActiveAcademicYear();
+  selectedClassFilter = ay.grade;
+  
+  ensureSemesterWeeksMetadata();
+  resolveInitialWeek();
+  renderAll();
+  showToast(`🎓 Đã chuyển sang cấu hình niên khóa ${ay.label}`, 'success');
+}
+
+function getAcademicProgress(targetDate = null) {
+  const ay = getActiveAcademicYear();
+  const d = targetDate ? parseLocalDate(targetDate) : new Date(selectedDate);
+  const targetKey = toDateStringKey(d);
+
+  const openDate = parseLocalDate(ay.openingDate);
+  const startDate = parseLocalDate(ay.startDate);
+  const endDate = parseLocalDate(ay.endDate);
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  // 1. Trước khai giảng
+  if (targetKey < ay.openingDate) {
+    const daysUntilOpening = Math.max(1, Math.ceil((openDate.getTime() - d.getTime()) / oneDayMs));
+    return {
+      status: 'before_opening',
+      academicYear: ay,
+      currentWeek: 0,
+      totalWeeks: ay.totalWeeks,
+      percentage: 0,
+      daysUntilOpening,
+      badgeText: `⏳ Còn ${daysUntilOpening} ngày đến Khai giảng (${formatDateDisplay(ay.openingDate)})`,
+      desc: `Năm học mới ${ay.label} sẽ chính thức khai giảng vào ngày ${formatDateDisplay(ay.openingDate)}.`
+    };
+  }
+
+  // 2. Giai đoạn Khai giảng đến trước ngày TKB số 1 (05/09 - 06/09)
+  if (targetKey >= ay.openingDate && targetKey < ay.startDate) {
+    const isOpeningDay = (targetKey === ay.openingDate);
+    return {
+      status: 'opening_period',
+      academicYear: ay,
+      currentWeek: 0,
+      totalWeeks: ay.totalWeeks,
+      percentage: 0,
+      badgeText: isOpeningDay ? '🎉 Hôm nay: Lễ Khai Giảng Năm Học Mới!' : '🚩 Tuần lễ khai giảng',
+      desc: `Lễ Khai giảng năm học mới ${ay.label}. Thời khóa biểu chính thức (Tuần 1) bắt đầu từ Thứ Hai, ${formatDateDisplay(ay.startDate)}.`
+    };
+  }
+
+  // 3. Trong năm học chính thức
+  if (targetKey >= ay.startDate && targetKey <= ay.endDate) {
+    const diffDays = Math.floor((d.getTime() - startDate.getTime()) / oneDayMs);
+    const weekNum = Math.min(ay.totalWeeks, Math.floor(diffDays / 7) + 1);
+    const percent = Math.min(100, Math.max(1, Math.round((weekNum / ay.totalWeeks) * 100)));
+    const remainingWeeks = Math.max(0, ay.totalWeeks - weekNum);
+    const isSem1 = weekNum <= ay.semester1Weeks;
+    const semName = isSem1 ? 'Học kỳ 1' : 'Học kỳ 2';
+    const semWeek = isSem1 ? weekNum : (weekNum - ay.semester1Weeks);
+
+    return {
+      status: 'in_progress',
+      academicYear: ay,
+      currentWeek: weekNum,
+      totalWeeks: ay.totalWeeks,
+      percentage: percent,
+      semester: semName,
+      semesterWeek: semWeek,
+      remainingWeeks,
+      badgeText: `📌 Tuần học: Tuần ${weekNum}/${ay.totalWeeks} • ${semName}`,
+      desc: `Đã hoàn thành ${percent}% năm học • Còn khoảng ${remainingWeeks} tuần học nữa bế giảng.`
+    };
+  }
+
+  // 4. Đã kết thúc năm học
+  return {
+    status: 'completed',
+    academicYear: ay,
+    currentWeek: ay.totalWeeks,
+    totalWeeks: ay.totalWeeks,
+    percentage: 100,
+    badgeText: `🏆 Đã kết thúc năm học ${ay.label}`,
+    desc: `Năm học đã bế giảng vào ngày ${formatDateDisplay(ay.endDate)}. Chúc mừng bạn đã hoàn thành chương trình!`
+  };
+}
+
+function renderAcademicYearProgressWidget() {
+  const container = document.getElementById('academicYearWidget');
+  if (!container) return;
+
+  const ay = getActiveAcademicYear();
+  const prog = getAcademicProgress(selectedDate);
+  const isComparingToday = (toDateStringKey(selectedDate) === toDateStringKey(new Date()));
+
+  const optionsHtml = Object.values(ACADEMIC_YEARS).map(y => `
+    <option value="${y.id}" ${y.id === ay.id ? 'selected' : ''}>
+      ${escapeHtml(y.label)} ${y.id === '2026-2027' ? '★' : ''}
+    </option>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="academic-year-top-row">
+      <div class="academic-year-meta">
+        <span style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+          🎓 Niên khóa:
+        </span>
+        <select id="academicYearSelect" class="academic-year-select" onchange="switchAcademicYear(this.value)" title="Chọn niên khóa để chuyển đổi cấp lớp">
+          ${optionsHtml}
+        </select>
+        <span class="academic-week-badge">
+          ${prog.badgeText}
+        </span>
+      </div>
+
+      <div class="academic-year-dates-info">
+        <span>🚩 Khai giảng: <strong>${formatDateDisplay(ay.openingDate)}</strong></span>
+        <span>•</span>
+        <span>🏁 Bế giảng: <strong>${formatDateDisplay(ay.endDate)}</strong></span>
+      </div>
+    </div>
+
+    <div class="academic-progress-container">
+      <div class="academic-progress-labels">
+        <span>
+          ${prog.status === 'in_progress'
+            ? `Tiến độ niên khóa: <strong>Tuần ${prog.currentWeek}/${prog.totalWeeks}</strong> (${prog.semester})`
+            : `<span>${prog.desc}</span>`}
+          ${!isComparingToday ? `<small style="opacity: 0.75; margin-left: 6px;">(Đang tính theo ngày chọn)</small>` : ''}
+        </span>
+        <span style="font-weight: 700; color: var(--primary);">
+          ${prog.percentage}% hoàn thành
+        </span>
+      </div>
+      <div class="academic-progress-track">
+        <div class="academic-progress-fill" style="width: ${prog.percentage}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+// Expose academic year utilities to window
+window.C7_ACADEMIC_YEARS = ACADEMIC_YEARS;
+window.getActiveAcademicYear = getActiveAcademicYear;
+window.switchAcademicYear = switchAcademicYear;
+window.getAcademicProgress = getAcademicProgress;
+
 window.addEventListener('load', () => {
   const user = getCurrentUser();
   if (!user) {
@@ -114,26 +302,30 @@ function initDefaultScheduleIfEmpty() {
     };
   }
 
-  // TKB số 1 chính thức áp dụng từ ngày 07/09/2026
-  if (!weekMetadata['week-1'] || weekMetadata['week-1'].startDate === '2026-08-24') {
+  const ay = getActiveAcademicYear();
+  // TKB số 1 chính thức áp dụng từ ngày startDate của niên khóa
+  if (!weekMetadata['week-1'] || weekMetadata['week-1'].startDate === '2026-08-24' || (weekMetadata['week-1'].academicYear && weekMetadata['week-1'].academicYear !== ay.id)) {
     weekMetadata['week-1'] = {
       name: 'Tuần 1',
-      className: '11C7',
-      startDate: '2026-09-07',
-      endDate: '2026-09-13',
+      className: ay.grade,
+      academicYear: ay.id,
+      startDate: ay.startDate,
+      endDate: toDateStringKey(new Date(parseLocalDate(ay.startDate).getFullYear(), parseLocalDate(ay.startDate).getMonth(), parseLocalDate(ay.startDate).getDate() + 6)),
       ...(weekMetadata['week-1'] || {})
     };
-    weekMetadata['week-1'].startDate = '2026-09-07';
-    weekMetadata['week-1'].endDate = '2026-09-13';
+    weekMetadata['week-1'].startDate = ay.startDate;
+    weekMetadata['week-1'].className = ay.grade;
+    weekMetadata['week-1'].academicYear = ay.id;
   }
 
   ensureSemesterWeeksMetadata();
 }
 
 function ensureSemesterWeeksMetadata() {
-  const baseStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate && weekMetadata['week-1'].startDate !== '2026-08-24')
+  const ay = getActiveAcademicYear();
+  const baseStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate && weekMetadata['week-1'].startDate !== '2026-08-24' && weekMetadata['week-1'].academicYear === ay.id)
     ? weekMetadata['week-1'].startDate
-    : '2026-09-07';
+    : ay.startDate;
   const startD = parseLocalDate(baseStart);
 
   // Sinh thông tin tuần tự động cho tối thiểu 10 tuần (đặc biệt là Tuần 8)
@@ -141,16 +333,19 @@ function ensureSemesterWeeksMetadata() {
     const wKey = `week-${i}`;
     const s = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + (i - 1) * 7);
     const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
-    if (!weekMetadata[wKey] || !weekMetadata[wKey].startDate || weekMetadata[wKey].startDate < '2026-09-07') {
+    if (!weekMetadata[wKey] || !weekMetadata[wKey].startDate || weekMetadata[wKey].academicYear !== ay.id) {
       weekMetadata[wKey] = {
         name: `Tuần ${i}`,
-        className: '11C7',
+        className: ay.grade,
+        academicYear: ay.id,
         startDate: toDateStringKey(s),
         endDate: toDateStringKey(e),
         ...(weekMetadata[wKey] || {})
       };
       weekMetadata[wKey].startDate = toDateStringKey(s);
       weekMetadata[wKey].endDate = toDateStringKey(e);
+      weekMetadata[wKey].className = ay.grade;
+      weekMetadata[wKey].academicYear = ay.id;
     }
   }
 }
@@ -252,6 +447,7 @@ function resolveWeekFromDate(date) {
 }
 
 function renderAll() {
+  renderAcademicYearProgressWidget();
   populateClassFilterOptions();
   renderCalendar();
   renderWeekChips();

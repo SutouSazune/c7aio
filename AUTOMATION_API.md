@@ -112,14 +112,54 @@ await C7_CONSOLE.updateSchedule({
 }, 'week-1');
 ```
 
-### 3.2. Cập nhật thông tin tuần học: `C7_CONSOLE.setWeekMetadata({ week, name, startDate, endDate })`
+### 3.2. Cập nhật thông tin tuần học: `C7_CONSOLE.setWeekMetadata({ week, name, className, startDate, endDate, semester, academicYear })`
 ```javascript
 await C7_CONSOLE.setWeekMetadata({
   week: 1,
   name: "Tuần 1 - Khởi đầu năm học mới",
+  className: "11C7",
   startDate: "2026-09-07",
-  endDate: "2026-09-13"
+  endDate: "2026-09-13",
+  semester: "HK1",
+  academicYear: "2026-2027"
 });
+```
+
+### 3.3. Cập nhật lịch học theo ngày và tiết học:
+```javascript
+// Cập nhật toàn bộ tiết học của 1 ngày (hoặc ngày cụ thể '2026-09-08')
+await C7_CONSOLE.updateDaySchedule('T2', [
+  { name: 'Toán học', time: '07:00 - 07:45', room: 'P.204' },
+  { name: 'Vật lí', time: '07:50 - 08:35', room: 'P.204' }
+], 'week-1', '11C7');
+
+// Thêm 1 tiết học vào thứ bất kỳ
+await C7_CONSOLE.addClassPeriod('T3', { name: 'Sinh học', time: '08:50 - 09:35', room: 'P.204' }, 'week-1', '11C7');
+
+// Xóa tiết học (theo index hoặc tên môn)
+await C7_CONSOLE.removeClassPeriod('T3', 0, 'week-1', '11C7');
+
+// Xóa sạch tiết học của ngày (ví dụ nghỉ lễ / nghỉ đột xuất)
+await C7_CONSOLE.clearDaySchedule('T2', 'week-1', '11C7');
+
+// Lấy danh sách tiết học của ngày
+const t2Schedule = C7_CONSOLE.getDaySchedule('T2', 'week-1', '11C7');
+```
+
+### 3.4. Niên khóa & Bộ đếm tuần học (Academic Years & Week Counter)
+*Hỗ trợ phân tách dữ liệu 3 niên khóa riêng biệt (Lớp 10: 2025-2026, Lớp 11: 2026-2027, Lớp 12: 2027-2028). Bộ đếm tuần tính từ ngày Khai giảng (05/09) đến ngày kết thúc năm học (31/05).*
+
+```javascript
+// 1. Lấy thông tin niên khóa hiện tại & tiến độ năm học
+const yearInfo = C7_CONSOLE.getAcademicYearInfo();
+// Kết quả: { academicYear: "2026-2027", grade: "11C7", status: "opening_period", currentWeek: 0, percentage: 0, badge: "..." }
+
+// 2. Kiểm tra tiến độ tại một ngày cụ thể
+const weekInfo = C7_CONSOLE.getWeekCount('2026-09-08');
+// Kết quả: { currentWeek: 1, totalWeeks: 35, percentage: 3, semester: "Học kỳ 1", semesterWeek: 1, ... }
+
+// 3. Chuyển đổi niên khóa hoạt động
+C7_CONSOLE.setAcademicYear('2026-2027'); // hoặc '2025-2026', '2027-2028'
 ```
 
 ---

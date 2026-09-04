@@ -2,7 +2,7 @@
  * C7AIO Automation Engine & Console API Suite
  * Cung cấp API lập trình toàn cục (window.C7_CONSOLE & window.C7_BOT)
  * Phục vụ AI Agent / Automation Tools tự động bóc tách tin nhắn & nạp dữ liệu Firebase an toàn
- * @version 3.4.0
+ * @version 3.4.2
  */
 
 (function() {
@@ -129,7 +129,7 @@
 
   // ================= MAIN CONTROLLER OBJECT =================
   const C7_ENGINE = {
-    version: '3.4.0',
+    version: '3.4.2',
 
     // ================= 1. TASKS MANAGEMENT =================
     /**
@@ -666,6 +666,73 @@
       return filtered;
     },
 
+    /**
+     * Lấy thông tin niên khóa hiện tại và tiến độ năm học (Bộ đếm tuần học)
+     * @param {string|Date} [targetDate] Ngày kiểm tra (mặc định hôm nay)
+     */
+    getAcademicYearInfo(targetDate = '') {
+      try {
+        if (typeof window !== 'undefined' && typeof window.getAcademicProgress === 'function' && typeof window.getActiveAcademicYear === 'function') {
+          const ay = window.getActiveAcademicYear();
+          const target = targetDate ? new Date(targetDate) : new Date();
+          const prog = window.getAcademicProgress(target);
+          return {
+            success: true,
+            academicYear: ay.id,
+            grade: ay.grade,
+            label: ay.label,
+            openingDate: ay.openingDate,
+            startDate: ay.startDate,
+            endDate: ay.endDate,
+            status: prog.status,
+            currentWeek: prog.currentWeek,
+            totalWeeks: prog.totalWeeks,
+            percentage: prog.percentage,
+            badge: prog.badgeText,
+            desc: prog.desc
+          };
+        }
+        const stored = (typeof localStorage !== 'undefined' && localStorage.getItem('c7aio_academic_year')) || '2026-2027';
+        return {
+          success: true,
+          academicYear: stored,
+          note: 'Chạy ở chế độ độc lập/fallback'
+        };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi getAcademicYearInfo:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Chuyển đổi niên khóa hoạt động ('2025-2026', '2026-2027', '2027-2028')
+     * @param {string} yearKey 
+     */
+    setAcademicYear(yearKey) {
+      try {
+        if (typeof window !== 'undefined' && typeof window.switchAcademicYear === 'function') {
+          window.switchAcademicYear(yearKey);
+          return { success: true, academicYear: yearKey };
+        }
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('c7aio_academic_year', yearKey);
+        }
+        console.log('✅ [C7_CONSOLE] Đã cập nhật niên khóa:', yearKey);
+        return { success: true, academicYear: yearKey };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi setAcademicYear:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Bộ đếm tuần học và trạng thái tính từ Khai giảng (05/09)
+     * @param {string|Date} [targetDate]
+     */
+    getWeekCount(targetDate = '') {
+      return this.getAcademicYearInfo(targetDate);
+    },
+
     // ================= 4. BATCH INGESTION (NẠP HÀNG LOẠT TRONG 1 LỆNH) =================
     /**
      * Nạp toàn bộ Nhiệm vụ, Thông báo và Lịch học từ 1 đoạn trích xuất duy nhất
@@ -776,7 +843,7 @@
    • C7_CONSOLE.togglePin(notifId)
    • C7_CONSOLE.getNotifications()
 
-3. Thời khóa biểu (Schedules):
+3. Thời khóa biểu & Niên khóa (Schedules & Academic Years):
    • C7_CONSOLE.updateSchedule({ T2: [...], T3: [...] }, 'week-1', '11C7')
    • C7_CONSOLE.updateDaySchedule('T2', [...], 'week-1', '11C7')  // hoặc ngày '2026-09-08'
    • C7_CONSOLE.addClassPeriod('T2', { name: 'Toán', time: '07:00 - 07:45', room: 'P.204' }, 'week-1', '11C7')
@@ -784,8 +851,11 @@
    • C7_CONSOLE.clearDaySchedule('T2') // xóa sạch tiết của 1 ngày (ví dụ nghỉ lễ)
    • C7_CONSOLE.getDaySchedule('T2', 'week-1', '11C7')
    • C7_CONSOLE.getClassesList() // danh sách các lớp riêng
-   • C7_CONSOLE.setWeekMetadata({ week: 1, name: 'Tuần 1', className: '11C7', startDate: '2026-09-07', endDate: '2026-09-13' })
+   • C7_CONSOLE.setWeekMetadata({ week: 1, name: 'Tuần 1', className: '11C7', startDate: '2026-09-07', endDate: '2026-09-13', academicYear: '2026-2027' })
    • C7_CONSOLE.getSchedule('week-1', '11C7')
+   • C7_CONSOLE.getAcademicYearInfo() // Thông tin niên khóa & tiến độ năm học
+   • C7_CONSOLE.setAcademicYear('2026-2027') // Đổi niên khóa ('2025-2026', '2026-2027', '2027-2028')
+   • C7_CONSOLE.getWeekCount('2026-09-08') // Đếm tuần học tính từ Khai giảng (05/09)
 
 4. Nạp hàng loạt (Batch Ingestion):
    • C7_CONSOLE.ingestBatch({ tasks: [...], notifications: [...], schedules: {...}, weekMetadata: {...} })
