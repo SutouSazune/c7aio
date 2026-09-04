@@ -836,10 +836,16 @@ function renderDayView() {
     rawClasses = weekSchedule[dayName] || [];
     const currentWeekMeta = weekMetadata[matchedWeekKey] || {};
     weekTitle = currentWeekMeta.name || matchedWeekKey;
-  } else if (isBeforeSemester) {
-    weekTitle = 'Chưa áp dụng TKB';
   } else {
-    weekTitle = 'Ngoài tuần học';
+    // Fallback: Xem trước TKB tuần cơ bản (week-1) để không bị khóa ngày trước niên khóa
+    const defaultWeekKey = (weekMetadata['week-1'] ? 'week-1' : Object.keys(weekMetadata)[0]) || 'week-1';
+    const fallbackSchedule = getEffectiveSchedule(defaultWeekKey);
+    rawClasses = fallbackSchedule[dayName] || [];
+    if (isBeforeSemester) {
+      weekTitle = 'Xem trước TKB (Trước niên khoá)';
+    } else {
+      weekTitle = 'Ngoài tuần học (Xem trước)';
+    }
   }
 
   // Gắn originalIndex để sửa/xóa chuẩn xác kể cả khi đang lọc lớp
@@ -854,12 +860,12 @@ function renderDayView() {
   let emptyMessageTitle = 'Không có tiết học';
   let emptyMessageDesc = 'Hôm nay không có tiết học hoặc chưa được xếp thời khóa biểu!';
 
-  if (isBeforeSemester) {
+  if (isBeforeSemester && classes.length === 0) {
     emptyMessageTitle = 'Chưa áp dụng thời khóa biểu';
-    emptyMessageDesc = `Thời khóa biểu số 1 chính thức bắt đầu áp dụng từ Thứ Hai, ${formatDateDisplay(firstWeekStart)}. Trước ngày này chưa có tiết học!`;
+    emptyMessageDesc = `Thời khóa biểu số 1 chính thức bắt đầu áp dụng từ Thứ Hai, ${formatDateDisplay(firstWeekStart)}. Ngày này không có tiết học!`;
   }
 
-  const jumpToStartBtn = isBeforeSemester ? `
+  const jumpToStartBtn = (isBeforeSemester && classes.length === 0) ? `
     <div style="margin-top: 14px;">
       <button class="c7-btn c7-btn-primary" onclick="goToSemesterStart()" style="font-size: 0.85rem;">
         👉 Đi đến ngày bắt đầu TKB (${formatDateDisplay(firstWeekStart)})
@@ -1298,8 +1304,9 @@ function renderMonthView() {
     const wKey = getWeekKeyForDate(dateObj);
 
     let classChips = '';
-    if (wKey) {
-      const sched = getEffectiveSchedule(wKey);
+    const activeWKey = wKey || (weekMetadata['week-1'] ? 'week-1' : Object.keys(weekMetadata)[0]) || 'week-1';
+    if (activeWKey) {
+      const sched = getEffectiveSchedule(activeWKey);
       let dayList = (sched[dayName] || []);
       if (selectedClassFilter) dayList = dayList.filter(c => !c.className || c.className === selectedClassFilter);
       const MAX_SHOW = 2;
