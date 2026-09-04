@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.4.0-automation-api';
+const CACHE_NAME = 'c7aio-v3.4.1-schedule-dates';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

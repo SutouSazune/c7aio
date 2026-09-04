@@ -114,27 +114,34 @@ function initDefaultScheduleIfEmpty() {
     };
   }
 
-  if (!weekMetadata['week-1']) {
+  // TKB số 1 chính thức áp dụng từ ngày 07/09/2026
+  if (!weekMetadata['week-1'] || weekMetadata['week-1'].startDate === '2026-08-24') {
     weekMetadata['week-1'] = {
       name: 'Tuần 1',
-      startDate: '2026-08-24',
-      endDate: '2026-08-30'
+      className: '11C7',
+      startDate: '2026-09-07',
+      endDate: '2026-09-13',
+      ...(weekMetadata['week-1'] || {})
     };
+    weekMetadata['week-1'].startDate = '2026-09-07';
+    weekMetadata['week-1'].endDate = '2026-09-13';
   }
 
   ensureSemesterWeeksMetadata();
 }
 
 function ensureSemesterWeeksMetadata() {
-  const baseStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate) ? weekMetadata['week-1'].startDate : '2026-08-24';
+  const baseStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate && weekMetadata['week-1'].startDate !== '2026-08-24')
+    ? weekMetadata['week-1'].startDate
+    : '2026-09-07';
   const startD = parseLocalDate(baseStart);
 
   // Sinh thông tin tuần tự động cho tối thiểu 10 tuần (đặc biệt là Tuần 8)
   for (let i = 1; i <= 10; i++) {
     const wKey = `week-${i}`;
-    if (!weekMetadata[wKey] || !weekMetadata[wKey].startDate) {
-      const s = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + (i - 1) * 7);
-      const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
+    const s = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + (i - 1) * 7);
+    const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
+    if (!weekMetadata[wKey] || !weekMetadata[wKey].startDate || weekMetadata[wKey].startDate < '2026-09-07') {
       weekMetadata[wKey] = {
         name: `Tuần ${i}`,
         className: '11C7',
@@ -142,6 +149,8 @@ function ensureSemesterWeeksMetadata() {
         endDate: toDateStringKey(e),
         ...(weekMetadata[wKey] || {})
       };
+      weekMetadata[wKey].startDate = toDateStringKey(s);
+      weekMetadata[wKey].endDate = toDateStringKey(e);
     }
   }
 }
@@ -175,6 +184,23 @@ function parseLocalDate(str) {
     return new Date(y, m, d);
   }
   return new Date(str);
+}
+
+function formatDateDisplay(str) {
+  if (!str) return '';
+  const parts = String(str).split('T')[0].split(/[-/]/);
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return str;
+}
+
+function goToSemesterStart() {
+  const firstWeekStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate) || '2026-09-07';
+  selectedDate = parseLocalDate(firstWeekStart);
+  currentDate = new Date(selectedDate);
+  currentWeekKey = 'week-1';
+  scheduleViewMode = 'day';
+  renderAll();
+  showToast('📅 Đã chuyển đến ngày bắt đầu TKB số 1 (07/09/2026)', 'success');
 }
 
 function getWeekKeyForDate(date) {
@@ -308,13 +334,20 @@ function updateCurrentWeekBanner() {
   const meta = weekMetadata[currentWeekKey] || {};
   const banner = document.getElementById('currentWeekBanner');
   if (banner) {
-    const title = meta.name || currentWeekKey;
+    const firstWeekStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate) || '2026-09-07';
+    const selectedDateKey = toDateStringKey(selectedDate);
+    const isBeforeSemester = scheduleViewMode === 'day' && selectedDateKey < firstWeekStart;
+
+    let title = meta.name || currentWeekKey;
+    if (isBeforeSemester) {
+      title = 'Chưa áp dụng TKB';
+    }
     const classBadge = meta.className ? ` • Lớp ${meta.className}` : '';
-    const dateRange = (meta.startDate && meta.endDate) ? ` (${meta.startDate} → ${meta.endDate})` : '';
+    const dateRange = (meta.startDate && meta.endDate) ? ` (${formatDateDisplay(meta.startDate)} → ${formatDateDisplay(meta.endDate)})` : '';
     const modeBadge = scheduleViewMode === 'day' 
       ? ` • Xem: <strong>${DAY_LABELS[getDayNameFromDate(selectedDate)]}</strong>` 
       : ` • Xem: <strong>Cả tuần</strong>`;
-    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${escapeHtml(title)}</strong>${classBadge}${dateRange}${modeBadge}`;
+    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${escapeHtml(title)}</strong>${classBadge}${isBeforeSemester ? ` (Bắt đầu từ ${formatDateDisplay(firstWeekStart)})` : dateRange}${modeBadge}`;
   }
 }
 
@@ -379,13 +412,16 @@ function renderCalendar() {
       renderAll();
     };
 
-    // Kiểm tra tiết học theo đúng tuần chứa ngày này
-    const targetWeekKey = getWeekKeyForDate(dateObj) || currentWeekKey;
-    const targetSchedule = getEffectiveSchedule(targetWeekKey);
-    const dayName = getDayNameFromDate(dateObj);
-    let dayClasses = targetSchedule[dayName] || [];
-    if (selectedClassFilter) {
-      dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
+    // Kiểm tra tiết học theo đúng tuần chứa ngày này (chỉ vẽ chấm nếu ngày này thuộc tuần học có TKB)
+    const targetWeekKey = getWeekKeyForDate(dateObj);
+    let dayClasses = [];
+    if (targetWeekKey) {
+      const targetSchedule = getEffectiveSchedule(targetWeekKey);
+      const dayName = getDayNameFromDate(dateObj);
+      dayClasses = targetSchedule[dayName] || [];
+      if (selectedClassFilter) {
+        dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
+      }
     }
     if (dayClasses.length > 0) {
       const dot = document.createElement('span');
@@ -504,8 +540,29 @@ function renderDayView() {
   if (!container) return;
 
   const dayName = getDayNameFromDate(selectedDate);
-  const weekSchedule = getEffectiveSchedule(currentWeekKey);
-  const rawClasses = weekSchedule[dayName] || [];
+  const matchedWeekKey = getWeekKeyForDate(selectedDate);
+  const today = new Date();
+  const isToday = toDateStringKey(selectedDate) === toDateStringKey(today);
+  const selectedDateKey = toDateStringKey(selectedDate);
+  const dateStr = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
+
+  // Kiểm tra ngày này có nằm trước khi học kỳ / TKB số 1 bắt đầu không
+  const firstWeekStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate) || '2026-09-07';
+  const isBeforeSemester = selectedDateKey < firstWeekStart;
+
+  let rawClasses = [];
+  let weekTitle = '';
+
+  if (matchedWeekKey) {
+    const weekSchedule = getEffectiveSchedule(matchedWeekKey);
+    rawClasses = weekSchedule[dayName] || [];
+    const currentWeekMeta = weekMetadata[matchedWeekKey] || {};
+    weekTitle = currentWeekMeta.name || matchedWeekKey;
+  } else if (isBeforeSemester) {
+    weekTitle = 'Chưa áp dụng TKB';
+  } else {
+    weekTitle = 'Ngoài tuần học';
+  }
 
   // Gắn originalIndex để sửa/xóa chuẩn xác kể cả khi đang lọc lớp
   const classesWithIndex = rawClasses.map((c, originalIndex) => ({ ...c, originalIndex }));
@@ -513,17 +570,28 @@ function renderDayView() {
     ? classesWithIndex.filter(c => !c.className || c.className === selectedClassFilter)
     : classesWithIndex;
 
-  const today = new Date();
-  const isToday = toDateStringKey(selectedDate) === toDateStringKey(today);
-  const dateStr = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
-  const currentWeekMeta = weekMetadata[currentWeekKey] || {};
-  const weekTitle = currentWeekMeta.name || currentWeekKey;
+  let emptyMessageTitle = 'Không có tiết học';
+  let emptyMessageDesc = 'Hôm nay không có tiết học hoặc chưa được xếp thời khóa biểu!';
+
+  if (isBeforeSemester) {
+    emptyMessageTitle = 'Chưa áp dụng thời khóa biểu';
+    emptyMessageDesc = `Thời khóa biểu số 1 chính thức bắt đầu áp dụng từ Thứ Hai, ${formatDateDisplay(firstWeekStart)}. Trước ngày này chưa có tiết học!`;
+  }
+
+  const jumpToStartBtn = isBeforeSemester ? `
+    <div style="margin-top: 14px;">
+      <button class="c7-btn c7-btn-primary" onclick="goToSemesterStart()" style="font-size: 0.85rem;">
+        👉 Đi đến ngày bắt đầu TKB (${formatDateDisplay(firstWeekStart)})
+      </button>
+    </div>
+  ` : '';
 
   const classesHtml = classes.length === 0
     ? `<div class="empty-widget" style="padding: 2.5rem 1rem; text-align: center; color: var(--text-sub); width: 100%;">
-        <span style="font-size: 2.8rem;">🏖️</span>
-        <h4 style="font-size: 1.1rem; margin: 8px 0 4px; color: var(--text-main);">Không có tiết học</h4>
-        <p style="font-size: 0.85rem;">Hôm nay không có tiết học hoặc chưa được xếp thời khóa biểu!</p>
+        <span style="font-size: 2.8rem;">${isBeforeSemester ? '⏳' : '🏖️'}</span>
+        <h4 style="font-size: 1.1rem; margin: 8px 0 4px; color: var(--text-main);">${emptyMessageTitle}</h4>
+        <p style="font-size: 0.85rem; max-width: 480px; margin: 0 auto;">${emptyMessageDesc}</p>
+        ${jumpToStartBtn}
       </div>`
     : `<div class="day-classes-list-grid" style="width: 100%;">` + classes.map(c => {
         const color = getSubjectColor(c.name || c.subject);

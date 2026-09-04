@@ -784,7 +784,7 @@
    • C7_CONSOLE.clearDaySchedule('T2') // xóa sạch tiết của 1 ngày (ví dụ nghỉ lễ)
    • C7_CONSOLE.getDaySchedule('T2', 'week-1', '11C7')
    • C7_CONSOLE.getClassesList() // danh sách các lớp riêng
-   • C7_CONSOLE.setWeekMetadata({ week: 1, name: 'Tuần 1', className: '11C7', startDate: '2026-08-24', endDate: '2026-08-30' })
+   • C7_CONSOLE.setWeekMetadata({ week: 1, name: 'Tuần 1', className: '11C7', startDate: '2026-09-07', endDate: '2026-09-13' })
    • C7_CONSOLE.getSchedule('week-1', '11C7')
 
 4. Nạp hàng loạt (Batch Ingestion):

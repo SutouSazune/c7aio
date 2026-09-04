@@ -117,8 +117,8 @@ await C7_CONSOLE.updateSchedule({
 await C7_CONSOLE.setWeekMetadata({
   week: 1,
   name: "Tuần 1 - Khởi đầu năm học mới",
-  startDate: "2026-08-24",
-  endDate: "2026-08-30"
+  startDate: "2026-09-07",
+  endDate: "2026-09-13"
 });
 ```
 
