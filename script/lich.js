@@ -475,6 +475,11 @@ function resolveInitialWeek() {
     currentWeekKey = matchedKey;
     return;
   }
+  // Mặc định luôn ưu tiên Tuần 1 nếu ngày hiện tại chưa đến hoặc nằm ngoài các tuần
+  if (weekMetadata['week-1'] || schedules['week-1']) {
+    currentWeekKey = 'week-1';
+    return;
+  }
   const keys = Object.keys(schedules);
   if (keys.length > 0) currentWeekKey = keys[0];
 }
@@ -612,7 +617,11 @@ function renderCalendar() {
     const prevDate = new Date(year, month - 1, prevMonthLast - i);
     const cell = document.createElement('div');
     cell.className = 'cal-day-cell other-month';
-    cell.textContent = prevMonthLast - i;
+    const numSpan = document.createElement('span');
+    numSpan.className = 'cal-day-num';
+    numSpan.textContent = prevMonthLast - i;
+    cell.appendChild(numSpan);
+    cell.appendChild(document.createElement('div'));
     cell.onclick = () => {
       selectedDate = prevDate;
       currentDate = new Date(selectedDate);
@@ -713,13 +722,21 @@ function renderCalendar() {
 }
 
 function prevMonth() {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+  if (scheduleViewMode === 'month') {
+    renderMonthView();
+  } else {
+    renderCalendar();
+  }
 }
 
 function nextMonth() {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+  if (scheduleViewMode === 'month') {
+    renderMonthView();
+  } else {
+    renderCalendar();
+  }
 }
 
 function jumpToToday() {
@@ -965,14 +982,6 @@ function openAddClassForCurrentDay(dayName) {
   openAddClassModal(dayName);
 }
 
-function prevMonth() {
-  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-}
-
-function nextMonth() {
-  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-}
-
 // ============= TIMETABLE VIEW (Cả tuần) =============
 function renderTimetable() {
   const container = document.getElementById('timetableGrid');
@@ -1001,10 +1010,19 @@ function renderTimetable() {
       ? classesWithIndex.filter(c => !c.className || c.className === selectedClassFilter)
       : classesWithIndex;
 
+    const dayEventsInWeek = getEventsForDayInWeek(currentWeekKey, day);
+
     const classesHtml = classes.length === 0
       ? '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 14px 0;">Không có tiết học</div>'
       : classes.map(c => {
           const color = getSubjectColor(c.name || c.subject);
+          const periodEvts = dayEventsInWeek.filter(e =>
+            (e.periodIndex === null || e.periodIndex === undefined || e.periodIndex === c.originalIndex)
+          );
+          const pBadges = periodEvts.map(ev =>
+            `<span class="event-inline-badge ${ev.severity === 'danger' ? 'danger' : ''}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</span>`
+          ).join('');
+
           return `
             <div class="class-card-item" style="border-left-color: ${color}">
               <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1013,6 +1031,7 @@ function renderTimetable() {
               </div>
               <div class="class-card-name">${escapeHtml(c.name || '')}</div>
               ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
+              ${pBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;">${pBadges}</div>` : ''}
               <div class="class-card-room">📍 ${escapeHtml(c.room || 'Chưa rõ')}</div>
               ${checkPermission('manage_schedule') ? `
                 <div style="display: flex; gap: 6px; margin-top: 6px;">
@@ -1031,7 +1050,10 @@ function renderTimetable() {
             <span>${DAY_LABELS[day]} <small style="font-size: 0.8rem; font-weight: 500; opacity: 0.8;">(${dateFormatted})</small></span>
             ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 6px; font-size: 0.7rem; font-weight: 700;">Hôm nay</span>' : ''}
           </div>
-          <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết 🔍</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${dayEventsInWeek.length > 0 ? `<span class="event-inline-badge" style="font-size:0.65rem;">📢 ${dayEventsInWeek.length}</span>` : ''}
+            <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết 🔍</span>
+          </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           ${classesHtml}
