@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
@@ -41,6 +41,26 @@
     <section class="schedule-header-card">
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
         <span class="current-week-tag" id="currentWeekBanner">🗓️ Đang hiển thị: Tuần 1</span>
+
+        <!-- Class Filter Selector -->
+        <div class="class-filter-box" style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">🏫 Lớp:</span>
+          <select id="classFilterSelect" class="form-control-custom" style="padding: 5px 10px; width: auto; font-weight: 700; font-size: 0.88rem;" onchange="handleClassFilterChange(this.value)">
+            <option value="">-- Tất cả lớp --</option>
+            <option value="11C7" selected>Lớp 11C7</option>
+          </select>
+        </div>
+
+        <!-- View Mode Switcher -->
+        <div class="view-mode-toggle-group">
+          <button type="button" class="view-mode-pill-btn active" id="btnViewWeek" onclick="switchScheduleViewMode('week')">
+            📋 Cả tuần
+          </button>
+          <button type="button" class="view-mode-pill-btn" id="btnViewDay" onclick="switchScheduleViewMode('day')">
+            📅 Ngày đã chọn
+          </button>
+        </div>
+
         <button class="c7-btn c7-btn-secondary" onclick="jumpToToday()">
           📍 Hôm nay
         </button>
@@ -89,6 +109,11 @@
       </div>
     </section>
 
+    <!-- Dedicated Day View Section (Click ngày nào hiện ngày đó) -->
+    <section class="schedule-day-view-card" id="dayViewContainer" style="display: none;">
+      <!-- Rendered dynamically by lich.js -->
+    </section>
+
     <!-- Weekly Timetable Grid -->
     <section class="timetable-grid-week" id="timetableGrid">
       <!-- Rendered by lich.js -->
@@ -120,9 +145,15 @@
           </div>
         </div>
 
-        <div>
-          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phân môn / Ghi chú</label>
-          <input type="text" id="inputClassSubject" class="form-control-custom" placeholder="vd: Đại số, Hình học, Đọc hiểu...">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Lớp học</label>
+            <input type="text" id="inputClassGrade" class="form-control-custom" placeholder="vd: 11C7" value="11C7">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phân môn / Ghi chú</label>
+            <input type="text" id="inputClassSubject" class="form-control-custom" placeholder="vd: Đại số, Hình học, Đọc hiểu...">
+          </div>
         </div>
 
         <div>
@@ -179,9 +210,15 @@
       <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 14px;">⚙️ Quản Lý Tuần Học</h3>
       
       <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-        <div>
-          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tên tuần</label>
-          <input type="text" id="inputWeekName" class="form-control-custom" placeholder="vd: Tuần 1, Tuần 2, Tuần Ôn Thi...">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Tên tuần</label>
+            <input type="text" id="inputWeekName" class="form-control-custom" placeholder="vd: Tuần 1, Tuần 2, Tuần Ôn Thi...">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Lớp áp dụng</label>
+            <input type="text" id="inputWeekClass" class="form-control-custom" placeholder="vd: 11C7" value="11C7">
+          </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">

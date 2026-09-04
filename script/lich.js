@@ -8,6 +8,8 @@ let weekMetadata = JSON.parse(localStorage.getItem('c7aio_weekMetadata_cache')) 
 let currentDate = new Date();
 let selectedDate = new Date();
 let currentWeekKey = 'week-1';
+let scheduleViewMode = 'week'; // 'week' hoặc 'day'
+let selectedClassFilter = '11C7'; // Lọc theo lớp riêng, mặc định 11C7
 let editingClassDay = null;
 let editingClassIndex = null;
 
@@ -138,10 +140,70 @@ function resolveInitialWeek() {
 }
 
 function renderAll() {
+  populateClassFilterOptions();
   renderCalendar();
   renderWeekChips();
+  renderDayView();
   renderTimetable();
   updateCurrentWeekBanner();
+
+  // Đồng bộ trạng thái hiển thị viewMode
+  const weekGrid = document.getElementById('timetableGrid');
+  const dayCard = document.getElementById('dayViewContainer');
+  const btnWeek = document.getElementById('btnViewWeek');
+  const btnDay = document.getElementById('btnViewDay');
+
+  if (btnWeek) btnWeek.classList.toggle('active', scheduleViewMode === 'week');
+  if (btnDay) btnDay.classList.toggle('active', scheduleViewMode === 'day');
+
+  if (scheduleViewMode === 'day') {
+    if (weekGrid) weekGrid.style.display = 'none';
+    if (dayCard) dayCard.style.display = 'flex';
+  } else {
+    if (weekGrid) weekGrid.style.display = 'grid';
+    if (dayCard) dayCard.style.display = 'none';
+  }
+}
+
+function switchScheduleViewMode(mode) {
+  scheduleViewMode = mode;
+  renderAll();
+}
+
+function populateClassFilterOptions() {
+  const select = document.getElementById('classFilterSelect');
+  if (!select) return;
+
+  const classesSet = new Set(['11C7']);
+  
+  // Quét từ metadata tuần
+  Object.values(weekMetadata).forEach(m => {
+    if (m && m.className) classesSet.add(m.className);
+  });
+
+  // Quét từ các tiết học trong schedules
+  Object.values(schedules).forEach(weekObj => {
+    if (weekObj && typeof weekObj === 'object') {
+      Object.values(weekObj).forEach(dayList => {
+        if (Array.isArray(dayList)) {
+          dayList.forEach(c => {
+            if (c && c.className) classesSet.add(c.className);
+          });
+        }
+      });
+    }
+  });
+
+  const sortedClasses = Array.from(classesSet).sort();
+  const currentVal = selectedClassFilter;
+
+  select.innerHTML = '<option value="">-- Tất cả lớp --</option>' +
+    sortedClasses.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>Lớp ${c}</option>`).join('');
+}
+
+function handleClassFilterChange(cls) {
+  selectedClassFilter = cls;
+  renderAll();
 }
 
 function updateCurrentWeekBanner() {
@@ -149,8 +211,9 @@ function updateCurrentWeekBanner() {
   const banner = document.getElementById('currentWeekBanner');
   if (banner) {
     const title = meta.name || currentWeekKey;
+    const classBadge = meta.className ? ` • Lớp ${meta.className}` : '';
     const dateRange = (meta.startDate && meta.endDate) ? ` (${meta.startDate} → ${meta.endDate})` : '';
-    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${title}</strong>${dateRange}`;
+    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${title}</strong>${classBadge}${dateRange}`;
   }
 }
 
@@ -195,16 +258,22 @@ function renderCalendar() {
     if (isToday) cell.classList.add('today');
     if (isSelected) cell.classList.add('selected');
 
+    // Click ngày nào thì lập tức hiện TKB của ngày đó!
     cell.onclick = () => {
       selectedDate = dateObj;
       resolveWeekFromDate(selectedDate);
-      renderAll();
+      switchScheduleViewMode('day');
     };
 
     // Check if day has classes in current active schedule
     const dayName = getDayNameFromDate(dateObj);
     const weekSchedule = schedules[currentWeekKey] || {};
-    if (weekSchedule[dayName] && weekSchedule[dayName].length > 0) {
+    let dayClasses = weekSchedule[dayName] || [];
+    if (selectedClassFilter) {
+      dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
+    }
+
+    if (dayClasses.length > 0) {
       const dot = document.createElement('span');
       dot.className = 'cal-class-dot';
       cell.appendChild(dot);
@@ -299,17 +368,122 @@ function addNewWeek() {
   showToast(`Đã tạo Tuần ${nextNum}!`, 'success');
 }
 
-// ============= TIMETABLE VIEW =============
+// ============= DAY SCHEDULE VIEW (Click ngày nào hiện ngày đó) =============
+function renderDayView() {
+  const container = document.getElementById('dayViewContainer');
+  if (!container) return;
+
+  const dayName = getDayNameFromDate(selectedDate);
+  const weekSchedule = schedules[currentWeekKey] || {};
+  let classes = weekSchedule[dayName] || [];
+
+  // Lọc theo lớp riêng nếu có
+  if (selectedClassFilter) {
+    classes = classes.filter(c => !c.className || c.className === selectedClassFilter);
+  }
+
+  const today = new Date();
+  const isToday = selectedDate.toDateString() === today.toDateString();
+  const dateStr = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
+
+  const classesHtml = classes.length === 0
+    ? `<div class="empty-widget" style="padding: 2.5rem 1rem; text-align: center; color: var(--text-sub); width: 100%;">
+        <span style="font-size: 2.8rem;">🏖️</span>
+        <h4 style="font-size: 1.1rem; margin: 8px 0 4px; color: var(--text-main);">Không có tiết học</h4>
+        <p style="font-size: 0.85rem;">Hôm nay không có tiết học hoặc chưa được xếp thời khóa biểu!</p>
+      </div>`
+    : `<div class="day-classes-list-grid" style="width: 100%;">` + classes.map((c, idx) => {
+        const color = getSubjectColor(c.name || c.subject);
+        return `
+          <div class="day-class-card-detailed" style="border-left-color: ${color}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <span class="class-card-time">⏰ ${escapeHtml(c.time || '')}</span>
+              ${c.className ? `<span class="class-card-grade-badge">🏫 Lớp ${escapeHtml(c.className)}</span>` : ''}
+            </div>
+            <div class="class-card-name" style="font-size: 1.05rem;">${escapeHtml(c.name || '')}</div>
+            ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+              <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
+              ${checkPermission('manage_schedule') ? `
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn-action-pill" onclick="editClass('${dayName}', ${idx})">✏️ Sửa</button>
+                  <button class="btn-action-pill danger" onclick="deleteClass('${dayName}', ${idx})">🗑️ Xóa</button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('') + `</div>`;
+
+  container.innerHTML = `
+    <div class="day-view-header-bar">
+      <div class="day-view-title-block">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0;">📅 ${DAY_LABELS[dayName]} (${dateStr})</h3>
+          ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700;">Hôm nay</span>' : ''}
+          ${selectedClassFilter ? `<span class="class-card-grade-badge" style="font-size: 0.75rem;">Lớp ${escapeHtml(selectedClassFilter)}</span>` : ''}
+        </div>
+        <span style="font-size: 0.85rem; color: var(--text-sub);">Thời khóa biểu chi tiết trong ngày • <strong>${classes.length}</strong> tiết học</span>
+      </div>
+
+      <div class="day-view-nav-buttons">
+        <button class="c7-btn c7-btn-secondary" onclick="prevDay()" title="Xem ngày trước">
+          ← Ngày trước
+        </button>
+        <button class="c7-btn c7-btn-secondary" onclick="jumpToToday()" title="Về hôm nay">
+          Hôm nay
+        </button>
+        <button class="c7-btn c7-btn-secondary" onclick="nextDay()" title="Xem ngày tiếp theo">
+          Ngày sau →
+        </button>
+        ${checkPermission('manage_schedule') ? `
+          <button class="c7-btn c7-btn-primary" onclick="openAddClassForCurrentDay('${dayName}')">
+            + Thêm tiết ngày này
+          </button>
+        ` : ''}
+      </div>
+    </div>
+    ${classesHtml}
+  `;
+}
+
+function prevDay() {
+  selectedDate = new Date(selectedDate.getTime() - 24 * 60 * 60 * 1000);
+  resolveWeekFromDate(selectedDate);
+  renderAll();
+}
+
+function nextDay() {
+  selectedDate = new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000);
+  resolveWeekFromDate(selectedDate);
+  renderAll();
+}
+
+function openAddClassForCurrentDay(dayName) {
+  openAddClassModal();
+  const selectDay = document.getElementById('selectClassDay');
+  if (selectDay && dayName) selectDay.value = dayName;
+}
+
+// ============= TIMETABLE VIEW (Cả tuần) =============
 function renderTimetable() {
   const container = document.getElementById('timetableGrid');
   if (!container) return;
 
   const weekSchedule = schedules[currentWeekKey] || {};
   const todayDayName = getDayNameFromDate(new Date());
+  const selectedDayName = getDayNameFromDate(selectedDate);
 
   container.innerHTML = DAYS.map(day => {
-    const classes = weekSchedule[day] || [];
+    let classes = weekSchedule[day] || [];
+
+    // Lọc theo lớp riêng nếu được chọn
+    if (selectedClassFilter) {
+      classes = classes.filter(c => !c.className || c.className === selectedClassFilter);
+    }
+
     const isToday = (day === todayDayName);
+    const isSelected = (day === selectedDayName);
 
     const classesHtml = classes.length === 0
       ? '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 14px 0;">Không có tiết học</div>'
@@ -317,7 +491,10 @@ function renderTimetable() {
           const color = getSubjectColor(c.name || c.subject);
           return `
             <div class="class-card-item" style="border-left-color: ${color}">
-              <div class="class-card-time">⏰ ${escapeHtml(c.time || '')}</div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="class-card-time">⏰ ${escapeHtml(c.time || '')}</span>
+                ${c.className ? `<span class="class-card-grade-badge">🏫 ${escapeHtml(c.className)}</span>` : ''}
+              </div>
               <div class="class-card-name">${escapeHtml(c.name || '')}</div>
               ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
               <div class="class-card-room">📍 ${escapeHtml(c.room || 'Chưa rõ')}</div>
@@ -332,13 +509,13 @@ function renderTimetable() {
         }).join('');
 
     return `
-      <div class="day-timetable-col ${isToday ? 'is-today-col' : ''}">
-        <div class="day-col-header">
+      <div class="day-timetable-col ${isToday ? 'is-today-col' : ''} ${isSelected ? 'is-selected-col' : ''}">
+        <div class="day-col-header" style="cursor: pointer;" onclick="selectDayColumn('${day}')" title="Click để xem chi tiết ngày này">
           <div class="day-col-title">
             <span>${DAY_LABELS[day]}</span>
             ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 6px; font-size: 0.7rem; font-weight: 700;">Hôm nay</span>' : ''}
           </div>
-          <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết</span>
+          <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết 🔍</span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           ${classesHtml}
@@ -348,6 +525,16 @@ function renderTimetable() {
   }).join('');
 }
 
+function selectDayColumn(day) {
+  const dayIndex = DAYS.indexOf(day);
+  const meta = weekMetadata[currentWeekKey] || {};
+  if (meta.startDate) {
+    const s = new Date(meta.startDate);
+    selectedDate = new Date(s.getTime() + dayIndex * 24 * 60 * 60 * 1000);
+  }
+  switchScheduleViewMode('day');
+}
+
 // ============= CLASS MODAL & FORM =============
 function openAddClassModal() {
   editingClassDay = null;
@@ -355,6 +542,8 @@ function openAddClassModal() {
   document.getElementById('classModalTitle').textContent = '➕ Thêm Tiết Học Mới';
   document.getElementById('inputClassName').value = '';
   document.getElementById('inputClassSubject').value = '';
+  const gradeInput = document.getElementById('inputClassGrade');
+  if (gradeInput) gradeInput.value = selectedClassFilter || '11C7';
   document.getElementById('inputClassTime').value = '';
   document.getElementById('inputClassRoom').value = 'P.204';
   document.querySelectorAll('.period-picker-btn').forEach(btn => btn.classList.remove('active'));
@@ -388,6 +577,8 @@ function editClass(day, index) {
   document.getElementById('classModalTitle').textContent = '✏️ Chỉnh Sửa Tiết Học';
   document.getElementById('inputClassName').value = c.name || '';
   document.getElementById('inputClassSubject').value = c.subject || '';
+  const gradeInput = document.getElementById('inputClassGrade');
+  if (gradeInput) gradeInput.value = c.className || selectedClassFilter || '11C7';
   document.getElementById('inputClassTime').value = c.time || '';
   document.getElementById('inputClassRoom').value = c.room || '';
   document.getElementById('selectClassDay').value = day;
@@ -411,6 +602,7 @@ async function submitClassForm() {
 
   const name = document.getElementById('inputClassName').value.trim();
   const subject = document.getElementById('inputClassSubject').value.trim();
+  const className = document.getElementById('inputClassGrade')?.value.trim() || '11C7';
   const time = document.getElementById('inputClassTime').value.trim();
   const room = document.getElementById('inputClassRoom').value.trim();
   const day = document.getElementById('selectClassDay').value;
@@ -425,7 +617,7 @@ async function submitClassForm() {
   }
   if (!schedules[currentWeekKey][day]) schedules[currentWeekKey][day] = [];
 
-  const classData = { name, subject, time, room: room || 'P.204' };
+  const classData = { name, subject, time, room: room || 'P.204', className };
 
   if (editingClassDay !== null && editingClassIndex !== null) {
     if (editingClassDay !== day) {
@@ -443,7 +635,7 @@ async function submitClassForm() {
   }
 
   if (typeof logAction === 'function') {
-    logAction('Cập nhật lịch học', `Môn: ${name} (${DAY_LABELS[day]})`);
+    logAction('Cập nhật lịch học', `Môn: ${name} (${DAY_LABELS[day]} - Lớp ${className})`);
   }
 
   showToast('Đã lưu tiết học thành công!', 'success');
@@ -470,6 +662,8 @@ async function deleteClass(day, index) {
 function openWeekManagementModal() {
   const meta = weekMetadata[currentWeekKey] || {};
   document.getElementById('inputWeekName').value = meta.name || currentWeekKey;
+  const classInput = document.getElementById('inputWeekClass');
+  if (classInput) classInput.value = meta.className || selectedClassFilter || '11C7';
   document.getElementById('inputWeekStartDate').value = meta.startDate || '';
   document.getElementById('inputWeekEndDate').value = meta.endDate || '';
   document.getElementById('weekModalOverlay').style.display = 'flex';
@@ -481,11 +675,13 @@ function closeWeekModal() {
 
 async function submitWeekMetadata() {
   const name = document.getElementById('inputWeekName').value.trim();
+  const className = document.getElementById('inputWeekClass')?.value.trim() || '11C7';
   const startDate = document.getElementById('inputWeekStartDate').value;
   const endDate = document.getElementById('inputWeekEndDate').value;
 
   weekMetadata[currentWeekKey] = {
     name: name || currentWeekKey,
+    className,
     startDate,
     endDate
   };

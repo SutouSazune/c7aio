@@ -21,8 +21,35 @@
 
   function normalizeDayKey(rawDay) {
     if (!rawDay) return null;
-    const clean = String(rawDay).toLowerCase().replace(/[\s_\-]/g, '');
+    if (rawDay instanceof Date && !isNaN(rawDay)) {
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      return days[rawDay.getDay()];
+    }
+    const str = String(rawDay).trim();
+    if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(str) || /^\d{1,2}[-/]\d{1,2}[-/]\d{4}/.test(str)) {
+      const parsed = new Date(str);
+      if (!isNaN(parsed.getTime())) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        return days[parsed.getDay()];
+      }
+    }
+    const clean = str.toLowerCase().replace(/[\s_\-]/g, '');
     return DAY_KEY_MAP[clean] || (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].includes(clean) ? clean : null);
+  }
+
+  function resolveWeekKeyFromDate(dateInput) {
+    if (!dateInput) return 'week-1';
+    let d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (isNaN(d.getTime())) return 'week-1';
+    const allMeta = getLocalWeekMetadata();
+    for (const [key, meta] of Object.entries(allMeta)) {
+      if (meta && meta.startDate && meta.endDate) {
+        const s = new Date(meta.startDate);
+        const e = new Date(meta.endDate);
+        if (d >= s && d <= e) return key;
+      }
+    }
+    return 'week-1';
   }
 
   function generateUniqueId(prefix = '') {
@@ -358,11 +385,12 @@
 
     // ================= 3. SCHEDULES & WEEK METADATA =================
     /**
-     * Cập nhật thời khóa biểu theo thứ hoặc toàn bộ tuần
+     * Cập nhật thời khóa biểu theo thứ hoặc toàn bộ tuần (Hỗ trợ lớp riêng)
      * @param {Object} scheduleData Object chứa các ngày (monday, tuesday, T2, T3...)
      * @param {string} weekKey Mặc định 'week-1'
+     * @param {string} className Tên lớp học, mặc định '11C7'
      */
-    async updateSchedule(scheduleData = {}, weekKey = 'week-1') {
+    async updateSchedule(scheduleData = {}, weekKey = 'week-1', className = '11C7') {
       try {
         if (!scheduleData || typeof scheduleData !== 'object') {
           throw new Error('Dữ liệu thời khóa biểu không hợp lệ!');
@@ -386,7 +414,8 @@
               subject: p.subject || p.name || '',
               time: p.time || '',
               room: p.room || 'P.204',
-              note: p.note || ''
+              note: p.note || '',
+              className: p.className || p.class || className || '11C7'
             }));
           }
         });
@@ -400,11 +429,11 @@
         }
 
         if (typeof logAction === 'function') {
-          logAction('Automation: Cập nhật TKB', `Tuần: ${weekKey}`);
+          logAction('Automation: Cập nhật TKB', `Tuần: ${weekKey} - Lớp: ${className}`);
         }
 
-        console.log('✅ [C7_CONSOLE] Đã cập nhật TKB thành công cho:', weekKey);
-        return { success: true, weekKey, schedule: currentWeekSchedule };
+        console.log('✅ [C7_CONSOLE] Đã cập nhật TKB thành công cho:', weekKey, `(Lớp ${className})`);
+        return { success: true, weekKey, className, schedule: currentWeekSchedule };
       } catch (err) {
         console.error('❌ [C7_CONSOLE] Lỗi updateSchedule:', err);
         return { success: false, error: err.message };
@@ -412,9 +441,186 @@
     },
 
     /**
-     * Cập nhật Metadata tuần học (Tên tuần, Ngày bắt đầu - kết thúc, Học kỳ, Năm học)
+     * Cập nhật TKB cho một ngày cụ thể (Truyền 'T2', 'monday' hoặc ngày '2026-09-08')
+     * @param {string|Date} dayOrDate Thứ ('T2', 'thứ 3') hoặc Ngày cụ thể ('YYYY-MM-DD')
+     * @param {Array<Object>} periods Danh sách tiết học trong ngày
+     * @param {string} [weekKey] Tự động suy ra nếu truyền ngày cụ thể, hoặc mặc định 'week-1'
+     * @param {string} [className] Mặc định '11C7'
      */
-    async setWeekMetadata({ week = 1, name = '', startDate = '', endDate = '', semester = 'HK1', academicYear = '2026-2027' } = {}) {
+    async updateDaySchedule(dayOrDate, periods = [], weekKey = null, className = '11C7') {
+      try {
+        const normDay = normalizeDayKey(dayOrDate);
+        if (!normDay) {
+          throw new Error(`Không nhận diện được thứ hoặc ngày: "${dayOrDate}"!`);
+        }
+
+        const targetWeekKey = weekKey || resolveWeekKeyFromDate(dayOrDate);
+        const allSchedules = getLocalSchedules();
+        if (!allSchedules[targetWeekKey]) {
+          allSchedules[targetWeekKey] = {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+          };
+        }
+
+        const formattedPeriods = Array.isArray(periods) ? periods.map(p => ({
+          name: p.name || p.subject || 'Tiết học',
+          subject: p.subject || p.name || '',
+          time: p.time || '',
+          room: p.room || 'P.204',
+          note: p.note || '',
+          className: p.className || p.class || className || '11C7'
+        })) : [];
+
+        allSchedules[targetWeekKey][normDay] = formattedPeriods;
+
+        if (typeof saveSharedSchedules === 'function') {
+          await saveSharedSchedules(allSchedules);
+        } else {
+          localStorage.setItem('c7aio_schedules_cache', JSON.stringify(allSchedules));
+        }
+
+        if (typeof logAction === 'function') {
+          logAction('Automation: Cập nhật TKB ngày', `${normDay} (${targetWeekKey}) - ${formattedPeriods.length} tiết`);
+        }
+
+        console.log(`✅ [C7_CONSOLE] Đã cập nhật TKB cho ngày ${normDay} (${targetWeekKey})!`);
+        return { success: true, weekKey: targetWeekKey, day: normDay, periods: formattedPeriods };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi updateDaySchedule:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Thêm 1 tiết học vào ngày cụ thể
+     */
+    async addClassPeriod(dayOrDate, periodObj = {}, weekKey = null, className = '11C7') {
+      try {
+        const normDay = normalizeDayKey(dayOrDate);
+        if (!normDay) throw new Error(`Không nhận diện được ngày: "${dayOrDate}"!`);
+        if (!periodObj || !periodObj.name) throw new Error('Thiếu tên môn học (periodObj.name)!');
+
+        const targetWeekKey = weekKey || resolveWeekKeyFromDate(dayOrDate);
+        const allSchedules = getLocalSchedules();
+        if (!allSchedules[targetWeekKey]) {
+          allSchedules[targetWeekKey] = {
+            monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+          };
+        }
+        if (!allSchedules[targetWeekKey][normDay]) {
+          allSchedules[targetWeekKey][normDay] = [];
+        }
+
+        const newPeriod = {
+          name: periodObj.name || 'Tiết học',
+          subject: periodObj.subject || periodObj.name || '',
+          time: periodObj.time || '',
+          room: periodObj.room || 'P.204',
+          note: periodObj.note || '',
+          className: periodObj.className || periodObj.class || className || '11C7'
+        };
+
+        allSchedules[targetWeekKey][normDay].push(newPeriod);
+
+        if (typeof saveSharedSchedules === 'function') {
+          await saveSharedSchedules(allSchedules);
+        } else {
+          localStorage.setItem('c7aio_schedules_cache', JSON.stringify(allSchedules));
+        }
+
+        console.log(`✅ [C7_CONSOLE] Đã thêm tiết học "${newPeriod.name}" vào ${normDay} (${targetWeekKey})!`);
+        return { success: true, weekKey: targetWeekKey, day: normDay, period: newPeriod };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi addClassPeriod:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Xóa 1 tiết học theo index (0, 1, 2...) hoặc theo tên môn
+     */
+    async removeClassPeriod(dayOrDate, periodIndexOrName, weekKey = null) {
+      try {
+        const normDay = normalizeDayKey(dayOrDate);
+        if (!normDay) throw new Error(`Không nhận diện được ngày: "${dayOrDate}"!`);
+        const targetWeekKey = weekKey || resolveWeekKeyFromDate(dayOrDate);
+        const allSchedules = getLocalSchedules();
+        const dayList = allSchedules[targetWeekKey] ? (allSchedules[targetWeekKey][normDay] || []) : [];
+
+        let removeIdx = -1;
+        if (typeof periodIndexOrName === 'number') {
+          removeIdx = periodIndexOrName;
+        } else if (typeof periodIndexOrName === 'string') {
+          const matchName = periodIndexOrName.toLowerCase().trim();
+          removeIdx = dayList.findIndex(p => (p.name || '').toLowerCase() === matchName || (p.subject || '').toLowerCase() === matchName);
+        }
+
+        if (removeIdx < 0 || removeIdx >= dayList.length) {
+          throw new Error(`Không tìm thấy tiết học cần xóa (${periodIndexOrName}) trong ${normDay}!`);
+        }
+
+        const removed = dayList.splice(removeIdx, 1)[0];
+        allSchedules[targetWeekKey][normDay] = dayList;
+
+        if (typeof saveSharedSchedules === 'function') {
+          await saveSharedSchedules(allSchedules);
+        } else {
+          localStorage.setItem('c7aio_schedules_cache', JSON.stringify(allSchedules));
+        }
+
+        console.log(`✅ [C7_CONSOLE] Đã xóa tiết "${removed.name}" khỏi ${normDay}!`);
+        return { success: true, removedPeriod: removed };
+      } catch (err) {
+        console.error('❌ [C7_CONSOLE] Lỗi removeClassPeriod:', err);
+        return { success: false, error: err.message };
+      }
+    },
+
+    /**
+     * Xóa sạch các tiết học của 1 ngày (Ví dụ ngày nghỉ lễ)
+     */
+    async clearDaySchedule(dayOrDate, weekKey = null) {
+      return this.updateDaySchedule(dayOrDate, [], weekKey);
+    },
+
+    /**
+     * Lấy danh sách tiết học của một ngày cụ thể (Có thể lọc theo lớp)
+     */
+    getDaySchedule(dayOrDate, weekKey = null, className = '') {
+      const normDay = normalizeDayKey(dayOrDate);
+      if (!normDay) return [];
+      const targetWeekKey = weekKey || resolveWeekKeyFromDate(dayOrDate);
+      const allSchedules = getLocalSchedules();
+      const weekSchedule = allSchedules[targetWeekKey] || {};
+      let list = weekSchedule[normDay] || [];
+      if (className) {
+        list = list.filter(c => !c.className || c.className === className);
+      }
+      return list;
+    },
+
+    /**
+     * Lấy danh sách tất cả các lớp riêng đang có trong TKB
+     */
+    getClassesList() {
+      const allSchedules = getLocalSchedules();
+      const allMeta = getLocalWeekMetadata();
+      const classes = new Set(['11C7']);
+      Object.values(allMeta).forEach(m => { if (m && m.className) classes.add(m.className); });
+      Object.values(allSchedules).forEach(w => {
+        if (w && typeof w === 'object') {
+          Object.values(w).forEach(dayList => {
+            if (Array.isArray(dayList)) dayList.forEach(c => { if (c && c.className) classes.add(c.className); });
+          });
+        }
+      });
+      return Array.from(classes).sort();
+    },
+
+    /**
+     * Cập nhật Metadata tuần học (Tên tuần, Lớp học, Ngày bắt đầu - kết thúc, Học kỳ, Năm học)
+     */
+    async setWeekMetadata({ week = 1, name = '', className = '11C7', startDate = '', endDate = '', semester = 'HK1', academicYear = '2026-2027' } = {}) {
       try {
         const weekKey = typeof week === 'number' ? `week-${week}` : (String(week).startsWith('week-') ? week : `week-${week}`);
         const allMeta = getLocalWeekMetadata();
@@ -422,6 +628,7 @@
         allMeta[weekKey] = {
           ...(allMeta[weekKey] || {}),
           name: name || `Tuần ${String(week).replace(/\D/g, '') || '1'}`,
+          className: className || (allMeta[weekKey] ? allMeta[weekKey].className : '11C7'),
           startDate: startDate || (allMeta[weekKey] ? allMeta[weekKey].startDate : ''),
           endDate: endDate || (allMeta[weekKey] ? allMeta[weekKey].endDate : ''),
           semester,
@@ -436,7 +643,7 @@
         }
 
         if (typeof logAction === 'function') {
-          logAction('Automation: Cập nhật Metadata Tuần', `${weekKey}: ${allMeta[weekKey].name}`);
+          logAction('Automation: Cập nhật Metadata Tuần', `${weekKey}: ${allMeta[weekKey].name} - Lớp ${allMeta[weekKey].className}`);
         }
 
         console.log('✅ [C7_CONSOLE] Đã cập nhật thông tin tuần:', weekKey);
@@ -447,9 +654,16 @@
       }
     },
 
-    getSchedule(weekKey = 'week-1') {
+    getSchedule(weekKey = 'week-1', className = '') {
       const all = getLocalSchedules();
-      return all[weekKey] || null;
+      const weekSchedule = all[weekKey] || null;
+      if (!weekSchedule || !className) return weekSchedule;
+
+      const filtered = {};
+      Object.entries(weekSchedule).forEach(([day, list]) => {
+        filtered[day] = Array.isArray(list) ? list.filter(c => !c.className || c.className === className) : [];
+      });
+      return filtered;
     },
 
     // ================= 4. BATCH INGESTION (NẠP HÀNG LOẠT TRONG 1 LỆNH) =================
@@ -563,9 +777,15 @@
    • C7_CONSOLE.getNotifications()
 
 3. Thời khóa biểu (Schedules):
-   • C7_CONSOLE.updateSchedule({ T2: [...], T3: [...] }, 'week-1')
-   • C7_CONSOLE.setWeekMetadata({ week: 1, name: 'Tuần 1', startDate: '2026-08-24', endDate: '2026-08-30' })
-   • C7_CONSOLE.getSchedule('week-1')
+   • C7_CONSOLE.updateSchedule({ T2: [...], T3: [...] }, 'week-1', '11C7')
+   • C7_CONSOLE.updateDaySchedule('T2', [...], 'week-1', '11C7')  // hoặc ngày '2026-09-08'
+   • C7_CONSOLE.addClassPeriod('T2', { name: 'Toán', time: '07:00 - 07:45', room: 'P.204' }, 'week-1', '11C7')
+   • C7_CONSOLE.removeClassPeriod('T2', 0) // xóa theo index hoặc tên môn
+   • C7_CONSOLE.clearDaySchedule('T2') // xóa sạch tiết của 1 ngày (ví dụ nghỉ lễ)
+   • C7_CONSOLE.getDaySchedule('T2', 'week-1', '11C7')
+   • C7_CONSOLE.getClassesList() // danh sách các lớp riêng
+   • C7_CONSOLE.setWeekMetadata({ week: 1, name: 'Tuần 1', className: '11C7', startDate: '2026-08-24', endDate: '2026-08-30' })
+   • C7_CONSOLE.getSchedule('week-1', '11C7')
 
 4. Nạp hàng loạt (Batch Ingestion):
    • C7_CONSOLE.ingestBatch({ tasks: [...], notifications: [...], schedules: {...}, weekMetadata: {...} })
