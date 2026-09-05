@@ -126,6 +126,7 @@ const PERMISSIONS = {
   'manage_schedule': 'Quản lý Thời khóa biểu',
   'manage_notifications': 'Đăng & Quản lý thông báo',
   'manage_roles': 'Điều hành Phân quyền',
+  'manage_seating': 'Chỉnh sửa Sơ Đồ Lớp',
   'view_logs': 'Xem Nhật ký hoạt động'
 };
 

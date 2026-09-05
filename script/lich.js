@@ -410,22 +410,18 @@ function ensureSemesterWeeksMetadata() {
     const wKey = `week-${i}`;
     const s = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + (i - 1) * 7);
     const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
-    if (!weekMetadata[wKey] || !weekMetadata[wKey].startDate || weekMetadata[wKey].academicYear !== ay.id) {
-      weekMetadata[wKey] = {
-        name: `Tuần ${i}`,
-        className: ay.grade,
-        academicYear: ay.id,
-        startDate: toDateStringKey(s),
-        endDate: toDateStringKey(e),
-        ...(weekMetadata[wKey] || {})
-      };
-      weekMetadata[wKey].startDate = toDateStringKey(s);
-      weekMetadata[wKey].endDate = toDateStringKey(e);
-      weekMetadata[wKey].className = ay.grade;
-      weekMetadata[wKey].academicYear = ay.id;
-    }
+    // Always overwrite startDate/endDate/academicYear to fix stale-cache bugs
+    weekMetadata[wKey] = {
+      name: `Tuần ${i}`,
+      ...(weekMetadata[wKey] || {}),
+      startDate: toDateStringKey(s),
+      endDate: toDateStringKey(e),
+      className: ay.grade,
+      academicYear: ay.id,
+    };
   }
 }
+
 
 function getEffectiveSchedule(weekKey) {
   if (schedules[weekKey]) {
@@ -474,6 +470,9 @@ function goToSemesterStart() {
   renderAll();
   showToast('📅 Đã chuyển đến ngày bắt đầu TKB số 1 (07/09/2026)', 'success');
 }
+
+// Alias used in HTML buttons
+function jumpToFirstWeek() { goToSemesterStart(); }
 
 function getWeekKeyForDate(date) {
   const dateKey = toDateStringKey(date);
