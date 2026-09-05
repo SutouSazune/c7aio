@@ -1043,9 +1043,23 @@ function editorRedo() { if(!editorRedoStack.length){showToast('Không có gì đ
 
 // ============= GRID RESIZE =============
 function editorAddRow()    { editorPushUndo(); editorRows++; editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell())); editorRenderGrid(); }
-function editorRemoveRow() { if(editorRows<=0)return; editorPushUndo(); editorRows--; editorLayout.pop(); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
+function editorRemoveRow() {
+  editorPushUndo();
+  editorRows--;
+  if (editorLayout.length) editorLayout.pop();
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
+}
 function editorAddCol()    { editorPushUndo(); editorCols++; editorLayout.forEach(r=>r.push(makeEmptyCell())); editorRenderGrid(); }
-function editorRemoveCol() { if(editorCols<=0)return; editorPushUndo(); editorCols--; editorLayout.forEach(r=>r.pop()); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
+function editorRemoveCol() {
+  editorPushUndo();
+  editorCols--;
+  editorLayout.forEach(r => { if (r.length) r.pop(); });
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
+}
 
 function editorInsertRowAt(atIndex) {
   if (atIndex < 0 || atIndex > editorRows) return;
@@ -1069,6 +1083,7 @@ function editorDeleteRowAt(atIndex) {
   editorPushUndo();
   editorLayout.splice(atIndex, 1);
   editorRows--;
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
@@ -1078,6 +1093,7 @@ function editorDeleteColAt(atIndex) {
   editorPushUndo();
   editorLayout.forEach(r => r.splice(atIndex, 1));
   editorCols--;
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
