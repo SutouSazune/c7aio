@@ -640,8 +640,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <button id="ctx-btn-merge-confirm" onclick="ctxMergeConfirm()" style="display:none">✅ Xác nhận ghép</button>
       <button id="ctx-btn-merge-cancel" onclick="ctxMergeCancel()" style="display:none">❌ Hủy chọn</button>
       <hr>
-      <button id="ctx-btn-swap" onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
-      <button id="ctx-btn-delete-sel" onclick="ctxDeleteSelected()" style="display:none">🗑️ Xóa ghế đã chọn</button>
+      <button onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
       <hr>
       <button class="ctx-danger" onclick="ctxClear()">❌ Xóa người ngồi</button>
     </div>`;
@@ -972,11 +971,6 @@ function showCtxMenu(event, r, c) {
     if (btnCancel) btnCancel.style.display = 'none';
   }
 
-  const btnDeleteSel = document.getElementById('ctx-btn-delete-sel');
-  if (btnDeleteSel) {
-    btnDeleteSel.style.display = editorSelectedCell ? 'block' : 'none';
-  }
-
   menu.style.display = 'block';
   menu.style.left = Math.min(event.clientX, window.innerWidth  - 220) + 'px';
   menu.style.top  = Math.min(event.clientY, window.innerHeight - 180) + 'px';
@@ -1041,19 +1035,6 @@ function ctxSwap() {
   const bData = { type:b.type, studentId:b.studentId, label:b.label, empty:b.empty };
   Object.assign(editorLayout[ctxRow][ctxCol], bData);
   Object.assign(editorLayout[editorSelectedCell.r][editorSelectedCell.c], aData);
-  editorSelectedCell = null;
-  editorRenderGrid();
-  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
-  hideCtxMenu();
-}
-
-function ctxDeleteSelected() {
-  if (!editorSelectedCell) { showToast('Hãy chọn một ghế trước (nhấn vào ghế)', 'warning'); hideCtxMenu(); return; }
-
-  const { r, c } = editorSelectedCell;
-  editorPushUndo();
-  const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
-  editorLayout[r][c] = makeEmptyCell(seatType);
   editorSelectedCell = null;
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
@@ -1279,26 +1260,34 @@ function getTableGroupCells(r, c, seatType) {
     for (let dr = 0; dr < 2; dr++) {
       for (let dc = 0; dc < 2; dc++) {
         const rr = baseR + dr, cc = baseC + dc;
-        if (rr < editorRows && cc < editorCols) cells.push([rr, cc]);
+        if (rr < editorRows && cc < editorCols && editorLayout[rr]?.[cc]?.seatType === 'quad') {
+          cells.push([rr, cc]);
+        }
       }
     }
   } else if (type === 'double') {
     const pairC = (c % 2 === 0) ? c : c - 1;
     for (let dc = 0; dc < 2; dc++) {
       const cc = pairC + dc;
-      if (cc < editorCols) cells.push([r, cc]);
+      if (cc < editorCols && editorLayout[r]?.[cc]?.seatType === 'double') {
+        cells.push([r, cc]);
+      }
     }
   } else if (type === 'quad_h') {
     const baseC = Math.floor(c / 4) * 4;
     for (let dc = 0; dc < 4; dc++) {
       const cc = baseC + dc;
-      if (cc < editorCols) cells.push([r, cc]);
+      if (cc < editorCols && editorLayout[r]?.[cc]?.seatType === 'quad_h') {
+        cells.push([r, cc]);
+      }
     }
   } else if (type === 'quad_v') {
     const baseR = Math.floor(r / 4) * 4;
     for (let dr = 0; dr < 4; dr++) {
       const rr = baseR + dr;
-      if (rr < editorRows) cells.push([rr, c]);
+      if (rr < editorRows && editorLayout[rr]?.[c]?.seatType === 'quad_v') {
+        cells.push([rr, c]);
+      }
     }
   } else {
     cells.push([r, c]);
