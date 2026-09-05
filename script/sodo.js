@@ -37,6 +37,7 @@ const SODO_OUTDOOR_LIST = [
 
 const SODO_SEAT_TYPE_LIST = [
   { key:'double',   label:'Bàn Đôi',       icon:'▣', desc:'Bàn 2 người, trong lớp học' },
+  { key:'quad',     label:'Bàn 4',         icon:'⊞', desc:'Bàn nhóm 4 người, ghép bàn/thực hành' },
   { key:'single',   label:'Bàn Đơn',       icon:'◻', desc:'Bàn 1 người, trong lớp học' },
   { key:'chair',    label:'Ghế Nhựa',      icon:'🪑', desc:'Ghế nhựa không bàn, ngoài trời / hội trường' },
   { key:'standing', label:'Vị Trí Đứng',  icon:'🧍', desc:'Vị trí đứng, thể dục / quốc phòng' },
@@ -163,7 +164,7 @@ function sodoLegendHTML() {
     <span class="sodo-legend-item"><span class="sodo-legend-dot" style="background:var(--primary)"></span>Học sinh</span>
     <span class="sodo-legend-item"><span class="sodo-legend-dot sodo-dot-empty"></span>Ghế trống</span>
     <span class="sodo-legend-item"><span class="sodo-legend-dot sodo-dot-anyone"></span>Bất Kỳ</span>
-    <span class="sodo-legend-item"><b>▣</b> Bàn đôi &nbsp; <b>◻</b> Bàn đơn &nbsp; <b>🪑</b> Ghế nhựa &nbsp; <b>🧍</b> Đứng</span>
+    <span class="sodo-legend-item"><b>▣</b> Bàn đôi &nbsp; <b>⊞</b> Bàn 4 &nbsp; <b>◻</b> Bàn đơn &nbsp; <b>🪑</b> Ghế nhựa &nbsp; <b>🧍</b> Đứng</span>
   </div>`;
 }
 
