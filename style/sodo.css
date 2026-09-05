@@ -1047,6 +1047,13 @@
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
 }
 
+.sodo-merge-selected {
+  border-color: #10b981 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+
 .sodo-editor-avatar {
   width: 34px;
   height: 34px;
