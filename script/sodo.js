@@ -414,15 +414,21 @@ function renderSeatingGrid(containerId, layout, opts = {}) {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const cell = layout[r]?.[c];
-      const deskPos = c % 2 === 0 ? 'left' : 'right';
       const seatType = cell?.seatType || opts.seatType || 'double';
+      
+      // Tính vị trí trong nhóm bàn
+      let deskPos = c % 2 === 0 ? 'left' : 'right';
+      let deskGroupCol = 'col-' + (c % 2);
+      let deskQuadIdx = (r % 2) * 2 + (c % 2); // 0: trên-trái, 1: trên-phải, 2: dưới-trái, 3: dưới-phải
+      
+      const deskAttrs = `data-col="${c}" data-row="${r}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}"`;
 
       if (!cell || cell.empty) {
-        html += `<div class="sodo-cell sodo-cell-empty sodo-seat-${seatType}" data-col="${c}" data-desk-pos="${deskPos}"><span class="sodo-empty-seat">—</span></div>`;
+        html += `<div class="sodo-cell sodo-cell-empty sodo-seat-${seatType}" ${deskAttrs}><span class="sodo-empty-seat">—</span></div>`;
         continue;
       }
       if (cell.type === 'anyone') {
-        html += `<div class="sodo-cell sodo-cell-anyone sodo-seat-${seatType}" data-col="${c}" data-desk-pos="${deskPos}" title="${sodoEsc(cell.label||'Bất Kỳ')}">
+        html += `<div class="sodo-cell sodo-cell-anyone sodo-seat-${seatType}" ${deskAttrs} title="${sodoEsc(cell.label||'Bất Kỳ')}">
           <div class="sodo-seat-avatar sodo-avatar-anyone">?</div>
           <div class="sodo-seat-name sodo-anyone-name">${sodoEsc(cell.label||'Bất Kỳ')}</div>
         </div>`;
@@ -430,7 +436,7 @@ function renderSeatingGrid(containerId, layout, opts = {}) {
       }
       const stu = cell.studentId ? STUDENTS.find(s => s.id === cell.studentId) : null;
       const name = stu ? stu.name : (cell.label || '?');
-      html += `<div class="sodo-cell sodo-cell-filled sodo-seat-${seatType}" data-col="${c}" data-desk-pos="${deskPos}" title="${sodoEsc(name)}">
+      html += `<div class="sodo-cell sodo-cell-filled sodo-seat-${seatType}" ${deskAttrs} title="${sodoEsc(name)}">
         <div class="sodo-seat-avatar" style="background:${getAvatarGradient(name)}">${getInitials(name)}</div>
         <div class="sodo-seat-name">${sodoEsc(sodoShortName(name))}</div>
       </div>`;
@@ -647,12 +653,16 @@ function editorRenderGrid() {
 function buildEditorCell(r, c) {
   const cell = editorLayout[r]?.[c] || makeEmptyCell();
   const isEmpty = !cell.studentId && !cell.label && cell.type !== 'anyone';
-  const deskPos = c % 2 === 0 ? 'left' : 'right';
   const seatType = cell.seatType || editorDefaultSeatType;
+  
+  // Tính vị trí trong nhóm bàn (bàn đôi: 2 ghế, bàn 4: cụm 4 ghế 2x2)
+  const deskPos = c % 2 === 0 ? 'left' : 'right';
+  const deskQuadIdx = (r % 2) * 2 + (c % 2); // 0: trên-trái, 1: trên-phải, 2: dưới-trái, 3: dưới-phải
+
   const isSelected = editorSelectedCell?.r === r && editorSelectedCell?.c === c;
   const selCls = isSelected ? 'sodo-cell-selected' : '';
 
-  const base = `data-row="${r}" data-col="${c}" data-desk-pos="${deskPos}"`;
+  const base = `data-row="${r}" data-col="${c}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}"`;
   const drop = `ondragover="cellDragOver(event,${r},${c})" ondrop="cellDrop(event,${r},${c})" ondragleave="cellDragLeave(event)"`;
   const events = `onclick="cellClick(${r},${c})" oncontextmenu="showCtxMenu(event,${r},${c})"`;
 

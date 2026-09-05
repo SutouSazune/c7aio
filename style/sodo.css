@@ -1339,18 +1339,86 @@
   border-color: rgba(6,182,212,0.25) !important;
 }
 
-/* --- Quad desk (Bàn 4 người / Bàn nhóm) --- */
+/* --- Quad desk (Bàn 4 người / Bàn nhóm 2x2) --- */
 .sodo-seat-quad {
-  background: linear-gradient(145deg, rgba(139,92,246,0.05) 0%, var(--card-bg) 100%) !important;
-  border-color: rgba(139,92,246,0.3) !important;
-  box-shadow: inset 0 0 0 1px rgba(139,92,246,0.12);
-}
-.sodo-seat-quad.sodo-cell-filled {
-  border-color: rgba(139,92,246,0.45) !important;
-}
-.sodo-editor-cell.sodo-seat-quad {
+  background: linear-gradient(145deg, rgba(139,92,246,0.06) 0%, var(--card-bg) 100%) !important;
   border-color: rgba(139,92,246,0.35) !important;
+  position: relative;
 }
+
+/* Cụm 4 ghế dính liền theo nhóm 2x2:
+   quad-idx 0: trên-trái  -> bo góc trên-trái
+   quad-idx 1: trên-phải  -> bo góc trên-phải
+   quad-idx 2: dưới-trái  -> bo góc dưới-trái
+   quad-idx 3: dưới-phải  -> bo góc dưới-phải
+*/
+.sodo-cell[data-seat-type="quad"][data-quad-idx="0"],
+.sodo-editor-cell[data-seat-type="quad"][data-quad-idx="0"] {
+  border-radius: 14px 4px 4px 4px !important;
+  border-right-style: dashed !important;
+  border-bottom-style: dashed !important;
+}
+.sodo-cell[data-seat-type="quad"][data-quad-idx="1"],
+.sodo-editor-cell[data-seat-type="quad"][data-quad-idx="1"] {
+  border-radius: 4px 14px 4px 4px !important;
+  border-left-style: dashed !important;
+  border-bottom-style: dashed !important;
+}
+.sodo-cell[data-seat-type="quad"][data-quad-idx="2"],
+.sodo-editor-cell[data-seat-type="quad"][data-quad-idx="2"] {
+  border-radius: 4px 4px 4px 14px !important;
+  border-right-style: dashed !important;
+  border-top-style: dashed !important;
+}
+.sodo-cell[data-seat-type="quad"][data-quad-idx="3"],
+.sodo-editor-cell[data-seat-type="quad"][data-quad-idx="3"] {
+  border-radius: 4px 4px 14px 4px !important;
+  border-left-style: dashed !important;
+  border-top-style: dashed !important;
+}
+
+/* Đánh dấu nhãn bàn nhóm Bàn 4 */
+.sodo-cell[data-seat-type="quad"][data-quad-idx="0"]::before,
+.sodo-editor-cell[data-seat-type="quad"][data-quad-idx="0"]::before {
+  content: '⊞ Bàn 4';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #8b5cf6;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+/* Bàn đôi (Bàn 2 người): ghế trái bo góc ngoài trái, ghế phải bo góc ngoài phải */
+.sodo-cell[data-seat-type="double"][data-desk-pos="left"],
+.sodo-editor-cell[data-seat-type="double"][data-desk-pos="left"] {
+  border-radius: 12px 4px 4px 12px !important;
+  border-right-style: dashed !important;
+  border-right-color: rgba(99,102,241,0.25) !important;
+}
+.sodo-cell[data-seat-type="double"][data-desk-pos="right"],
+.sodo-editor-cell[data-seat-type="double"][data-desk-pos="right"] {
+  border-radius: 4px 12px 12px 4px !important;
+  border-left-style: dashed !important;
+  border-left-color: rgba(99,102,241,0.25) !important;
+}
+
+/* Nhãn Bàn 2 ở ghế trái */
+.sodo-cell[data-seat-type="double"][data-desk-pos="left"]::before,
+.sodo-editor-cell[data-seat-type="double"][data-desk-pos="left"]::before {
+  content: '▣ Bàn 2';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: var(--primary);
+  opacity: 0.75;
+  letter-spacing: 0.5px;
+}
+
 
 
 /* ===================== ANYONE (BẤT KỲ) SLOT ===================== */
