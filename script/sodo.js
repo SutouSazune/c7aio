@@ -585,10 +585,18 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         <div class="sodo-editor-canvas">
           <div class="sodo-editor-canvas-header">
             <div class="sodo-grid-controls">
-              <button class="sodo-ctrl-btn" onclick="editorAddRow()">+ Hàng</button>
-              <button class="sodo-ctrl-btn" id="btn-rm-row" onclick="editorRemoveRow()">− Hàng</button>
-              <button class="sodo-ctrl-btn" onclick="editorAddCol()">+ Cột</button>
-              <button class="sodo-ctrl-btn" id="btn-rm-col" onclick="editorRemoveCol()">− Cột</button>
+              <select id="sel-row-pos" class="sodo-pos-select" title="Vị trí hàng">
+                ${Array.from({length: Math.max(editorRows, 1)}, (_, i) => `<option value="${i}">Hàng ${i + 1}</option>`).join('')}
+                <option value="${editorRows}">Cuối cùng</option>
+              </select>
+              <button class="sodo-ctrl-btn" onclick="editorInsertRow(parseInt(document.getElementById('sel-row-pos').value))">+ Chèn Hàng</button>
+              <button class="sodo-ctrl-btn" onclick="editorDeleteRow(parseInt(document.getElementById('sel-row-pos').value))">− Xóa Hàng</button>
+              <select id="sel-col-pos" class="sodo-pos-select" title="Vị trí cột">
+                ${Array.from({length: Math.max(editorCols, 1)}, (_, i) => `<option value="${i}">Cột ${i + 1}</option>`).join('')}
+                <option value="${editorCols}">Cuối cùng</option>
+              </select>
+              <button class="sodo-ctrl-btn" onclick="editorInsertCol(parseInt(document.getElementById('sel-col-pos').value))">+ Chèn Cột</button>
+              <button class="sodo-ctrl-btn" onclick="editorDeleteCol(parseInt(document.getElementById('sel-col-pos').value))">− Xóa Cột</button>
               <span class="sodo-grid-size-badge" id="sodo-grid-size">${editorRows} × ${editorCols}</span>
             </div>
             <div class="sodo-desk-type-controls">
@@ -777,10 +785,24 @@ function editorUpdateCount() {
 }
 
 function editorUpdateBtns() {
-  document.getElementById('btn-rm-row')?.toggleAttribute('disabled', editorRows <= 1);
-  document.getElementById('btn-rm-col')?.toggleAttribute('disabled', editorCols <= 1);
   const sz = document.getElementById('sodo-grid-size');
   if (sz) sz.textContent = `${editorRows} × ${editorCols}`;
+
+  const rowSel = document.getElementById('sel-row-pos');
+  if (rowSel) {
+    const cur = parseInt(rowSel.value);
+    rowSel.innerHTML = Array.from({length: Math.max(editorRows, 1)}, (_, i) => `<option value="${i}">Hàng ${i + 1}</option>`).join('') +
+      `<option value="${editorRows}">Cuối cùng</option>`;
+    rowSel.value = Math.min(cur, editorRows);
+  }
+
+  const colSel = document.getElementById('sel-col-pos');
+  if (colSel) {
+    const cur = parseInt(colSel.value);
+    colSel.innerHTML = Array.from({length: Math.max(editorCols, 1)}, (_, i) => `<option value="${i}">Cột ${i + 1}</option>`).join('') +
+      `<option value="${editorCols}">Cuối cùng</option>`;
+    colSel.value = Math.min(cur, editorCols);
+  }
 }
 
 function editorRenderExtraList() {
@@ -1160,6 +1182,41 @@ function editorAddRow()    { editorPushUndo(); editorRows++; editorLayout.push(A
 function editorRemoveRow() { if(editorRows<=1)return; editorPushUndo(); editorRows--; editorLayout.pop(); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
 function editorAddCol()    { editorPushUndo(); editorCols++; editorLayout.forEach(r=>r.push(makeEmptyCell())); editorRenderGrid(); }
 function editorRemoveCol() { if(editorCols<=1)return; editorPushUndo(); editorCols--; editorLayout.forEach(r=>r.pop()); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
+
+function editorInsertRow(atIndex) {
+  if (atIndex < 0 || atIndex > editorRows) return;
+  editorPushUndo();
+  const newRow = Array.from({length:editorCols},()=>makeEmptyCell());
+  editorLayout.splice(atIndex, 0, newRow);
+  editorRows++;
+  editorRenderGrid();
+}
+
+function editorInsertCol(atIndex) {
+  if (atIndex < 0 || atIndex > editorCols) return;
+  editorPushUndo();
+  editorLayout.forEach(r => r.splice(atIndex, 0, makeEmptyCell()));
+  editorCols++;
+  editorRenderGrid();
+}
+
+function editorDeleteRow(atIndex) {
+  if (editorRows <= 1 || atIndex < 0 || atIndex >= editorRows) return;
+  editorPushUndo();
+  editorLayout.splice(atIndex, 1);
+  editorRows--;
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
+}
+
+function editorDeleteCol(atIndex) {
+  if (editorCols <= 1 || atIndex < 0 || atIndex >= editorCols) return;
+  editorPushUndo();
+  editorLayout.forEach(r => r.splice(atIndex, 1));
+  editorCols--;
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
+}
 
 // ============= EXTRA PEOPLE =============
 function editorAddExtra() {

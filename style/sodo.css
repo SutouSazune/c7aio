@@ -936,6 +936,19 @@
   letter-spacing: 0.5px;
 }
 
+.sodo-pos-select {
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1.5px solid var(--input-border);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 110px;
+}
+
 .sodo-board-label-editor {
   text-align: center;
   background: linear-gradient(90deg, #0f172a 0%, #1e293b 40%, #334155 50%, #1e293b 60%, #0f172a 100%);
