@@ -1047,7 +1047,7 @@ function editorRemoveRow() {
   editorPushUndo();
   editorRows--;
   if (editorLayout.length) editorLayout.pop();
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
@@ -1056,7 +1056,7 @@ function editorRemoveCol() {
   editorPushUndo();
   editorCols--;
   editorLayout.forEach(r => { if (r.length) r.pop(); });
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
@@ -1083,7 +1083,7 @@ function editorDeleteRowAt(atIndex) {
   editorPushUndo();
   editorLayout.splice(atIndex, 1);
   editorRows--;
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
@@ -1093,7 +1093,7 @@ function editorDeleteColAt(atIndex) {
   editorPushUndo();
   editorLayout.forEach(r => r.splice(atIndex, 1));
   editorCols--;
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, editorDefaultSeatType);
+  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
