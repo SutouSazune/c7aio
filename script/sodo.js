@@ -1041,6 +1041,7 @@ function toggleMergeMode() {
   } else {
     editorMergeMode = true;
     editorMergeSelection = [];
+    editorSelectedCell = null;
     showToast('Chế độ ghép chỗ: nhấn vào các ghế trống để chọn', 'info');
     editorRenderGrid();
   }
@@ -1073,6 +1074,7 @@ function ctxMergeConfirm() {
   exitMergeMode();
   hideCtxMenu();
   editorRenderGrid();
+  showToast('Đã ghép chỗ thành công', 'success');
 }
 
 function ctxMergeCancel() {
