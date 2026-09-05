@@ -624,6 +624,9 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <hr>
       <button onclick="ctxCycleDesk()">🔄 Đổi loại ghế/bàn</button>
       <hr>
+      <button onclick="ctxMergeSeats()">🔗 Ghép chỗ</button>
+      <button onclick="ctxSplitSeats()">✂️ Tách chỗ</button>
+      <hr>
       <button onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
       <hr>
       <button class="ctx-danger" onclick="ctxClear()">❌ Xóa người ngồi</button>
@@ -945,6 +948,84 @@ function ctxSwap() {
   editorSelectedCell = null;
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
+  hideCtxMenu();
+}
+
+function ctxMergeSeats() {
+  if (ctxRow===null) return;
+  const cell = editorLayout[ctxRow]?.[ctxCol];
+  if (!cell) return;
+
+  const isEmpty = !cell.studentId && !cell.label && cell.type !== 'anyone';
+  if (!isEmpty) {
+    showToast('Chỉ ghép được các ghế trống', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  const r = ctxRow, c = ctxCol;
+
+  let mergeType = null;
+  let group = [];
+
+  let horizontal = [];
+  for (let dc = 0; dc < 4; dc++) {
+    const cc = c + dc;
+    if (cc >= editorCols) break;
+    const nc = editorLayout[r]?.[cc];
+    const empty = nc && !nc.studentId && !nc.label && nc.type !== 'anyone';
+    if (!empty) break;
+    horizontal.push([r, cc]);
+    if (horizontal.length === 4) { mergeType = 'quad_h'; group = [...horizontal]; break; }
+  }
+  if (!mergeType && horizontal.length === 2) { mergeType = 'double'; group = [...horizontal]; }
+
+  if (!mergeType) {
+    let vertical = [];
+    for (let dr = 0; dr < 4; dr++) {
+      const rr = r + dr;
+      if (rr >= editorRows) break;
+      const nc = editorLayout[rr]?.[c];
+      const empty = nc && !nc.studentId && !nc.label && nc.type !== 'anyone';
+      if (!empty) break;
+      vertical.push([rr, c]);
+      if (vertical.length === 4) { mergeType = 'quad_v'; group = [...vertical]; break; }
+    }
+    if (!mergeType && vertical.length === 2) { mergeType = 'double'; group = [...vertical]; }
+  }
+
+  if (!mergeType) {
+    showToast('Không đủ ghế trống liền kề để ghép', 'info');
+    hideCtxMenu();
+    return;
+  }
+
+  editorPushUndo();
+  group.forEach(([rr, cc]) => {
+    if (editorLayout[rr]?.[cc]) editorLayout[rr][cc].seatType = mergeType;
+  });
+  editorRenderGrid();
+  hideCtxMenu();
+}
+
+function ctxSplitSeats() {
+  if (ctxRow===null) return;
+  const cell = editorLayout[ctxRow]?.[ctxCol];
+  if (!cell) return;
+
+  const seatType = cell.seatType || editorDefaultSeatType;
+  if (!isMultiSeatTable(seatType)) {
+    showToast('Ghế này không phải bàn ghép', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  const group = getTableGroupCells(ctxRow, ctxCol, seatType);
+  editorPushUndo();
+  group.forEach(([rr, cc]) => {
+    if (editorLayout[rr]?.[cc]) editorLayout[rr][cc] = makeEmptyCell('single');
+  });
+  editorRenderGrid();
   hideCtxMenu();
 }
 
