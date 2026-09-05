@@ -78,8 +78,6 @@ let dragFromCell  = null;
 // Context/selection
 let ctxRow = null, ctxCol = null;
 let editorSelectedCell = null;
-let editorMergeSelection = [];
-let editorMergeMode = false;
 let extraIdSeed = 90000;
 
 // ============= FIREBASE =============
@@ -388,8 +386,6 @@ function closeSodoOverlay() {
   const ov = document.getElementById('sodo-editor-overlay');
   if (ov) { ov.classList.remove('active'); ov.innerHTML = ''; }
   document.body.style.overflow = '';
-  editorMergeMode = false;
-  editorMergeSelection = [];
 }
 
 // ============= DELETE =============
@@ -541,13 +537,6 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         </div>
       </div>
 
-      <div id="sodo-merge-bar" class="sodo-merge-bar" style="display:none">
-        <span class="sodo-merge-bar-label">🔗 Chế độ ghép chỗ:</span>
-        <span id="sodo-merge-count" class="sodo-merge-count">0 ghế đã chọn</span>
-        <button class="sodo-editor-btn sodo-editor-btn-save" onclick="ctxMergeConfirm()">✅ Ghép</button>
-        <button class="sodo-editor-btn" onclick="ctxMergeCancel()">❌ Hủy</button>
-      </div>
-
       <div class="sodo-editor-body">
         <!-- Sidebar -->
         <div class="sodo-editor-sidebar">
@@ -640,13 +629,9 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
     <div id="sodo-ctx-menu" class="sodo-context-menu" style="display:none">
       <button onclick="ctxClear()">🚫 Để trống ghế</button>
       <button onclick="ctxSetAnyone()">👤 Đặt thành "Bất Kỳ"</button>
+      <button onclick="ctxMarkEmptySeat()">🏷️ Đánh dấu ghế trống</button>
       <hr>
       <button onclick="ctxCycleDesk()">🔄 Đổi loại ghế/bàn</button>
-      <hr>
-      <button id="ctx-btn-merge" onclick="ctxMergeSeats()">🔗 Ghép chỗ</button>
-      <button id="ctx-btn-split" onclick="ctxSplitSeats()">✂️ Tách chỗ</button>
-      <button id="ctx-btn-merge-confirm" onclick="ctxMergeConfirm()" style="display:none">✅ Xác nhận ghép</button>
-      <button id="ctx-btn-merge-cancel" onclick="ctxMergeCancel()" style="display:none">❌ Hủy chọn</button>
       <hr>
       <button onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
       <hr>
@@ -671,19 +656,6 @@ function editorRenderGrid() {
   grid.innerHTML = html;
   editorUpdateCount();
   editorUpdateBtns();
-  updateMergeBar();
-}
-
-function updateMergeBar() {
-  const bar = document.getElementById('sodo-merge-bar');
-  const countEl = document.getElementById('sodo-merge-count');
-  if (!bar || !countEl) return;
-  if (editorMergeMode) {
-    bar.style.display = 'flex';
-    countEl.textContent = `${editorMergeSelection.length} ghế đã chọn`;
-  } else {
-    bar.style.display = 'none';
-  }
 }
 
 function buildEditorCell(r, c) {
@@ -695,8 +667,6 @@ function buildEditorCell(r, c) {
 
   const isSelected = editorSelectedCell?.r === r && editorSelectedCell?.c === c;
   const selCls = isSelected ? 'sodo-cell-selected' : '';
-  const isMergeSelected = editorMergeSelection.some(([rr, cc]) => rr === r && cc === c);
-  const mergeCls = (isEmpty && isMergeSelected) ? 'sodo-merge-selected' : '';
 
   const base = `data-row="${r}" data-col="${c}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}"`;
   const drop = `ondragover="cellDragOver(event,${r},${c})" ondrop="cellDrop(event,${r},${c})" ondragleave="cellDragLeave(event)"`;
@@ -713,7 +683,7 @@ function buildEditorCell(r, c) {
   }
 
   if (isEmpty) {
-    return `<div class="sodo-editor-cell sodo-editor-cell-empty sodo-seat-${seatType} ${selCls} ${mergeCls}"
+    return `<div class="sodo-editor-cell sodo-editor-cell-empty sodo-seat-${seatType} ${selCls}"
       ${base} ${drop} ${events}>
       <span class="sodo-empty-plus">+</span>
     </div>`;
@@ -910,22 +880,6 @@ function dragEndCleanup(event) {
 
 // ============= CELL CLICK =============
 function cellClick(r, c) {
-  if (editorMergeMode) {
-    const cell = editorLayout[r]?.[c];
-    if (!cell || cell.studentId || cell.label || cell.type === 'anyone') {
-      showToast('Chỉ chọn được ghế trống', 'warning');
-      return;
-    }
-    const idx = editorMergeSelection.findIndex(([rr, cc]) => rr === r && cc === c);
-    if (idx >= 0) {
-      editorMergeSelection.splice(idx, 1);
-    } else {
-      editorMergeSelection.push([r, c]);
-    }
-    editorRenderGrid();
-    return;
-  }
-
   if (editorSelectedCell) {
     const sel = editorSelectedCell;
     if (sel.r === r && sel.c === c) {
@@ -973,24 +927,10 @@ function showCtxMenu(event, r, c) {
   const menu = document.getElementById('sodo-ctx-menu');
   if (!menu) return;
 
-  const btnMerge = document.getElementById('ctx-btn-merge');
   const btnSplit = document.getElementById('ctx-btn-split');
-  const btnConfirm = document.getElementById('ctx-btn-merge-confirm');
-  const btnCancel = document.getElementById('ctx-btn-merge-cancel');
-
-  if (editorMergeMode) {
-    if (btnMerge) btnMerge.style.display = 'none';
-    if (btnSplit) btnSplit.style.display = 'none';
-    if (btnConfirm) btnConfirm.style.display = editorMergeSelection.length >= 2 ? 'block' : 'none';
-    if (btnCancel) btnCancel.style.display = 'block';
-  } else {
-    if (btnMerge) btnMerge.style.display = 'block';
-    if (btnSplit) {
-      const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
-      btnSplit.style.display = isMultiSeatTable(seatType) ? 'block' : 'none';
-    }
-    if (btnConfirm) btnConfirm.style.display = 'none';
-    if (btnCancel) btnCancel.style.display = 'none';
+  if (btnSplit) {
+    const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
+    btnSplit.style.display = isMultiSeatTable(seatType) ? 'block' : 'none';
   }
 
   menu.style.display = 'block';
@@ -1063,129 +1003,10 @@ function ctxSwap() {
   hideCtxMenu();
 }
 
-function ctxMergeSeats() {
+function ctxMarkEmptySeat() {
   if (ctxRow===null) return;
-  const cell = editorLayout[ctxRow]?.[ctxCol];
-  if (!cell) return;
-
-  const isEmpty = !cell.studentId && !cell.label && cell.type !== 'anyone';
-  if (!isEmpty) {
-    showToast('Chỉ bắt đầu ghép từ ghế trống', 'warning');
-    hideCtxMenu();
-    return;
-  }
-
-  toggleMergeMode();
-  hideCtxMenu();
-}
-
-function toggleMergeMode() {
-  if (editorMergeMode) {
-    exitMergeMode();
-  } else {
-    editorMergeMode = true;
-    editorMergeSelection = [];
-    editorSelectedCell = null;
-    showToast('Chế độ ghép chỗ: nhấn vào các ghế trống để chọn', 'info');
-    editorRenderGrid();
-  }
-}
-
-function exitMergeMode() {
-  editorMergeMode = false;
-  editorMergeSelection = [];
-  editorRenderGrid();
-}
-
-function ctxMergeConfirm() {
-  if (editorMergeSelection.length < 2) {
-    showToast('Chọn ít nhất 2 ghế để ghép', 'warning');
-    return;
-  }
-
-  const group = editorMergeSelection.map(([r, c]) => [r, c]);
-  const mergeType = validateMergeGroup(group);
-
-  if (!mergeType) {
-    showToast('Các ghế phải liền kề nhau (2 ghế hoặc 4 ghế thành hình chữ nhật)', 'warning');
-    return;
-  }
-
-  const alreadyMerged = group.every(([r, c]) => (editorLayout[r]?.[c]?.seatType || editorDefaultSeatType) === mergeType);
-  if (alreadyMerged) {
-    showToast('Các ghế này đã được ghép rồi', 'info');
-    exitMergeMode();
-    hideCtxMenu();
-    editorRenderGrid();
-    return;
-  }
-
   editorPushUndo();
-
-  const firstCell = editorLayout[group[0][0]]?.[group[0][1]];
-  const originalType = firstCell?.seatType || editorDefaultSeatType;
-  const originalGroup = getTableGroupCells(group[0][0], group[0][1], originalType);
-  const selectedSet = new Set(group.map(([r, c]) => `${r},${c}`));
-
-  originalGroup.forEach(([rr, cc]) => {
-    if (!selectedSet.has(`${rr},${cc}`)) {
-      if (editorLayout[rr]?.[cc]) {
-        editorLayout[rr][cc].seatType = 'single';
-      }
-    }
-  });
-
-  group.forEach(([rr, cc]) => {
-    if (editorLayout[rr]?.[cc]) editorLayout[rr][cc].seatType = mergeType;
-  });
-
-  exitMergeMode();
-  hideCtxMenu();
-  editorRenderGrid();
-  showToast('Đã ghép chỗ thành công', 'success');
-}
-
-function ctxMergeCancel() {
-  exitMergeMode();
-  hideCtxMenu();
-}
-
-function validateMergeGroup(group) {
-  if (group.length === 2) {
-    const [[r1, c1], [r2, c2]] = group;
-    if (r1 === r2 && Math.abs(c1 - c2) === 1) return 'double';
-    if (c1 === c2 && Math.abs(r1 - r2) === 1) return 'double';
-  }
-  if (group.length === 4) {
-    const rows = group.map(([r]) => r);
-    const cols = group.map(([, c]) => c);
-    const minR = Math.min(...rows), maxR = Math.max(...rows);
-    const minC = Math.min(...cols), maxC = Math.max(...cols);
-
-    if (minR === maxR && maxC - minC === 3) return 'quad_h';
-    if (minC === maxC && maxR - minR === 3) return 'quad_v';
-    if (maxR - minR === 1 && maxC - minC === 1) return 'quad';
-  }
-  return null;
-}
-
-function ctxSplitSeats() {
-  if (ctxRow===null) return;
-  const cell = editorLayout[ctxRow]?.[ctxCol];
-  if (!cell) return;
-
-  const seatType = cell.seatType || editorDefaultSeatType;
-  if (!isMultiSeatTable(seatType)) {
-    showToast('Ghế này không phải bàn ghép', 'warning');
-    hideCtxMenu();
-    return;
-  }
-
-  const group = getTableGroupCells(ctxRow, ctxCol, seatType);
-  editorPushUndo();
-  group.forEach(([rr, cc]) => {
-    if (editorLayout[rr]?.[cc]) editorLayout[rr][cc] = makeEmptyCell('single');
-  });
+  editorLayout[ctxRow][ctxCol] = { type:'empty', studentId:null, label:'Ghế trống', empty:true, seatType: editorLayout[ctxRow][ctxCol].seatType || editorDefaultSeatType };
   editorRenderGrid();
   hideCtxMenu();
 }
@@ -1323,7 +1144,6 @@ document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key==='y') { e.preventDefault(); editorRedo(); }
   if (e.ctrlKey && e.key==='s') { e.preventDefault(); editorSave(); }
   if (e.key==='Escape') {
-    if (editorMergeMode) { exitMergeMode(); return; }
     const m = document.getElementById('sodo-ctx-menu');
     if (m?.style.display!=='none') { hideCtxMenu(); return; }
     closeEditor();
