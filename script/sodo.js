@@ -1043,9 +1043,9 @@ function editorRedo() { if(!editorRedoStack.length){showToast('Không có gì đ
 
 // ============= GRID RESIZE =============
 function editorAddRow()    { editorPushUndo(); editorRows++; editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell())); editorRenderGrid(); }
-function editorRemoveRow() { editorPushUndo(); editorRows--; editorLayout.pop(); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
+function editorRemoveRow() { if(editorRows<=0)return; editorPushUndo(); editorRows--; editorLayout.pop(); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
 function editorAddCol()    { editorPushUndo(); editorCols++; editorLayout.forEach(r=>r.push(makeEmptyCell())); editorRenderGrid(); }
-function editorRemoveCol() { editorPushUndo(); editorCols--; editorLayout.forEach(r=>r.pop()); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
+function editorRemoveCol() { if(editorCols<=0)return; editorPushUndo(); editorCols--; editorLayout.forEach(r=>r.pop()); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
 
 function editorInsertRowAt(atIndex) {
   if (atIndex < 0 || atIndex > editorRows) return;
@@ -1065,7 +1065,7 @@ function editorInsertColAt(atIndex) {
 }
 
 function editorDeleteRowAt(atIndex) {
-  if (atIndex < 0 || atIndex >= editorRows) return;
+  if (atIndex < 0 || atIndex >= editorRows || editorRows <= 0) return;
   editorPushUndo();
   editorLayout.splice(atIndex, 1);
   editorRows--;
@@ -1074,7 +1074,7 @@ function editorDeleteRowAt(atIndex) {
 }
 
 function editorDeleteColAt(atIndex) {
-  if (atIndex < 0 || atIndex >= editorCols) return;
+  if (atIndex < 0 || atIndex >= editorCols || editorCols <= 0) return;
   editorPushUndo();
   editorLayout.forEach(r => r.splice(atIndex, 1));
   editorCols--;
