@@ -625,6 +625,21 @@
 }
 .sodo-editor-btn-close:hover { background: rgba(239, 68, 68, 0.9) !important; }
 
+/* Merge mode bar */
+.sodo-merge-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: rgba(16, 185, 129, 0.08);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.25);
+  color: #059669;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.sodo-merge-bar-label { opacity: 0.9; }
+.sodo-merge-count { margin-left: 4px; opacity: 0.7; font-weight: 500; }
+
 /* Body */
 .sodo-editor-body {
   display: flex;

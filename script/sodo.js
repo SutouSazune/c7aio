@@ -541,6 +541,13 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         </div>
       </div>
 
+      <div id="sodo-merge-bar" class="sodo-merge-bar" style="display:none">
+        <span class="sodo-merge-bar-label">🔗 Chế độ ghép chỗ:</span>
+        <span id="sodo-merge-count" class="sodo-merge-count">0 ghế đã chọn</span>
+        <button class="sodo-editor-btn sodo-editor-btn-save" onclick="ctxMergeConfirm()">✅ Ghép</button>
+        <button class="sodo-editor-btn" onclick="ctxMergeCancel()">❌ Hủy</button>
+      </div>
+
       <div class="sodo-editor-body">
         <!-- Sidebar -->
         <div class="sodo-editor-sidebar">
@@ -656,6 +663,19 @@ function editorRenderGrid() {
   grid.innerHTML = html;
   editorUpdateCount();
   editorUpdateBtns();
+  updateMergeBar();
+}
+
+function updateMergeBar() {
+  const bar = document.getElementById('sodo-merge-bar');
+  const countEl = document.getElementById('sodo-merge-count');
+  if (!bar || !countEl) return;
+  if (editorMergeMode) {
+    bar.style.display = 'flex';
+    countEl.textContent = `${editorMergeSelection.length} ghế đã chọn`;
+  } else {
+    bar.style.display = 'none';
+  }
 }
 
 function buildEditorCell(r, c) {
@@ -871,7 +891,7 @@ function cellClick(r, c) {
   if (editorMergeMode) {
     const cell = editorLayout[r]?.[c];
     if (!cell || cell.studentId || cell.label || cell.type === 'anyone') {
-      exitMergeMode();
+      showToast('Chỉ chọn được ghế trống', 'warning');
       return;
     }
     const idx = editorMergeSelection.findIndex(([rr, cc]) => rr === r && cc === c);
@@ -924,7 +944,6 @@ function showCtxMenu(event, r, c) {
 function hideCtxMenu() {
   const m = document.getElementById('sodo-ctx-menu');
   if (m) m.style.display = 'none';
-  exitMergeMode();
 }
 
 function ctxClear() {
@@ -1199,6 +1218,7 @@ document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key==='y') { e.preventDefault(); editorRedo(); }
   if (e.ctrlKey && e.key==='s') { e.preventDefault(); editorSave(); }
   if (e.key==='Escape') {
+    if (editorMergeMode) { exitMergeMode(); return; }
     const m = document.getElementById('sodo-ctx-menu');
     if (m?.style.display!=='none') { hideCtxMenu(); return; }
     closeEditor();
