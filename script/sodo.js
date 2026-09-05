@@ -519,14 +519,16 @@ function _emptyLayout(rows, cols, seatType) {
 function showEditor(title, icon, allowExtra, showNameInput, existingName = '', existingPublic = true) {
   const ov = document.getElementById('sodo-editor-overlay');
   if (!ov) return;
-  ov.innerHTML = buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, existingPublic);
+  ov.innerHTML = buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, existingPublic, editorMode);
   ov.classList.add('active');
   document.body.style.overflow = 'hidden';
   editorRenderGrid();
   editorRenderSidebar();
 }
 
-function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, existingPublic) {
+function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, existingPublic, mode = 'default') {
+  const isIndoor = mode === 'default' || mode === 'subject';
+
   return `
     <div class="sodo-editor">
       <div class="sodo-editor-header">
@@ -583,6 +585,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
             </div>
           </div>
 
+          ${isIndoor ? `
           <div class="sodo-editor-sidebar-header">
             <h4>📚 Dãy</h4>
           </div>
@@ -597,6 +600,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
             <input id="sodo-row-group-spacing" type="range" min="0" max="48" value="16" oninput="editorSetRowGroupSpacing(this.value)" style="width:100px">
             <span id="sodo-row-group-spacing-val">16px</span>
           </div>
+          ` : ''}
 
           <div class="sodo-editor-sidebar-header">
             <h4>👥 Học Sinh</h4>
@@ -622,10 +626,12 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         <div class="sodo-editor-canvas">
           <div class="sodo-editor-canvas-header">
             <div class="sodo-grid-controls">
-              <button id="btn-add-row" class="sodo-ctrl-btn" onclick="editorAddRow()" title="Thêm hàng cuối">+ Hàng</button>
-              <button id="btn-rm-row" class="sodo-ctrl-btn" onclick="editorRemoveRow()" title="Xóa hàng cuối">− Hàng</button>
-              <button id="btn-add-col" class="sodo-ctrl-btn" onclick="editorAddCol()" title="Thêm cột cuối">+ Cột</button>
-              <button id="btn-rm-col" class="sodo-ctrl-btn" onclick="editorRemoveCol()" title="Xóa cột cuối">− Cột</button>
+              ${!isIndoor ? `
+              <button class="sodo-ctrl-btn" onclick="editorAddRow()" title="Thêm hàng cuối">+ Hàng</button>
+              <button class="sodo-ctrl-btn" onclick="editorRemoveRow()" title="Xóa hàng cuối">− Hàng</button>
+              <button class="sodo-ctrl-btn" onclick="editorAddCol()" title="Thêm cột cuối">+ Cột</button>
+              <button class="sodo-ctrl-btn" onclick="editorRemoveCol()" title="Xóa cột cuối">− Cột</button>
+              ` : ''}
               <span class="sodo-grid-size-badge" id="sodo-grid-size">${editorRows} × ${editorCols}</span>
             </div>
             <div class="sodo-desk-type-controls">
@@ -639,9 +645,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
 
           <div class="sodo-board-label-editor">🖥️ &nbsp;PHÍA TRƯỚC / HƯỚNG NHÌN &nbsp;🖥️</div>
 
-          <div class="sodo-editor-grid-wrapper">
-            <div id="sodo-editor-grid" class="sodo-editor-grid" style="--sodo-cols:${editorCols}"></div>
-          </div>
+          <div id="sodo-editor-grid" class="sodo-editor-grid" style="--sodo-cols:${editorCols}"></div>
 
           <div class="sodo-editor-legend">
             💡 Kéo học sinh / Bất Kỳ vào ghế &nbsp;·&nbsp; Kéo trong bảng để hoán đổi &nbsp;·&nbsp; Chuột phải để tùy chọn &nbsp;·&nbsp; Ctrl+Z hoàn tác &nbsp;·&nbsp; Ctrl+S lưu
@@ -667,23 +671,24 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
 
     <!-- Context Menu -->
     <div id="sodo-ctx-menu" class="sodo-context-menu" style="display:none">
-      ${editorActiveRowGroupId ? `
+      ${isIndoor ? `
       <button onclick="ctxAddTableToRowGroup('double')">▣ Thêm bàn đôi vào dãy</button>
       <button onclick="ctxAddTableToRowGroup('quad')">⊞ Thêm bàn 4 (2x2) vào dãy</button>
       <button onclick="ctxAddTableToRowGroup('quad_h')">⊟ Thêm bàn 4 ngang vào dãy</button>
       <button onclick="ctxAddTableToRowGroup('quad_v')">⏣ Thêm bàn 4 dọc vào dãy</button>
       <button onclick="ctxAddTableToRowGroup('single')">◻ Thêm bàn đơn vào dãy</button>
       <hr>
-      ` : ''}
-      <button id="ctx-split-row" onclick="ctxSplitByRow()">✂️ Tách dãy</button>
+      <button onclick="ctxSplitByRow()">✂️ Tách dãy</button>
       <hr>
-      <button id="ctx-insert-row" onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
-      <button id="ctx-insert-row2" onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
-      <button id="ctx-delete-row" onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
-      <button id="ctx-insert-col" onclick="ctxInsertColLeft()">＋ Chèn cột bên trái</button>
-      <button id="ctx-insert-col2" onclick="ctxInsertColRight()">＋ Chèn cột bên phải</button>
-      <button id="ctx-delete-col" onclick="ctxDeleteThisCol()">－ Xóa cột này</button>
+      ` : `
+      <button onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
+      <button onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
+      <button onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
+      <button onclick="ctxInsertColLeft()">＋ Chèn cột bên trái</button>
+      <button onclick="ctxInsertColRight()">＋ Chèn cột bên phải</button>
+      <button onclick="ctxDeleteThisCol()">－ Xóa cột này</button>
       <hr>
+      `}
       <button onclick="ctxClear()">🚫 Để trống ghế</button>
       <button onclick="ctxSetAnyone()">👤 Đặt thành "Bất Kỳ"</button>
       <button onclick="ctxMarkEmptySeat()">🏷️ Đánh dấu ghế trống</button>
@@ -694,7 +699,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <hr>
       <button class="ctx-danger" onclick="ctxClear()">❌ Xóa người ngồi</button>
     </div>`;
-}
+  }
 
 function pickIcon(ic) {
   editorPickedIcon = ic;
@@ -920,12 +925,6 @@ function editorUpdateCount() {
 }
 
 function editorUpdateBtns() {
-  const hasRowGroups = editorRowGroups.length > 0;
-  document.getElementById('btn-add-row')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
-  document.getElementById('btn-rm-row')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
-  document.getElementById('btn-add-col')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
-  document.getElementById('btn-rm-col')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
-  
   const sz = document.getElementById('sodo-grid-size');
   if (sz) sz.textContent = `${editorRows} × ${editorCols}`;
 }
@@ -1081,12 +1080,6 @@ function showCtxMenu(event, r, c) {
   ctxRow = r; ctxCol = c;
   const menu = document.getElementById('sodo-ctx-menu');
   if (!menu) return;
-
-  const hasRowGroups = editorRowGroups.length > 0;
-  ['ctx-insert-row', 'ctx-insert-row2', 'ctx-delete-row', 'ctx-insert-col', 'ctx-insert-col2', 'ctx-delete-col', 'ctx-split-row'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = hasRowGroups ? 'none' : 'block';
-  });
 
   menu.style.display = 'block';
   menu.style.left = Math.min(event.clientX, window.innerWidth  - 220) + 'px';
@@ -1284,75 +1277,6 @@ function editorUndo() { if(!editorUndoStack.length){showToast('Không có gì đ
 function editorRedo() { if(!editorRedoStack.length){showToast('Không có gì để làm lại','info');return;} editorUndoStack.push(sodoClone(editorLayout)); editorLayout=editorRedoStack.pop(); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
 
 // ============= GRID RESIZE =============
-function editorAddRow() {
-  editorPushUndo();
-  if (editorCols <= 0) { editorCols = 1; editorLayout.forEach(r => r.push(makeEmptyCell())); }
-  editorRows++;
-  editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell()));
-  editorRenderGrid();
-}
-function editorRemoveRow() {
-  editorPushUndo();
-  editorRows--;
-  if (editorLayout.length) editorLayout.pop();
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
-  editorRenderGrid();
-  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
-}
-function editorAddCol() {
-  editorPushUndo();
-  if (editorRows <= 0) { editorRows = 1; editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell())); }
-  editorCols++;
-  editorLayout.forEach(r=>r.push(makeEmptyCell()));
-  editorRenderGrid();
-}
-function editorRemoveCol() {
-  editorPushUndo();
-  editorCols--;
-  editorLayout.forEach(r => { if (r.length) r.pop(); });
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
-  editorRenderGrid();
-  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
-}
-
-function editorInsertRowAt(atIndex) {
-  if (atIndex < 0 || atIndex > editorRows) return;
-  editorPushUndo();
-  if (editorCols <= 0) { editorCols = 1; editorLayout.forEach(r => r.push(makeEmptyCell())); }
-  const newRow = Array.from({length:editorCols},()=>makeEmptyCell());
-  editorLayout.splice(atIndex, 0, newRow);
-  editorRows++;
-  editorRenderGrid();
-}
-
-function editorInsertColAt(atIndex) {
-  if (atIndex < 0 || atIndex > editorCols) return;
-  editorPushUndo();
-  if (editorRows <= 0) { editorRows = 1; editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell())); }
-  editorLayout.forEach(r => r.splice(atIndex, 0, makeEmptyCell()));
-  editorCols++;
-  editorRenderGrid();
-}
-
-function editorDeleteRowAt(atIndex) {
-  if (atIndex < 0 || atIndex >= editorRows || editorRows <= 0) return;
-  editorPushUndo();
-  editorLayout.splice(atIndex, 1);
-  editorRows--;
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
-  editorRenderGrid();
-  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
-}
-
-function editorDeleteColAt(atIndex) {
-  if (atIndex < 0 || atIndex >= editorCols || editorCols <= 0) return;
-  editorPushUndo();
-  editorLayout.forEach(r => r.splice(atIndex, 1));
-  editorCols--;
-  if (editorRows <= 0 || editorCols <= 0) _emptyLayout(0, 0, editorDefaultSeatType);
-  editorRenderGrid();
-  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
-}
 
 // ============= EXTRA PEOPLE =============
 function editorAddExtra() {
