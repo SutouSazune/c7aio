@@ -650,8 +650,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <hr>
       <button onclick="ctxCycleDesk()">🔄 Đổi loại ghế/bàn</button>
       <hr>
-      <button id="ctx-btn-split-row" onclick="ctxSplitByRow()" style="display:none">✂️ Tách theo dãy</button>
-      <button id="ctx-btn-split-col" onclick="ctxSplitByCol()" style="display:none">✂️ Tách theo cột</button>
+      <button id="ctx-btn-split-col" onclick="ctxSplitByCol()" style="display:none">✂️ Tách dãy</button>
       <button onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
       <button onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
       <button onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
@@ -940,17 +939,13 @@ function showCtxMenu(event, r, c) {
   const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
   const isMulti = isMultiSeatTable(seatType);
 
-  const btnSplitRow = document.getElementById('ctx-btn-split-row');
   const btnSplitCol = document.getElementById('ctx-btn-split-col');
-  if (btnSplitRow && btnSplitCol) {
+  if (btnSplitCol) {
     if (!isMulti) {
-      btnSplitRow.style.display = 'none';
       btnSplitCol.style.display = 'none';
     } else {
       const group = getTableGroupCells(r, c, seatType);
-      const rows = [...new Set(group.map(([rr]) => rr))];
       const cols = [...new Set(group.map(([, cc]) => cc))];
-      btnSplitRow.style.display = rows.length > 1 ? 'block' : 'none';
       btnSplitCol.style.display = cols.length > 1 ? 'block' : 'none';
     }
   }
