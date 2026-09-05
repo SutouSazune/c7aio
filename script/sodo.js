@@ -622,10 +622,10 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         <div class="sodo-editor-canvas">
           <div class="sodo-editor-canvas-header">
             <div class="sodo-grid-controls">
-              <button class="sodo-ctrl-btn" onclick="editorAddRow()" title="Thêm hàng cuối">+ Hàng</button>
-              <button class="sodo-ctrl-btn" onclick="editorRemoveRow()" title="Xóa hàng cuối">− Hàng</button>
-              <button class="sodo-ctrl-btn" onclick="editorAddCol()" title="Thêm cột cuối">+ Cột</button>
-              <button class="sodo-ctrl-btn" onclick="editorRemoveCol()" title="Xóa cột cuối">− Cột</button>
+              <button id="btn-add-row" class="sodo-ctrl-btn" onclick="editorAddRow()" title="Thêm hàng cuối">+ Hàng</button>
+              <button id="btn-rm-row" class="sodo-ctrl-btn" onclick="editorRemoveRow()" title="Xóa hàng cuối">− Hàng</button>
+              <button id="btn-add-col" class="sodo-ctrl-btn" onclick="editorAddCol()" title="Thêm cột cuối">+ Cột</button>
+              <button id="btn-rm-col" class="sodo-ctrl-btn" onclick="editorRemoveCol()" title="Xóa cột cuối">− Cột</button>
               <span class="sodo-grid-size-badge" id="sodo-grid-size">${editorRows} × ${editorCols}</span>
             </div>
             <div class="sodo-desk-type-controls">
@@ -674,20 +674,21 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <button onclick="ctxAddTableToRowGroup('quad_v')">⏣ Thêm bàn 4 dọc vào dãy</button>
       <button onclick="ctxAddTableToRowGroup('single')">◻ Thêm bàn đơn vào dãy</button>
       <hr>
-      ` : '<div style="padding:8px 14px;font-size:0.8rem;color:var(--text-muted)">Chưa chọn dãy. Tạo dãy ở sidebar trước.</div><hr>'}
+      ` : ''}
+      <button id="ctx-split-row" onclick="ctxSplitByRow()">✂️ Tách dãy</button>
+      <hr>
+      <button id="ctx-insert-row" onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
+      <button id="ctx-insert-row2" onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
+      <button id="ctx-delete-row" onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
+      <button id="ctx-insert-col" onclick="ctxInsertColLeft()">＋ Chèn cột bên trái</button>
+      <button id="ctx-insert-col2" onclick="ctxInsertColRight()">＋ Chèn cột bên phải</button>
+      <button id="ctx-delete-col" onclick="ctxDeleteThisCol()">－ Xóa cột này</button>
+      <hr>
       <button onclick="ctxClear()">🚫 Để trống ghế</button>
       <button onclick="ctxSetAnyone()">👤 Đặt thành "Bất Kỳ"</button>
       <button onclick="ctxMarkEmptySeat()">🏷️ Đánh dấu ghế trống</button>
       <hr>
       <button onclick="ctxCycleDesk()">🔄 Đổi loại ghế/bàn</button>
-      <hr>
-      <button onclick="ctxSplitByRow()">✂️ Tách dãy</button>
-      <button onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
-      <button onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
-      <button onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
-      <button onclick="ctxInsertColLeft()">＋ Chèn cột bên trái</button>
-      <button onclick="ctxInsertColRight()">＋ Chèn cột bên phải</button>
-      <button onclick="ctxDeleteThisCol()">－ Xóa cột này</button>
       <hr>
       <button onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
       <hr>
@@ -919,6 +920,12 @@ function editorUpdateCount() {
 }
 
 function editorUpdateBtns() {
+  const hasRowGroups = editorRowGroups.length > 0;
+  document.getElementById('btn-add-row')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
+  document.getElementById('btn-rm-row')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
+  document.getElementById('btn-add-col')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
+  document.getElementById('btn-rm-col')?.style.setProperty('display', hasRowGroups ? 'none' : 'inline-flex');
+  
   const sz = document.getElementById('sodo-grid-size');
   if (sz) sz.textContent = `${editorRows} × ${editorCols}`;
 }
@@ -1074,6 +1081,12 @@ function showCtxMenu(event, r, c) {
   ctxRow = r; ctxCol = c;
   const menu = document.getElementById('sodo-ctx-menu');
   if (!menu) return;
+
+  const hasRowGroups = editorRowGroups.length > 0;
+  ['ctx-insert-row', 'ctx-insert-row2', 'ctx-delete-row', 'ctx-insert-col', 'ctx-insert-col2', 'ctx-delete-col', 'ctx-split-row'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = hasRowGroups ? 'none' : 'block';
+  });
 
   menu.style.display = 'block';
   menu.style.left = Math.min(event.clientX, window.innerWidth  - 220) + 'px';
