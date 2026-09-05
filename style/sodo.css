@@ -1047,6 +1047,90 @@
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
 }
 
+/* Row Group (Dãy) */
+.sodo-row-group-list {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.sodo-row-group-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+}
+
+.sodo-row-group-item:hover {
+  background: var(--primary-light);
+}
+
+.sodo-row-group-item.active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.sodo-row-group-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  flex: 1;
+}
+
+.sodo-row-group-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.sodo-row-group-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.sodo-row-group-delete:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.sodo-row-group-form {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sodo-row-group-form input {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--input-border);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-family: inherit;
+}
+
+.sodo-row-group-form button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1.5px solid var(--primary);
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .sodo-editor-avatar {
   width: 34px;
   height: 34px;
