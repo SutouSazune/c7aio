@@ -801,11 +801,11 @@ function cellDragLeave(event) { event.currentTarget.classList.remove('drag-over'
 function cellDrop(event, r, c) {
   event.preventDefault();
   event.currentTarget.classList.remove('drag-over');
-  editorPushUndo();
 
   const target = editorLayout[r]?.[c] || makeEmptyCell();
 
   if (dragIsAnyone && !dragFromCell) {
+    editorPushUndo();
     editorAnyoneCounter++;
     editorLayout[r][c] = { ...target, type:'anyone', studentId:null, label:`Bất Kỳ ${editorAnyoneCounter}`, empty:false };
     dragIsAnyone = false;
@@ -815,6 +815,20 @@ function cellDrop(event, r, c) {
 
   if (dragFromCell !== null) {
     const src = editorLayout[dragFromCell.r]?.[dragFromCell.c] || makeEmptyCell();
+    const srcSeatType = src.seatType || editorDefaultSeatType;
+    const tgtSeatType = target.seatType || editorDefaultSeatType;
+
+    if (srcSeatType !== tgtSeatType) {
+      showToast('Không thể kéo thả giữa hai loại bàn khác nhau', 'warning');
+      return;
+    }
+
+    if ((srcSeatType === 'quad' || srcSeatType === 'double') && !isSameTable(dragFromCell.r, dragFromCell.c, r, c)) {
+      showToast('Chỉ kéo thả trong cùng một bàn', 'warning');
+      return;
+    }
+
+    editorPushUndo();
     const srcData = { type:src.type, studentId:src.studentId, label:src.label, empty:src.empty };
     const tgtData = { type:target.type, studentId:target.studentId, label:target.label, empty:target.empty };
     editorLayout[r][c]                         = { ...target, ...srcData };
@@ -822,6 +836,14 @@ function cellDrop(event, r, c) {
   } else if (dragStudentId !== null) {
     const person = [...STUDENTS, ...editorExtraPeople].find(s => s.id === dragStudentId);
     if (!person) return;
+
+    const seatType = target.seatType || editorDefaultSeatType;
+    if ((seatType === 'quad' || seatType === 'double') && getTableOccupiedCount(r, c) >= getTableCapacity(seatType)) {
+      showToast(`Bàn này đã đủ ${getTableCapacity(seatType)} người`, 'warning');
+      return;
+    }
+
+    editorPushUndo();
     editorLayout[r][c] = { ...target, type:'student', studentId:person.id, label:person.name, empty:false };
   }
 
@@ -883,16 +905,42 @@ function ctxCycleDesk() {
   const cell = editorLayout[ctxRow]?.[ctxCol];
   if (!cell) return;
   const keys = SODO_SEAT_TYPE_LIST.map(t => t.key);
-  cell.seatType = keys[(keys.indexOf(cell.seatType||'double') + 1) % keys.length];
+  const newType = keys[(keys.indexOf(cell.seatType||'double') + 1) % keys.length];
+
+  if (newType === 'quad' || newType === 'double') {
+    const group = getTableGroupCells(ctxRow, ctxCol, newType);
+    group.forEach(([r, c]) => {
+      if (editorLayout[r]?.[c]) editorLayout[r][c].seatType = newType;
+    });
+  } else {
+    cell.seatType = newType;
+  }
+
   editorRenderGrid();
   hideCtxMenu();
 }
 
 function ctxSwap() {
   if (ctxRow===null || !editorSelectedCell) { showToast('Hãy chọn một ghế khác trước (nhấn vào ghế)', 'warning'); hideCtxMenu(); return; }
-  editorPushUndo();
+
   const a = editorLayout[ctxRow][ctxCol];
   const b = editorLayout[editorSelectedCell.r][editorSelectedCell.c];
+  const seatTypeA = a.seatType || editorDefaultSeatType;
+  const seatTypeB = b.seatType || editorDefaultSeatType;
+
+  if (seatTypeA !== seatTypeB) {
+    showToast('Chỉ hoán đổi trong cùng loại bàn', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  if ((seatTypeA === 'quad' || seatTypeA === 'double') && !isSameTable(ctxRow, ctxCol, editorSelectedCell.r, editorSelectedCell.c)) {
+    showToast('Chỉ hoán đổi trong cùng một bàn', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  editorPushUndo();
   const aData = { type:a.type, studentId:a.studentId, label:a.label, empty:a.empty };
   const bData = { type:b.type, studentId:b.studentId, label:b.label, empty:b.empty };
   Object.assign(editorLayout[ctxRow][ctxCol], bData);
@@ -1006,6 +1054,49 @@ document.addEventListener('keydown', e => {
     closeEditor();
   }
 });
+
+// ============= TABLE GROUP LOGIC =============
+function getTableGroupCells(r, c, seatType) {
+  const type = seatType || (editorLayout[r]?.[c]?.seatType) || editorDefaultSeatType;
+  const cells = [];
+
+  if (type === 'quad') {
+    const baseR = Math.floor(r / 2) * 2;
+    const baseC = Math.floor(c / 2) * 2;
+    for (let dr = 0; dr < 2; dr++) {
+      for (let dc = 0; dc < 2; dc++) {
+        const rr = baseR + dr, cc = baseC + dc;
+        if (rr < editorRows && cc < editorCols) cells.push([rr, cc]);
+      }
+    }
+  } else if (type === 'double') {
+    const pairC = (c % 2 === 0) ? c : c - 1;
+    for (let dc = 0; dc < 2; dc++) {
+      const cc = pairC + dc;
+      if (cc < editorCols) cells.push([r, cc]);
+    }
+  } else {
+    cells.push([r, c]);
+  }
+
+  return cells;
+}
+
+function getTableCapacity(seatType) {
+  if (seatType === 'quad') return 4;
+  if (seatType === 'double') return 2;
+  return 1;
+}
+
+function getTableOccupiedCount(r, c) {
+  const group = getTableGroupCells(r, c);
+  return group.filter(([rr, cc]) => editorLayout[rr]?.[cc]?.type === 'student').length;
+}
+
+function isSameTable(r1, c1, r2, c2) {
+  const group = getTableGroupCells(r1, c1);
+  return group.some(([rr, cc]) => rr === r2 && cc === c2);
+}
 
 // ============= HELPERS =============
 function makeEmptyCell(seatType) {
