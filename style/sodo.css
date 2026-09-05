@@ -200,7 +200,7 @@
 }
 
 /* Aisle between desk pairs */
-.sodo-cell[data-desk-pos="left"]:not([data-col="0"]) {
+.sodo-cell[data-seat-type="double"][data-desk-pos="left"]:not([data-col="0"]) {
   margin-left: 18px;
 }
 
@@ -952,7 +952,7 @@
 }
 
 /* Aisle in editor */
-.sodo-editor-cell[data-desk-pos="left"]:not([data-col="0"]) {
+.sodo-editor-cell[data-seat-type="double"][data-desk-pos="left"]:not([data-col="0"]) {
   margin-left: 18px;
 }
 
@@ -1419,6 +1419,67 @@
   letter-spacing: 0.5px;
 }
 
+/* --- Quad horizontal (Bàn 4 ngang 1x4) --- */
+.sodo-seat-quad_h {
+  background: linear-gradient(90deg, rgba(139,92,246,0.06) 0%, var(--card-bg) 50%, rgba(139,92,246,0.06) 100%) !important;
+  border-color: rgba(139,92,246,0.35) !important;
+}
+
+.sodo-cell[data-seat-type="quad_h"][data-quad-idx="0"],
+.sodo-editor-cell[data-seat-type="quad_h"][data-quad-idx="0"] {
+  border-radius: 14px 4px 4px 14px !important;
+  border-right-style: dashed !important;
+}
+
+.sodo-cell[data-seat-type="quad_h"][data-quad-idx="3"],
+.sodo-editor-cell[data-seat-type="quad_h"][data-quad-idx="3"] {
+  border-radius: 4px 14px 14px 4px !important;
+  border-left-style: dashed !important;
+}
+
+.sodo-cell[data-seat-type="quad_h"][data-quad-idx="0"]::before,
+.sodo-editor-cell[data-seat-type="quad_h"][data-quad-idx="0"]::before {
+  content: '⊟ Bàn 4 ngang';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #8b5cf6;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+/* --- Quad vertical (Bàn 4 dọc 4x1) --- */
+.sodo-seat-quad_v {
+  background: linear-gradient(180deg, rgba(139,92,246,0.06) 0%, var(--card-bg) 50%, rgba(139,92,246,0.06) 100%) !important;
+  border-color: rgba(139,92,246,0.35) !important;
+}
+
+.sodo-cell[data-seat-type="quad_v"][data-quad-idx="0"],
+.sodo-editor-cell[data-seat-type="quad_v"][data-quad-idx="0"] {
+  border-radius: 14px 14px 4px 4px !important;
+  border-bottom-style: dashed !important;
+}
+
+.sodo-cell[data-seat-type="quad_v"][data-quad-idx="3"],
+.sodo-editor-cell[data-seat-type="quad_v"][data-quad-idx="3"] {
+  border-radius: 4px 4px 14px 14px !important;
+  border-top-style: dashed !important;
+}
+
+.sodo-cell[data-seat-type="quad_v"][data-quad-idx="0"]::before,
+.sodo-editor-cell[data-seat-type="quad_v"][data-quad-idx="0"]::before {
+  content: 'Bàn 4 dọc';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #8b5cf6;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
 
 
 /* ===================== ANYONE (BẤT KỲ) SLOT ===================== */

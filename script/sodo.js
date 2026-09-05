@@ -37,7 +37,9 @@ const SODO_OUTDOOR_LIST = [
 
 const SODO_SEAT_TYPE_LIST = [
   { key:'double',   label:'Bàn Đôi',       icon:'▣', desc:'Bàn 2 người, trong lớp học' },
-  { key:'quad',     label:'Bàn 4',         icon:'⊞', desc:'Bàn nhóm 4 người, ghép bàn/thực hành' },
+  { key:'quad',     label:'Bàn 4 (2x2)',   icon:'⊞', desc:'Bàn nhóm 4 người, hình vuông' },
+  { key:'quad_h',   label:'Bàn 4 Ngang',   icon:'⊟', desc:'Bàn 4 người, xếp ngang 1x4' },
+  { key:'quad_v',   label:'Bàn 4 Dọc',     icon:'⏣', desc:'Bàn 4 người, xếp dọc 4x1' },
   { key:'single',   label:'Bàn Đơn',       icon:'◻', desc:'Bàn 1 người, trong lớp học' },
   { key:'chair',    label:'Ghế Nhựa',      icon:'🪑', desc:'Ghế nhựa không bàn, ngoài trời / hội trường' },
   { key:'standing', label:'Vị Trí Đứng',  icon:'🧍', desc:'Vị trí đứng, thể dục / quốc phòng' },
@@ -415,11 +417,8 @@ function renderSeatingGrid(containerId, layout, opts = {}) {
     for (let c = 0; c < cols; c++) {
       const cell = layout[r]?.[c];
       const seatType = cell?.seatType || opts.seatType || 'double';
-      
       // Tính vị trí trong nhóm bàn
-      let deskPos = c % 2 === 0 ? 'left' : 'right';
-      let deskGroupCol = 'col-' + (c % 2);
-      let deskQuadIdx = (r % 2) * 2 + (c % 2); // 0: trên-trái, 1: trên-phải, 2: dưới-trái, 3: dưới-phải
+      const { deskPos, deskQuadIdx } = getDeskPosition(r, c, seatType);
       
       const deskAttrs = `data-col="${c}" data-row="${r}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}"`;
 
@@ -655,9 +654,7 @@ function buildEditorCell(r, c) {
   const isEmpty = !cell.studentId && !cell.label && cell.type !== 'anyone';
   const seatType = cell.seatType || editorDefaultSeatType;
   
-  // Tính vị trí trong nhóm bàn (bàn đôi: 2 ghế, bàn 4: cụm 4 ghế 2x2)
-  const deskPos = c % 2 === 0 ? 'left' : 'right';
-  const deskQuadIdx = (r % 2) * 2 + (c % 2); // 0: trên-trái, 1: trên-phải, 2: dưới-trái, 3: dưới-phải
+   const { deskPos, deskQuadIdx } = getDeskPosition(r, c, seatType);
 
   const isSelected = editorSelectedCell?.r === r && editorSelectedCell?.c === c;
   const selCls = isSelected ? 'sodo-cell-selected' : '';
@@ -823,7 +820,7 @@ function cellDrop(event, r, c) {
       return;
     }
 
-    if ((srcSeatType === 'quad' || srcSeatType === 'double') && !isSameTable(dragFromCell.r, dragFromCell.c, r, c)) {
+    if ((srcSeatType === 'quad' || srcSeatType === 'double' || srcSeatType === 'quad_h' || srcSeatType === 'quad_v') && !isSameTable(dragFromCell.r, dragFromCell.c, r, c)) {
       showToast('Chỉ kéo thả trong cùng một bàn', 'warning');
       return;
     }
@@ -838,7 +835,7 @@ function cellDrop(event, r, c) {
     if (!person) return;
 
     const seatType = target.seatType || editorDefaultSeatType;
-    if ((seatType === 'quad' || seatType === 'double') && getTableOccupiedCount(r, c) >= getTableCapacity(seatType)) {
+    if (isMultiSeatTable(seatType) && getTableOccupiedCount(r, c) >= getTableCapacity(seatType)) {
       showToast(`Bàn này đã đủ ${getTableCapacity(seatType)} người`, 'warning');
       return;
     }
@@ -907,7 +904,7 @@ function ctxCycleDesk() {
   const keys = SODO_SEAT_TYPE_LIST.map(t => t.key);
   const newType = keys[(keys.indexOf(cell.seatType||'double') + 1) % keys.length];
 
-  if (newType === 'quad' || newType === 'double') {
+  if (isMultiSeatTable(newType)) {
     const group = getTableGroupCells(ctxRow, ctxCol, newType);
     group.forEach(([r, c]) => {
       if (editorLayout[r]?.[c]) editorLayout[r][c].seatType = newType;
@@ -934,7 +931,7 @@ function ctxSwap() {
     return;
   }
 
-  if ((seatTypeA === 'quad' || seatTypeA === 'double') && !isSameTable(ctxRow, ctxCol, editorSelectedCell.r, editorSelectedCell.c)) {
+  if (isMultiSeatTable(seatTypeA) && !isSameTable(ctxRow, ctxCol, editorSelectedCell.r, editorSelectedCell.c)) {
     showToast('Chỉ hoán đổi trong cùng một bàn', 'warning');
     hideCtxMenu();
     return;
@@ -1075,6 +1072,18 @@ function getTableGroupCells(r, c, seatType) {
       const cc = pairC + dc;
       if (cc < editorCols) cells.push([r, cc]);
     }
+  } else if (type === 'quad_h') {
+    const baseC = Math.floor(c / 4) * 4;
+    for (let dc = 0; dc < 4; dc++) {
+      const cc = baseC + dc;
+      if (cc < editorCols) cells.push([r, cc]);
+    }
+  } else if (type === 'quad_v') {
+    const baseR = Math.floor(r / 4) * 4;
+    for (let dr = 0; dr < 4; dr++) {
+      const rr = baseR + dr;
+      if (rr < editorRows) cells.push([rr, c]);
+    }
   } else {
     cells.push([r, c]);
   }
@@ -1083,7 +1092,7 @@ function getTableGroupCells(r, c, seatType) {
 }
 
 function getTableCapacity(seatType) {
-  if (seatType === 'quad') return 4;
+  if (seatType === 'quad' || seatType === 'quad_h' || seatType === 'quad_v') return 4;
   if (seatType === 'double') return 2;
   return 1;
 }
@@ -1096,6 +1105,31 @@ function getTableOccupiedCount(r, c) {
 function isSameTable(r1, c1, r2, c2) {
   const group = getTableGroupCells(r1, c1);
   return group.some(([rr, cc]) => rr === r2 && cc === c2);
+}
+
+function isMultiSeatTable(seatType) {
+  return getTableCapacity(seatType) > 1;
+}
+
+function getDeskPosition(r, c, seatType) {
+  const type = seatType || 'double';
+  if (type === 'double') {
+    return { deskPos: c % 2 === 0 ? 'left' : 'right', deskQuadIdx: c % 2 };
+  }
+  if (type === 'quad') {
+    return { deskPos: c % 2 === 0 ? 'left' : 'right', deskQuadIdx: (r % 2) * 2 + (c % 2) };
+  }
+  if (type === 'quad_h') {
+    const baseC = Math.floor(c / 4) * 4;
+    const idx = c - baseC;
+    return { deskPos: ['left', 'mid1', 'mid2', 'right'][idx] || 'left', deskQuadIdx: idx };
+  }
+  if (type === 'quad_v') {
+    const baseR = Math.floor(r / 4) * 4;
+    const idx = r - baseR;
+    return { deskPos: ['top', 'upper-mid', 'lower-mid', 'bottom'][idx] || 'left', deskQuadIdx: idx };
+  }
+  return { deskPos: 'left', deskQuadIdx: 0 };
 }
 
 // ============= HELPERS =============
