@@ -532,8 +532,33 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
           <button class="sodo-editor-btn" onclick="editorUndo()" title="Ctrl+Z">↩️ Hoàn Tác</button>
           <button class="sodo-editor-btn" onclick="editorRedo()" title="Ctrl+Y">↪️ Làm Lại</button>
           <button class="sodo-editor-btn sodo-editor-btn-reset" onclick="editorReset()">🔄 Reset</button>
-          <button class="sodo-editor-btn sodo-editor-btn-save"  onclick="editorSave()">💾 Lưu</button>
+          <button class="sodo-editor-btn sodo-editor-btn-save" onclick="editorSave()">💾 Lưu</button>
+          <button class="sodo-editor-btn" onclick="exportChart()">📤 Xuất</button>
           <button class="sodo-editor-btn sodo-editor-btn-close" onclick="closeEditor()">✕ Đóng</button>
+        </div>
+      </div>
+
+      <!-- Export Modal -->
+      <div id="sodo-export-modal" class="sodo-modal" style="display:none">
+        <div class="sodo-modal-content">
+          <div class="sodo-modal-header">
+            <h3>📤 Xuất sơ đồ</h3>
+            <button class="sodo-modal-close" onclick="closeExportModal()">✕</button>
+          </div>
+          <div class="sodo-modal-body">
+            <button class="sodo-export-btn" onclick="exportAsImage()">
+              <span class="sodo-export-icon">🖼️</span>
+              <span class="sodo-export-label">In ảnh PNG</span>
+            </button>
+            <button class="sodo-export-btn" onclick="exportAsPDF()">
+              <span class="sodo-export-icon">📄</span>
+              <span class="sodo-export-label">In PDF</span>
+            </button>
+            <button class="sodo-export-btn" onclick="exportAsCSV()">
+              <span class="sodo-export-icon">📊</span>
+              <span class="sodo-export-label">Xuất CSV</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -625,6 +650,8 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <hr>
       <button onclick="ctxCycleDesk()">🔄 Đổi loại ghế/bàn</button>
       <hr>
+      <button id="ctx-btn-split-row" onclick="ctxSplitByRow()" style="display:none">✂️ Tách theo dãy</button>
+      <button id="ctx-btn-split-col" onclick="ctxSplitByCol()" style="display:none">✂️ Tách theo cột</button>
       <button onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
       <button onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
       <button onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
@@ -910,10 +937,22 @@ function showCtxMenu(event, r, c) {
   const menu = document.getElementById('sodo-ctx-menu');
   if (!menu) return;
 
-  const btnSplit = document.getElementById('ctx-btn-split');
-  if (btnSplit) {
-    const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
-    btnSplit.style.display = isMultiSeatTable(seatType) ? 'block' : 'none';
+  const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
+  const isMulti = isMultiSeatTable(seatType);
+
+  const btnSplitRow = document.getElementById('ctx-btn-split-row');
+  const btnSplitCol = document.getElementById('ctx-btn-split-col');
+  if (btnSplitRow && btnSplitCol) {
+    if (!isMulti) {
+      btnSplitRow.style.display = 'none';
+      btnSplitCol.style.display = 'none';
+    } else {
+      const group = getTableGroupCells(r, c, seatType);
+      const rows = [...new Set(group.map(([rr]) => rr))];
+      const cols = [...new Set(group.map(([, cc]) => cc))];
+      btnSplitRow.style.display = rows.length > 1 ? 'block' : 'none';
+      btnSplitCol.style.display = cols.length > 1 ? 'block' : 'none';
+    }
   }
 
   menu.style.display = 'block';
@@ -990,6 +1029,95 @@ function ctxMarkEmptySeat() {
   if (ctxRow===null) return;
   editorPushUndo();
   editorLayout[ctxRow][ctxCol] = { type:'empty', studentId:null, label:'Ghế trống', empty:true, seatType: editorLayout[ctxRow][ctxCol].seatType || editorDefaultSeatType };
+  editorRenderGrid();
+  hideCtxMenu();
+}
+
+function ctxSplitByRow() {
+  if (ctxRow===null) return;
+  const cell = editorLayout[ctxRow]?.[ctxCol];
+  if (!cell) return;
+
+  const seatType = cell.seatType || editorDefaultSeatType;
+  if (!isMultiSeatTable(seatType)) {
+    showToast('Ghế này không phải bàn ghép', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  const group = getTableGroupCells(ctxRow, ctxCol, seatType);
+  const rows = [...new Set(group.map(([r]) => r))].sort((a, b) => a - b);
+
+  if (rows.length <= 1) {
+    showToast('Không thể tách theo dãy (chỉ có 1 hàng)', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  editorPushUndo();
+
+  const rowSet = new Set();
+  for (let i = 0; i < rows.length; i += 2) {
+    const r1 = rows[i];
+    const r2 = rows[i + 1];
+    if (r2 === undefined) {
+      group.forEach(([r, c]) => {
+        if (r === r1 && editorLayout[r]?.[c]) editorLayout[r][c].seatType = 'single';
+      });
+      break;
+    }
+    rowSet.add(r1);
+    rowSet.add(r2);
+    group.forEach(([r, c]) => {
+      if ((r === r1 || r === r2) && editorLayout[r]?.[c]) {
+        editorLayout[r][c].seatType = 'double';
+      }
+    });
+  }
+
+  editorRenderGrid();
+  hideCtxMenu();
+}
+
+function ctxSplitByCol() {
+  if (ctxCol===null) return;
+  const cell = editorLayout[ctxRow]?.[ctxCol];
+  if (!cell) return;
+
+  const seatType = cell.seatType || editorDefaultSeatType;
+  if (!isMultiSeatTable(seatType)) {
+    showToast('Ghế này không phải bàn ghép', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  const group = getTableGroupCells(ctxRow, ctxCol, seatType);
+  const cols = [...new Set(group.map(([, c]) => c))].sort((a, b) => a - b);
+
+  if (cols.length <= 1) {
+    showToast('Không thể tách theo cột (chỉ có 1 cột)', 'warning');
+    hideCtxMenu();
+    return;
+  }
+
+  editorPushUndo();
+
+  for (let i = 0; i < cols.length; i += 2) {
+    const c1 = cols[i];
+    const c2 = cols[i + 1];
+    if (c2 === undefined) {
+      group.forEach(([r, c]) => {
+        if (c === c1 && editorLayout[r]?.[c]) editorLayout[r][c].seatType = 'single';
+      });
+      break;
+    }
+    group.forEach(([r, c]) => {
+      if ((c === c1 || c === c2) && editorLayout[r]?.[c]) {
+        editorLayout[r][c].seatType = 'double';
+      }
+    });
+  }
+
   editorRenderGrid();
   hideCtxMenu();
 }
@@ -1184,6 +1312,94 @@ async function editorSave() {
 
 function closeEditor() {
   showConfirm('Thoát editor','Thoát mà không lưu? Thay đổi sẽ mất.',()=>{ closeSodoOverlay(); editorMode=null; });
+}
+
+// ============= EXPORT =============
+function exportChart() {
+  document.getElementById('sodo-export-modal').style.display = 'flex';
+}
+
+function closeExportModal() {
+  document.getElementById('sodo-export-modal').style.display = 'none';
+}
+
+async function exportAsImage() {
+  const grid = document.getElementById('sodo-editor-grid');
+  if (!grid) return;
+  showToast('Đang xuất ảnh...', 'info');
+
+  try {
+    const clone = grid.cloneNode(true);
+    clone.style.width = grid.scrollWidth + 'px';
+    clone.style.background = '#ffffff';
+    clone.style.padding = '20px';
+    
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${grid.scrollWidth + 40}" height="${grid.scrollHeight + 40}">
+      <rect width="100%" height="100%" fill="#ffffff"/>
+      <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: system-ui, sans-serif;">
+          ${clone.outerHTML}
+        </div>
+      </foreignObject>
+    </svg>`;
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+    });
+    
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    
+    const link = document.createElement('a');
+    link.download = `seating-chart-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    showToast('Đã xuất ảnh thành công', 'success');
+  } catch (e) {
+    showToast('Lỗi xuất ảnh: ' + e.message, 'error');
+  }
+  
+  closeExportModal();
+}
+
+function exportAsPDF() {
+  closeExportModal();
+  window.print();
+}
+
+function exportAsCSV() {
+  let csv = 'Hàng,Cột,Loại,Học sinh\n';
+  for (let r = 0; r < editorRows; r++) {
+    for (let c = 0; c < editorCols; c++) {
+      const cell = editorLayout[r]?.[c];
+      if (!cell || cell.empty) continue;
+      const name = cell.type === 'student' && cell.studentId 
+        ? (STUDENTS.find(s => s.id === cell.studentId)?.name || cell.label || '?')
+        : cell.label || 'Bất Kỳ';
+      const seatType = cell.seatType || editorDefaultSeatType;
+      csv += `${r + 1},${c + 1},${seatType},"${name}"\n`;
+    }
+  }
+  
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `seating-chart-${Date.now()}.csv`;
+  a.click();
+  
+  showToast('Đã xuất CSV thành công', 'success');
+  closeExportModal();
 }
 
 // ============= KEYBOARD =============

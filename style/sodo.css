@@ -1700,3 +1700,133 @@
   .sodo-icon-pick-btn { width: 30px; height: 30px; font-size: 0.95rem; }
 }
 
+/* ===================== EXPORT MODAL ===================== */
+.sodo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sodoFadeIn 0.2s ease;
+}
+
+.sodo-modal-content {
+  background: var(--bg-surface);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+.sodo-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--input-border);
+}
+
+.sodo-modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-main);
+}
+
+.sodo-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.sodo-modal-close:hover {
+  color: var(--danger);
+}
+
+.sodo-modal-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 20px;
+}
+
+.sodo-export-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.sodo-export-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.sodo-export-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.sodo-export-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+@keyframes sodoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===================== PRINT STYLES ===================== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #sodo-editor-overlay, #sodo-editor-overlay * {
+    visibility: visible;
+  }
+  #sodo-editor-overlay {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    overflow: visible;
+  }
+  .sodo-editor-header,
+  .sodo-editor-sidebar,
+  .sodo-editor-footer,
+  .sodo-export-modal,
+  .sodo-modal,
+  .sodo-ctx-menu {
+    display: none !important;
+  }
+  .sodo-editor-body {
+    display: block;
+  }
+  .sodo-grid {
+    display: grid !important;
+    gap: 4px !important;
+  }
+  .sodo-cell {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}
+
