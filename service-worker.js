@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.5.1-schedule-full-sync';
+const CACHE_NAME = 'c7aio-v3.5.2-accurate-schedule-dates';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

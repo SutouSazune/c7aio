@@ -82,7 +82,7 @@ const ACADEMIC_YEARS = {
     label: 'Lớp 11 (2026 - 2027)',
     openingDate: '2026-09-05',
     startDate: '2026-09-07',
-    endDate: '2027-05-31',
+    endDate: '2027-05-29',
     totalWeeks: 35,
     semester1Weeks: 18
   },
@@ -523,9 +523,7 @@ function resolveInitialWeek() {
 
 function resolveWeekFromDate(date) {
   const matchedKey = getWeekKeyForDate(date);
-  if (matchedKey) {
-    currentWeekKey = matchedKey;
-  }
+  currentWeekKey = matchedKey;
 }
 
 function renderAll() {
@@ -707,20 +705,22 @@ function renderCalendar() {
     const dotRow = document.createElement('div');
     dotRow.className = 'cal-dot-row';
 
-    // Class dot (blue)
+    // Class dot (blue) - CHỈ hiển thị nếu ngày này thuộc về một tuần học đã xếp lịch
     const targetWeekKey = getWeekKeyForDate(dateObj);
-    const activeWeekKey = targetWeekKey || 'week-1';
-    const targetSchedule = getEffectiveSchedule(activeWeekKey);
-    const dayName = getDayNameFromDate(dateObj);
-    let dayClasses = targetSchedule[dayName] || [];
-    if (selectedClassFilter) {
-      dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
-    }
-    if (dayClasses.length > 0) {
-      const dot = document.createElement('span');
-      dot.className = 'cal-class-dot';
-      dot.title = `${dayClasses.length} tiết học (${DAY_LABELS[dayName] || ''})`;
-      dotRow.appendChild(dot);
+    if (targetWeekKey) {
+      const targetSchedule = getEffectiveSchedule(targetWeekKey);
+      const dayName = getDayNameFromDate(dateObj);
+      let dayClasses = targetSchedule[dayName] || [];
+      if (selectedClassFilter) {
+        dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
+      }
+      if (dayClasses.length > 0) {
+        const dot = document.createElement('span');
+        dot.className = 'cal-class-dot';
+        const weekName = weekMetadata[targetWeekKey]?.name || targetWeekKey;
+        dot.title = `${dayClasses.length} tiết học (${DAY_LABELS[dayName] || ''} - ${weekName})`;
+        dotRow.appendChild(dot);
+      }
     }
 
     // Event dot (orange)
@@ -830,6 +830,13 @@ function renderWeekChips() {
       + Thêm tuần mới
     </button>
   ` : '');
+
+  if (currentWeekKey) {
+    const activeChip = container.querySelector('.week-chip-btn.active');
+    if (activeChip) {
+      activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }
 }
 
 function selectWeekKey(wKey) {
@@ -888,11 +895,9 @@ function renderDayView() {
     const currentWeekMeta = weekMetadata[matchedWeekKey] || {};
     weekTitle = currentWeekMeta.name || matchedWeekKey;
   } else {
-    // Fallback: Xem trước TKB số 1 (week-1)
-    const defaultWeekKey = (weekMetadata['week-1'] ? 'week-1' : Object.keys(weekMetadata)[0]) || 'week-1';
-    const fallbackSchedule = getEffectiveSchedule(defaultWeekKey);
-    rawClasses = fallbackSchedule[dayName] || [];
-    weekTitle = isBeforeSemester ? 'TKB số 1 (Xem trước)' : 'TKB số 1 (Ngoài tuần học)';
+    // Ngày này nằm ngoài tất cả các tuần học đã định nghĩa (ví dụ trước 07/09/2026 hoặc sau 29/05/2027)
+    rawClasses = [];
+    weekTitle = isBeforeSemester ? 'Chưa vào năm học' : 'Ngoài năm học';
   }
 
   // Gắn originalIndex để sửa/xóa chuẩn xác kể cả khi đang lọc lớp
@@ -902,11 +907,30 @@ function renderDayView() {
     : classesWithIndex;
 
   // Events cho ngày này
-  const dayEventsAll = matchedWeekKey ? getEventsForDayInWeek(matchedWeekKey, dayName) : [];
+  const dayEventsAll = matchedWeekKey ? getEventsForDayInWeek(matchedWeekKey, dayName) : getEventsForDate(selectedDateKey);
 
   let emptyMessageTitle = 'Không có tiết học';
   let emptyMessageDesc = 'Ngày này không có tiết học hoặc chưa được xếp thời khóa biểu.';
-  const jumpToStartBtn = '';
+  let jumpToStartBtn = '';
+
+  if (!matchedWeekKey) {
+    if (isBeforeSemester) {
+      emptyMessageTitle = 'Chưa bắt đầu năm học';
+      emptyMessageDesc = `Năm học 2026 - 2027 chính thức bắt đầu từ <strong>Thứ Hai, ngày 07/09/2026</strong> với <strong>Thời khóa biểu số 1</strong>. Ngày này chưa có tiết học nào.`;
+      jumpToStartBtn = `
+        <div style="margin-top: 14px;">
+          <button type="button" class="c7-btn c7-btn-primary" onclick="jumpToFirstWeek()" style="font-weight: 700;">
+            👉 Chuyển đến TKB số 1 (Bắt đầu từ 07/09/2026)
+          </button>
+        </div>`;
+    } else {
+      emptyMessageTitle = 'Ngoài thời gian năm học';
+      emptyMessageDesc = 'Thời gian này nằm ngoài khung năm học đã định nghĩa. Không có tiết học nào.';
+    }
+  } else {
+    emptyMessageTitle = 'Không có tiết học';
+    emptyMessageDesc = `${DAY_LABELS[dayName]} không có tiết học nào được xếp thời khóa biểu.`;
+  }
 
   // Event banners HTML
   const eventBannersHtml = dayEventsAll.length > 0
@@ -1386,9 +1410,8 @@ function renderMonthView() {
     const wKey = getWeekKeyForDate(dateObj);
 
     let classChips = '';
-    const activeWKey = wKey || (weekMetadata['week-1'] ? 'week-1' : Object.keys(weekMetadata)[0]) || 'week-1';
-    if (activeWKey) {
-      const sched = getEffectiveSchedule(activeWKey);
+    if (wKey) {
+      const sched = getEffectiveSchedule(wKey);
       let dayList = (sched[dayName] || []);
       if (selectedClassFilter) dayList = dayList.filter(c => !c.className || c.className === selectedClassFilter);
       dayList.forEach((c, i) => {
@@ -1476,14 +1499,13 @@ function renderYearView() {
       const isToday = dateKey === todayStr;
       let classes = 'year-mini-day';
       let hasC = false, hasE = false;
-      const activeWKey = wKey || (weekMetadata['week-1'] ? 'week-1' : Object.keys(weekMetadata)[0]) || 'week-1';
-      if (activeWKey) {
-        const sched = getEffectiveSchedule(activeWKey);
+      if (wKey) {
+        const sched = getEffectiveSchedule(wKey);
         let dayList = sched[dayName] || [];
         if (selectedClassFilter) dayList = dayList.filter(c => !c.className || c.className === selectedClassFilter);
         hasC = dayList.length > 0;
-        hasE = getEventsForDate(dateKey).length > 0;
       }
+      hasE = getEventsForDate(dateKey).length > 0;
       if (isToday) classes += ' is-today';
       else if (hasE) { classes += ' has-event'; eventDays++; }
       else if (hasC) { classes += ' has-class'; classDays++; }

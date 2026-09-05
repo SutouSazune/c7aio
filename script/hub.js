@@ -305,16 +305,14 @@ function updateDashboardScheduleWidget() {
     }
   }
 
-  // Fallback: Ưu tiên TKB số 1 (week-1) nếu chưa đến ngày hoặc nằm ngoài tuần
-  if (!currentWeekKey) {
-    currentWeekKey = 'week-1';
-  }
-
   // Kế thừa TKB số 1 nếu tuần hiện tại chưa có dữ liệu riêng
-  let weekSchedule = hubSchedules[currentWeekKey] || {};
-  let todayClasses = weekSchedule[currentDayName] || [];
-  if (todayClasses.length === 0 && currentWeekKey !== 'week-1' && hubSchedules['week-1']) {
-    todayClasses = hubSchedules['week-1'][currentDayName] || [];
+  let todayClasses = [];
+  if (currentWeekKey) {
+    let weekSchedule = hubSchedules[currentWeekKey] || {};
+    todayClasses = weekSchedule[currentDayName] || [];
+    if (todayClasses.length === 0 && currentWeekKey !== 'week-1' && hubSchedules['week-1']) {
+      todayClasses = hubSchedules['week-1'][currentDayName] || [];
+    }
   }
 
   // Lọc theo lớp học của người dùng nếu có (mặc định 11C7)
@@ -338,7 +336,7 @@ function updateDashboardScheduleWidget() {
     html += `
       <div class="empty-widget">
         <span>🏖️</span>
-        <p>Hôm nay không có tiết học nào. Nghỉ ngơi nhé!</p>
+        <p>${currentWeekKey ? 'Hôm nay không có tiết học nào. Nghỉ ngơi nhé!' : 'Chưa vào năm học hoặc ngày nghỉ. Năm học 2026 - 2027 bắt đầu từ 07/09/2026.'}</p>
       </div>
     `;
   } else {
