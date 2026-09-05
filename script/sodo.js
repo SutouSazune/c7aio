@@ -650,7 +650,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <hr>
       <button onclick="ctxCycleDesk()">🔄 Đổi loại ghế/bàn</button>
       <hr>
-      <button id="ctx-btn-split-col" onclick="ctxSplitByCol()" style="display:none">✂️ Tách dãy</button>
+      <button onclick="ctxSplitByRow()">✂️ Tách dãy</button>
       <button onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
       <button onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
       <button onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
@@ -936,20 +936,6 @@ function showCtxMenu(event, r, c) {
   const menu = document.getElementById('sodo-ctx-menu');
   if (!menu) return;
 
-  const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
-  const isMulti = isMultiSeatTable(seatType);
-
-  const btnSplitCol = document.getElementById('ctx-btn-split-col');
-  if (btnSplitCol) {
-    if (!isMulti) {
-      btnSplitCol.style.display = 'none';
-    } else {
-      const group = getTableGroupCells(r, c, seatType);
-      const cols = [...new Set(group.map(([, cc]) => cc))];
-      btnSplitCol.style.display = cols.length > 1 ? 'block' : 'none';
-    }
-  }
-
   menu.style.display = 'block';
   menu.style.left = Math.min(event.clientX, window.innerWidth  - 220) + 'px';
   menu.style.top  = Math.min(event.clientY, window.innerHeight - 180) + 'px';
@@ -1030,86 +1016,21 @@ function ctxMarkEmptySeat() {
 
 function ctxSplitByRow() {
   if (ctxRow===null) return;
-  const cell = editorLayout[ctxRow]?.[ctxCol];
-  if (!cell) return;
-
-  const seatType = cell.seatType || editorDefaultSeatType;
-  if (!isMultiSeatTable(seatType)) {
-    showToast('Ghế này không phải bàn ghép', 'warning');
-    hideCtxMenu();
-    return;
-  }
-
-  const group = getTableGroupCells(ctxRow, ctxCol, seatType);
-  const rows = [...new Set(group.map(([r]) => r))].sort((a, b) => a - b);
-
-  if (rows.length <= 1) {
-    showToast('Không thể tách theo dãy (chỉ có 1 hàng)', 'warning');
-    hideCtxMenu();
-    return;
-  }
-
   editorPushUndo();
 
-  const rowSet = new Set();
-  for (let i = 0; i < rows.length; i += 2) {
-    const r1 = rows[i];
-    const r2 = rows[i + 1];
-    if (r2 === undefined) {
-      group.forEach(([r, c]) => {
-        if (r === r1 && editorLayout[r]?.[c]) editorLayout[r][c].seatType = 'single';
-      });
-      break;
-    }
-    rowSet.add(r1);
-    rowSet.add(r2);
-    group.forEach(([r, c]) => {
-      if ((r === r1 || r === r2) && editorLayout[r]?.[c]) {
-        editorLayout[r][c].seatType = 'double';
-      }
-    });
-  }
+  const processed = new Set();
+  for (let c = 0; c < editorCols; c++) {
+    const cell = editorLayout[ctxRow]?.[c];
+    const seatType = cell?.seatType || editorDefaultSeatType;
+    if (!isMultiSeatTable(seatType)) continue;
 
-  editorRenderGrid();
-  hideCtxMenu();
-}
+    const group = getTableGroupCells(ctxRow, c, seatType);
+    const groupKey = group.map(([r, cc]) => `${r},${cc}`).sort().join('|');
+    if (processed.has(groupKey)) continue;
 
-function ctxSplitByCol() {
-  if (ctxCol===null) return;
-  const cell = editorLayout[ctxRow]?.[ctxCol];
-  if (!cell) return;
-
-  const seatType = cell.seatType || editorDefaultSeatType;
-  if (!isMultiSeatTable(seatType)) {
-    showToast('Ghế này không phải bàn ghép', 'warning');
-    hideCtxMenu();
-    return;
-  }
-
-  const group = getTableGroupCells(ctxRow, ctxCol, seatType);
-  const cols = [...new Set(group.map(([, c]) => c))].sort((a, b) => a - b);
-
-  if (cols.length <= 1) {
-    showToast('Không thể tách theo cột (chỉ có 1 cột)', 'warning');
-    hideCtxMenu();
-    return;
-  }
-
-  editorPushUndo();
-
-  for (let i = 0; i < cols.length; i += 2) {
-    const c1 = cols[i];
-    const c2 = cols[i + 1];
-    if (c2 === undefined) {
-      group.forEach(([r, c]) => {
-        if (c === c1 && editorLayout[r]?.[c]) editorLayout[r][c].seatType = 'single';
-      });
-      break;
-    }
-    group.forEach(([r, c]) => {
-      if ((c === c1 || c === c2) && editorLayout[r]?.[c]) {
-        editorLayout[r][c].seatType = 'double';
-      }
+    processed.add(groupKey);
+    group.forEach(([r, cc]) => {
+      if (editorLayout[r]?.[cc]) editorLayout[r][cc].seatType = 'single';
     });
   }
 
