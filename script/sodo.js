@@ -1042,7 +1042,13 @@ function editorUndo() { if(!editorUndoStack.length){showToast('Không có gì đ
 function editorRedo() { if(!editorRedoStack.length){showToast('Không có gì để làm lại','info');return;} editorUndoStack.push(sodoClone(editorLayout)); editorLayout=editorRedoStack.pop(); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
 
 // ============= GRID RESIZE =============
-function editorAddRow()    { editorPushUndo(); editorRows++; editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell())); editorRenderGrid(); }
+function editorAddRow() {
+  editorPushUndo();
+  if (editorCols <= 0) { editorCols = 1; editorLayout.forEach(r => r.push(makeEmptyCell())); }
+  editorRows++;
+  editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell()));
+  editorRenderGrid();
+}
 function editorRemoveRow() {
   editorPushUndo();
   editorRows--;
@@ -1051,7 +1057,13 @@ function editorRemoveRow() {
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
-function editorAddCol()    { editorPushUndo(); editorCols++; editorLayout.forEach(r=>r.push(makeEmptyCell())); editorRenderGrid(); }
+function editorAddCol() {
+  editorPushUndo();
+  if (editorRows <= 0) { editorRows = 1; editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell())); }
+  editorCols++;
+  editorLayout.forEach(r=>r.push(makeEmptyCell()));
+  editorRenderGrid();
+}
 function editorRemoveCol() {
   editorPushUndo();
   editorCols--;
@@ -1064,6 +1076,7 @@ function editorRemoveCol() {
 function editorInsertRowAt(atIndex) {
   if (atIndex < 0 || atIndex > editorRows) return;
   editorPushUndo();
+  if (editorCols <= 0) { editorCols = 1; editorLayout.forEach(r => r.push(makeEmptyCell())); }
   const newRow = Array.from({length:editorCols},()=>makeEmptyCell());
   editorLayout.splice(atIndex, 0, newRow);
   editorRows++;
@@ -1073,6 +1086,7 @@ function editorInsertRowAt(atIndex) {
 function editorInsertColAt(atIndex) {
   if (atIndex < 0 || atIndex > editorCols) return;
   editorPushUndo();
+  if (editorRows <= 0) { editorRows = 1; editorLayout.push(Array.from({length:editorCols},()=>makeEmptyCell())); }
   editorLayout.forEach(r => r.splice(atIndex, 0, makeEmptyCell()));
   editorCols++;
   editorRenderGrid();
