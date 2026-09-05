@@ -1112,9 +1112,24 @@ function ctxMergeConfirm() {
   }
 
   editorPushUndo();
+
+  const firstCell = editorLayout[group[0][0]]?.[group[0][1]];
+  const originalType = firstCell?.seatType || editorDefaultSeatType;
+  const originalGroup = getTableGroupCells(group[0][0], group[0][1], originalType);
+  const selectedSet = new Set(group.map(([r, c]) => `${r},${c}`));
+
+  originalGroup.forEach(([rr, cc]) => {
+    if (!selectedSet.has(`${rr},${cc}`)) {
+      if (editorLayout[rr]?.[cc]) {
+        editorLayout[rr][cc].seatType = 'single';
+      }
+    }
+  });
+
   group.forEach(([rr, cc]) => {
     if (editorLayout[rr]?.[cc]) editorLayout[rr][cc].seatType = mergeType;
   });
+
   exitMergeMode();
   hideCtxMenu();
   editorRenderGrid();
