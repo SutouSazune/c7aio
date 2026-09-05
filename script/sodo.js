@@ -1015,22 +1015,22 @@ function ctxMarkEmptySeat() {
 }
 
 function ctxSplitByRow() {
-  if (ctxRow===null) return;
+  if (ctxCol===null) return;
   editorPushUndo();
 
   const processed = new Set();
-  for (let c = 0; c < editorCols; c++) {
-    const cell = editorLayout[ctxRow]?.[c];
+  for (let r = 0; r < editorRows; r++) {
+    const cell = editorLayout[r]?.[ctxCol];
     const seatType = cell?.seatType || editorDefaultSeatType;
     if (!isMultiSeatTable(seatType)) continue;
 
-    const group = getTableGroupCells(ctxRow, c, seatType);
-    const groupKey = group.map(([r, cc]) => `${r},${cc}`).sort().join('|');
+    const group = getTableGroupCells(r, ctxCol, seatType);
+    const groupKey = group.map(([rr, cc]) => `${rr},${cc}`).sort().join('|');
     if (processed.has(groupKey)) continue;
 
     processed.add(groupKey);
-    group.forEach(([r, cc]) => {
-      if (editorLayout[r]?.[cc]) editorLayout[r][cc].seatType = 'single';
+    group.forEach(([rr, cc]) => {
+      if (editorLayout[rr]?.[cc]) editorLayout[rr][cc].seatType = 'single';
     });
   }
 
