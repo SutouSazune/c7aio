@@ -605,7 +605,12 @@
     getClassesList() {
       const allSchedules = getLocalSchedules();
       const allMeta = getLocalWeekMetadata();
-      const classes = new Set(['11C7']);
+      const standard36 = [
+        ...Array.from({ length: 12 }, (_, i) => `10A${i + 1}`),
+        ...Array.from({ length: 12 }, (_, i) => `11C${i + 1}`),
+        ...Array.from({ length: 12 }, (_, i) => `12A${i + 1}`)
+      ];
+      const classes = new Set(standard36);
       Object.values(allMeta).forEach(m => { if (m && m.className) classes.add(m.className); });
       Object.values(allSchedules).forEach(w => {
         if (w && typeof w === 'object') {
@@ -765,6 +770,9 @@
         };
         events[weekKey].push(newEvent);
         localStorage.setItem('c7aio_schedule_events', JSON.stringify(events));
+        if (typeof saveSharedScheduleEvents === 'function') {
+          saveSharedScheduleEvents(events);
+        }
 
         // Sync to in-memory if on schedule page
         if (typeof window !== 'undefined' && typeof window.scheduleEvents !== 'undefined') {
@@ -809,6 +817,9 @@
         const before = events[weekKey].length;
         events[weekKey] = events[weekKey].filter(e => e.id !== eventId);
         localStorage.setItem('c7aio_schedule_events', JSON.stringify(events));
+        if (typeof saveSharedScheduleEvents === 'function') {
+          saveSharedScheduleEvents(events);
+        }
         if (typeof window !== 'undefined' && typeof window.scheduleEvents !== 'undefined') {
           window.scheduleEvents = events;
         }
@@ -830,6 +841,9 @@
         const count = Array.isArray(events[weekKey]) ? events[weekKey].length : 0;
         events[weekKey] = [];
         localStorage.setItem('c7aio_schedule_events', JSON.stringify(events));
+        if (typeof saveSharedScheduleEvents === 'function') {
+          saveSharedScheduleEvents(events);
+        }
         if (typeof window !== 'undefined' && typeof window.scheduleEvents !== 'undefined') {
           window.scheduleEvents = events;
         }

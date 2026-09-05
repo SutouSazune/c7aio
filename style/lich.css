@@ -272,27 +272,114 @@
   box-shadow: var(--shadow-glow);
 }
 
-/* Schedule class dot (blue/green) */
+/* Schedule class dot (blue) */
 .cal-class-dot {
-  width: 5px;
-  height: 5px;
-  background: var(--accent);
+  width: 6px;
+  height: 6px;
+  background: #3b82f6;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.5);
 }
 
 /* Event change dot (orange/red) */
 .cal-event-dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   background: #f97316;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(249, 115, 22, 0.5);
 }
 
 .cal-day-cell.selected .cal-class-dot,
 .cal-day-cell.selected .cal-event-dot {
-  background: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 0 4px rgba(255,255,255,0.8);
+}
+
+.btn-add-period-col {
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px dashed var(--primary);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.btn-add-period-col:hover {
+  background: rgba(99, 102, 241, 0.15);
+  transform: translateY(-1px);
+}
+
+.week-events-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.25s ease-out;
+}
+.week-events-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.week-events-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ea580c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+[data-theme="dark"] .week-events-title { color: #fb923c; }
+.week-events-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+}
+.week-event-item {
+  background: rgba(249, 115, 22, 0.07);
+  border-left: 3px solid #f97316;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.week-event-item.danger {
+  background: rgba(239, 68, 68, 0.07);
+  border-left-color: #ef4444;
+}
+.week-event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.week-event-title-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.week-event-sub-text {
+  font-size: 0.75rem;
+  color: var(--text-sub);
 }
 
 .week-chips-bar {
@@ -666,6 +753,78 @@
   background: rgba(249,115,22,0.1);
 }
 
+/* Week chip modification badge */
+.week-chip-btn.has-changes {
+  border-color: rgba(249, 115, 22, 0.6);
+}
+.week-chip-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ea580c;
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  margin-left: 6px;
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.4);
+}
+[data-theme="dark"] .week-chip-badge {
+  background: #f97316;
+}
+
+/* Day column with events */
+.day-timetable-col.has-events {
+  border-top: 3px solid #f97316;
+}
+.day-mod-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+[data-theme="dark"] .day-mod-badge {
+  color: #fb923c;
+  background: rgba(249, 115, 22, 0.25);
+}
+
+/* Cancelled Period (Báo nghỉ / bỏ tiết) */
+.class-card-item.period-cancelled,
+.day-class-card-detailed.period-cancelled {
+  opacity: 0.75;
+  background: rgba(239, 68, 68, 0.05) !important;
+  border: 1.5px dashed #ef4444 !important;
+}
+.class-card-item.period-cancelled .class-card-name,
+.day-class-card-detailed.period-cancelled .class-card-name {
+  text-decoration: line-through;
+  color: var(--text-sub) !important;
+}
+
+/* Changed Period (Đổi lịch / đổi phòng) */
+.class-card-item.period-changed,
+.day-class-card-detailed.period-changed {
+  background: rgba(249, 115, 22, 0.06) !important;
+  border: 1.5px solid #f97316 !important;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.15);
+}
+
+/* Extra Class Card (Tiết tăng cường / học bù) */
+.class-card-item.extra-class-card,
+.day-class-card-detailed.extra-class-card {
+  background: rgba(16, 185, 129, 0.07) !important;
+  border: 1.5px solid #10b981 !important;
+  border-left-width: 4px !important;
+  border-left-color: #10b981 !important;
+}
+
 /* ============= VIEW MODE: 4 BUTTONS ============= */
 .view-mode-toggle-group {
   display: flex;
@@ -755,7 +914,7 @@
 }
 
 .month-cell {
-  min-height: 80px;
+  min-height: 95px;
   background: var(--bg-surface);
   border: 1px solid var(--input-border);
   border-radius: var(--radius-md);
@@ -810,7 +969,18 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  overflow: hidden;
+  max-height: 95px;
+  overflow-y: auto;
+  padding-right: 1px;
+}
+
+.month-cell-class-chips::-webkit-scrollbar {
+  width: 3px;
+}
+
+.month-cell-class-chips::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 2px;
 }
 
 .month-class-chip {

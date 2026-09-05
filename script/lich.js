@@ -40,6 +40,30 @@ const PERIOD_TIMES = {
   10: '16:30 - 17:15'
 };
 
+// ============= DANH MỤC CHUẨN 36 LỚP HỌC TOÀN TRƯỜNG =============
+const STANDARD_CLASSES = [
+  ...Array.from({ length: 12 }, (_, i) => `10A${i + 1}`),
+  ...Array.from({ length: 12 }, (_, i) => `11C${i + 1}`),
+  ...Array.from({ length: 12 }, (_, i) => `12A${i + 1}`)
+];
+
+function getSubjectColor(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('toán')) return '#3b82f6';
+  if (n.includes('văn')) return '#ec4899';
+  if (n.includes('anh')) return '#8b5cf6';
+  if (n.includes('lý') || n.includes('vật lí')) return '#06b6d4';
+  if (n.includes('hóa')) return '#10b981';
+  if (n.includes('sinh')) return '#84cc16';
+  if (n.includes('sử')) return '#f59e0b';
+  if (n.includes('địa')) return '#d97706';
+  if (n.includes('tin')) return '#6366f1';
+  if (n.includes('thể dục') || n.includes('gdtc')) return '#ef4444';
+  if (n.includes('gdcd') || n.includes('kinh tế')) return '#14b8a6';
+  if (n.includes('chào cờ') || n.includes('sinh hoạt')) return '#e11d48';
+  return '#64748b';
+}
+
 // ============= CẤU HÌNH NIÊN KHÓA & BỘ ĐẾM TUẦN HỌC (LỚP 10 - 11 - 12) =============
 const ACADEMIC_YEARS = {
   '2025-2026': {
@@ -231,6 +255,9 @@ window.getAcademicProgress = getAcademicProgress;
 // ============= SCHEDULE EVENTS HELPERS =============
 function saveScheduleEvents() {
   localStorage.setItem('c7aio_schedule_events', JSON.stringify(scheduleEvents));
+  if (typeof saveSharedScheduleEvents === 'function') {
+    saveSharedScheduleEvents(scheduleEvents);
+  }
 }
 
 function getEventsForWeek(weekKey) {
@@ -304,6 +331,15 @@ window.addEventListener('load', () => {
       }
     });
   }
+
+  if (typeof onSharedScheduleEventsChanged === 'function') {
+    onSharedScheduleEventsChanged((data) => {
+      if (data && typeof data === 'object') {
+        scheduleEvents = data;
+        renderAll();
+      }
+    });
+  }
 });
 
 function initDefaultScheduleIfEmpty() {
@@ -368,8 +404,9 @@ function ensureSemesterWeeksMetadata() {
     : ay.startDate;
   const startD = parseLocalDate(baseStart);
 
-  // Sinh thông tin tuần tự động cho tối thiểu 10 tuần (đặc biệt là Tuần 8)
-  for (let i = 1; i <= 10; i++) {
+  // Sinh thông tin tuần tự động cho toàn bộ 35 tuần của niên khóa (TKB số 1 áp dụng nền tảng)
+  const totalWeeks = ay.totalWeeks || 35;
+  for (let i = 1; i <= totalWeeks; i++) {
     const wKey = `week-${i}`;
     const s = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + (i - 1) * 7);
     const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
@@ -497,6 +534,7 @@ function renderAll() {
   renderCalendar();
   renderWeekChips();
   updateCurrentWeekBanner();
+  renderWeekEventsLogCard();
 
   // Sync 4 view mode buttons
   ['week', 'day', 'month', 'year'].forEach(m => {
@@ -508,6 +546,12 @@ function renderAll() {
   const dayCard = document.getElementById('dayViewContainer');
   const monthCard = document.getElementById('monthViewContainer');
   const yearCard = document.getElementById('yearViewContainer');
+  const miniCalCard = document.getElementById('miniCalendarSection');
+  const weekChipsSec = document.getElementById('weekChipsSection');
+
+  const isMonthOrYear = (scheduleViewMode === 'month' || scheduleViewMode === 'year');
+  if (miniCalCard) miniCalCard.style.display = isMonthOrYear ? 'none' : 'block';
+  if (weekChipsSec) weekChipsSec.style.display = isMonthOrYear ? 'none' : 'block';
 
   if (weekGrid) weekGrid.style.display = scheduleViewMode === 'week' ? 'grid' : 'none';
   if (dayCard) dayCard.style.display = scheduleViewMode === 'day' ? 'flex' : 'none';
@@ -540,14 +584,14 @@ function populateClassFilterOptions() {
   const select = document.getElementById('classFilterSelect');
   if (!select) return;
 
-  const classesSet = new Set(['11C7']);
+  const classesSet = new Set(STANDARD_CLASSES);
   
-  // Quét từ metadata tuần
+  // Quét thêm từ metadata tuần
   Object.values(weekMetadata).forEach(m => {
     if (m && m.className) classesSet.add(m.className);
   });
 
-  // Quét từ các tiết học trong schedules
+  // Quét thêm từ các tiết học trong schedules
   Object.values(schedules).forEach(weekObj => {
     if (weekObj && typeof weekObj === 'object') {
       Object.values(weekObj).forEach(dayList => {
@@ -560,11 +604,37 @@ function populateClassFilterOptions() {
     }
   });
 
-  const sortedClasses = Array.from(classesSet).sort();
+  const allClasses = Array.from(classesSet);
+  const k10 = allClasses.filter(c => c.startsWith('10')).sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
+  const k11 = allClasses.filter(c => c.startsWith('11')).sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
+  const k12 = allClasses.filter(c => c.startsWith('12')).sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
+  const others = allClasses.filter(c => !c.startsWith('10') && !c.startsWith('11') && !c.startsWith('12')).sort();
+
   const currentVal = selectedClassFilter;
 
-  select.innerHTML = '<option value="">-- Tất cả lớp --</option>' +
-    sortedClasses.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>Lớp ${c}</option>`).join('');
+  let html = '<option value="">-- Xem tất cả lớp (36 lớp) --</option>';
+  if (k11.length > 0) {
+    html += `<optgroup label="Khối 11 (Mặc định)">` +
+      k11.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>Lớp ${c} ${c === '11C7' ? '★' : ''}</option>`).join('') +
+      `</optgroup>`;
+  }
+  if (k10.length > 0) {
+    html += `<optgroup label="Khối 10">` +
+      k10.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>Lớp ${c}</option>`).join('') +
+      `</optgroup>`;
+  }
+  if (k12.length > 0) {
+    html += `<optgroup label="Khối 12">` +
+      k12.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>Lớp ${c}</option>`).join('') +
+      `</optgroup>`;
+  }
+  if (others.length > 0) {
+    html += `<optgroup label="Lớp khác">` +
+      others.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>Lớp ${c}</option>`).join('') +
+      `</optgroup>`;
+  }
+
+  select.innerHTML = html;
 }
 
 function handleClassFilterChange(cls) {
@@ -578,18 +648,18 @@ function updateCurrentWeekBanner() {
   if (banner) {
     const firstWeekStart = (weekMetadata['week-1'] && weekMetadata['week-1'].startDate) || '2026-09-07';
     const selectedDateKey = toDateStringKey(selectedDate);
-    const isBeforeSemester = scheduleViewMode === 'day' && selectedDateKey < firstWeekStart;
+    const isBeforeSemester = selectedDateKey < firstWeekStart;
 
-    let title = meta.name || currentWeekKey;
+    let title = meta.name ? `${meta.name} (TKB số 1)` : 'Thời khóa biểu số 1';
     if (isBeforeSemester) {
-      title = 'Chưa áp dụng TKB';
+      title = `${meta.name || 'Tuần 1'} • TKB số 1`;
     }
-    const classBadge = meta.className ? ` • Lớp ${meta.className}` : '';
+    const classBadge = selectedClassFilter ? ` • Lớp ${selectedClassFilter}` : ' • Toàn trường (36 lớp)';
     const dateRange = (meta.startDate && meta.endDate) ? ` (${formatDateDisplay(meta.startDate)} → ${formatDateDisplay(meta.endDate)})` : '';
     const modeBadge = scheduleViewMode === 'day' 
       ? ` • Xem: <strong>${DAY_LABELS[getDayNameFromDate(selectedDate)]}</strong>` 
       : ` • Xem: <strong>Cả tuần</strong>`;
-    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${escapeHtml(title)}</strong>${classBadge}${isBeforeSemester ? ` (Bắt đầu từ ${formatDateDisplay(firstWeekStart)})` : dateRange}${modeBadge}`;
+    banner.innerHTML = `🗓️ Đang hiển thị: <strong>${escapeHtml(title)}</strong>${classBadge}${dateRange}${modeBadge}`;
   }
 }
 
@@ -611,36 +681,15 @@ function renderCalendar() {
 
   matrix.innerHTML = '';
 
-  // Prev month padding
-  const prevMonthLast = new Date(year, month, 0).getDate();
-  for (let i = startingDay - 1; i >= 0; i--) {
-    const prevDate = new Date(year, month - 1, prevMonthLast - i);
-    const cell = document.createElement('div');
-    cell.className = 'cal-day-cell other-month';
-    const numSpan = document.createElement('span');
-    numSpan.className = 'cal-day-num';
-    numSpan.textContent = prevMonthLast - i;
-    cell.appendChild(numSpan);
-    cell.appendChild(document.createElement('div'));
-    cell.onclick = () => {
-      selectedDate = prevDate;
-      currentDate = new Date(selectedDate);
-      resolveWeekFromDate(selectedDate);
-      switchScheduleViewMode('day');
-    };
-    matrix.appendChild(cell);
-  }
-
-  // Current month days
+  // Helper to build calendar cell
   const today = new Date();
   const todayStr = toDateStringKey(today);
   const selectedStr = toDateStringKey(selectedDate);
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateObj = new Date(year, month, d);
+  function createCalCell(dateObj, isOtherMonth) {
     const dateKey = toDateStringKey(dateObj);
     const cell = document.createElement('div');
-    cell.className = 'cal-day-cell';
+    cell.className = 'cal-day-cell' + (isOtherMonth ? ' other-month' : '');
 
     const isToday = (dateKey === todayStr);
     const isSelected = (dateKey === selectedStr);
@@ -648,35 +697,33 @@ function renderCalendar() {
     if (isToday) cell.classList.add('today');
     if (isSelected) cell.classList.add('selected');
 
-    // Number span
+    // Day number
     const numSpan = document.createElement('span');
     numSpan.className = 'cal-day-num';
-    numSpan.textContent = d;
+    numSpan.textContent = dateObj.getDate();
     cell.appendChild(numSpan);
 
     // Dots row
     const dotRow = document.createElement('div');
     dotRow.className = 'cal-dot-row';
 
-    // Class dot
+    // Class dot (blue)
     const targetWeekKey = getWeekKeyForDate(dateObj);
-    let hasClasses = false;
-    if (targetWeekKey) {
-      const targetSchedule = getEffectiveSchedule(targetWeekKey);
-      const dayName = getDayNameFromDate(dateObj);
-      let dayClasses = targetSchedule[dayName] || [];
-      if (selectedClassFilter) {
-        dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
-      }
-      hasClasses = dayClasses.length > 0;
+    const activeWeekKey = targetWeekKey || 'week-1';
+    const targetSchedule = getEffectiveSchedule(activeWeekKey);
+    const dayName = getDayNameFromDate(dateObj);
+    let dayClasses = targetSchedule[dayName] || [];
+    if (selectedClassFilter) {
+      dayClasses = dayClasses.filter(c => !c.className || c.className === selectedClassFilter);
     }
-    if (hasClasses) {
+    if (dayClasses.length > 0) {
       const dot = document.createElement('span');
       dot.className = 'cal-class-dot';
+      dot.title = `${dayClasses.length} tiết học (${DAY_LABELS[dayName] || ''})`;
       dotRow.appendChild(dot);
     }
 
-    // Event dot (orange - schedule changes)
+    // Event dot (orange)
     const dayEvents = getEventsForDate(dateKey);
     if (dayEvents.length > 0) {
       const eDot = document.createElement('span');
@@ -695,7 +742,20 @@ function renderCalendar() {
       renderAll();
     };
 
-    matrix.appendChild(cell);
+    return cell;
+  }
+
+  // Prev month padding
+  const prevMonthLast = new Date(year, month, 0).getDate();
+  for (let i = startingDay - 1; i >= 0; i--) {
+    const prevDate = new Date(year, month - 1, prevMonthLast - i);
+    matrix.appendChild(createCalCell(prevDate, true));
+  }
+
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d);
+    matrix.appendChild(createCalCell(dateObj, false));
   }
 
   // Next month padding
@@ -703,21 +763,7 @@ function renderCalendar() {
   const nextPadding = (7 - (totalRendered % 7)) % 7;
   for (let n = 1; n <= nextPadding; n++) {
     const nextDate = new Date(year, month + 1, n);
-    const cell = document.createElement('div');
-    cell.className = 'cal-day-cell other-month';
-    const numSpan = document.createElement('span');
-    numSpan.className = 'cal-day-num';
-    numSpan.textContent = n;
-    cell.appendChild(numSpan);
-    cell.appendChild(document.createElement('div')); // empty dot row
-    cell.onclick = () => {
-      selectedDate = nextDate;
-      currentDate = new Date(selectedDate);
-      resolveWeekFromDate(selectedDate);
-      scheduleViewMode = 'day';
-      renderAll();
-    };
-    matrix.appendChild(cell);
+    matrix.appendChild(createCalCell(nextDate, true));
   }
 }
 
@@ -769,9 +815,14 @@ function renderWeekChips() {
     const meta = weekMetadata[wKey] || {};
     const name = meta.name || (`Tuần ${wKey.replace(/\D/g, '')}`);
     const isActive = wKey === currentWeekKey;
+    const events = getEventsForWeek(wKey);
+    const hasMod = events.length > 0;
+    const badgeHtml = hasMod 
+      ? `<span class="week-chip-badge" title="Tuần này có ${events.length} thay đổi lịch">⚡${events.length}</span>` 
+      : '';
     return `
-      <button class="week-chip-btn ${isActive ? 'active' : ''}" onclick="selectWeekKey('${wKey}')">
-        ${escapeHtml(name)}
+      <button class="week-chip-btn ${isActive ? 'active' : ''} ${hasMod ? 'has-changes' : ''}" onclick="selectWeekKey('${wKey}')">
+        ${escapeHtml(name)}${badgeHtml}
       </button>
     `;
   }).join('') + (checkPermission('manage_schedule') ? `
@@ -837,15 +888,11 @@ function renderDayView() {
     const currentWeekMeta = weekMetadata[matchedWeekKey] || {};
     weekTitle = currentWeekMeta.name || matchedWeekKey;
   } else {
-    // Fallback: Xem trước TKB tuần cơ bản (week-1) để không bị khóa ngày trước niên khóa
+    // Fallback: Xem trước TKB số 1 (week-1)
     const defaultWeekKey = (weekMetadata['week-1'] ? 'week-1' : Object.keys(weekMetadata)[0]) || 'week-1';
     const fallbackSchedule = getEffectiveSchedule(defaultWeekKey);
     rawClasses = fallbackSchedule[dayName] || [];
-    if (isBeforeSemester) {
-      weekTitle = 'Xem trước TKB (Trước niên khoá)';
-    } else {
-      weekTitle = 'Ngoài tuần học (Xem trước)';
-    }
+    weekTitle = isBeforeSemester ? 'TKB số 1 (Xem trước)' : 'TKB số 1 (Ngoài tuần học)';
   }
 
   // Gắn originalIndex để sửa/xóa chuẩn xác kể cả khi đang lọc lớp
@@ -858,20 +905,8 @@ function renderDayView() {
   const dayEventsAll = matchedWeekKey ? getEventsForDayInWeek(matchedWeekKey, dayName) : [];
 
   let emptyMessageTitle = 'Không có tiết học';
-  let emptyMessageDesc = 'Hôm nay không có tiết học hoặc chưa được xếp thời khóa biểu!';
-
-  if (isBeforeSemester && classes.length === 0) {
-    emptyMessageTitle = 'Chưa áp dụng thời khóa biểu';
-    emptyMessageDesc = `Thời khóa biểu số 1 chính thức bắt đầu áp dụng từ Thứ Hai, ${formatDateDisplay(firstWeekStart)}. Ngày này không có tiết học!`;
-  }
-
-  const jumpToStartBtn = (isBeforeSemester && classes.length === 0) ? `
-    <div style="margin-top: 14px;">
-      <button class="c7-btn c7-btn-primary" onclick="goToSemesterStart()" style="font-size: 0.85rem;">
-        👉 Đi đến ngày bắt đầu TKB (${formatDateDisplay(firstWeekStart)})
-      </button>
-    </div>
-  ` : '';
+  let emptyMessageDesc = 'Ngày này không có tiết học hoặc chưa được xếp thời khóa biểu.';
+  const jumpToStartBtn = '';
 
   // Event banners HTML
   const eventBannersHtml = dayEventsAll.length > 0
@@ -900,38 +935,56 @@ function renderDayView() {
       </div>`
     : `<div class="day-classes-list-grid" style="width: 100%;">` + classes.map(c => {
         const color = getSubjectColor(c.name || c.subject);
-        // Find events for this specific period
+        // Find events specifically for this period
         const periodEvents = matchedWeekKey
           ? getEventsForWeek(matchedWeekKey).filter(e =>
               (!e.day || e.day === dayName) &&
-              (e.periodIndex === null || e.periodIndex === undefined || e.periodIndex === c.originalIndex)
+              (e.periodIndex !== null && e.periodIndex !== undefined && parseInt(e.periodIndex) === c.originalIndex)
             )
           : [];
+        const isCancelled = periodEvents.some(e => e.type === 'day_off');
+        const isChanged = periodEvents.some(e => e.type === 'schedule_change');
         const periodBadges = periodEvents.map(ev =>
-          `<span class="event-inline-badge ${ev.severity === 'danger' ? 'danger' : ''}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</span>`
+          `<span class="event-inline-badge ${ev.severity === 'danger' || ev.type === 'day_off' ? 'danger' : ''}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</span>`
         ).join('');
         return `
-          <div class="day-class-card-detailed" style="border-left-color: ${color}">
+          <div class="day-class-card-detailed ${isCancelled ? 'period-cancelled' : ''} ${isChanged ? 'period-changed' : ''}" style="border-left-color: ${color}">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
               <span class="class-card-time">⏰ ${escapeHtml(c.time || '')}</span>
               ${c.className ? `<span class="class-card-grade-badge">🏫 Lớp ${escapeHtml(c.className)}</span>` : ''}
             </div>
-            <div class="class-card-name" style="font-size: 1.05rem;">${escapeHtml(c.name || '')}</div>
+            <div class="class-card-name" style="font-size: 1.05rem;">
+              ${isCancelled ? `<s>${escapeHtml(c.name || '')}</s> <span style="font-size:0.75rem;color:#ef4444;font-weight:700;">(Đã báo nghỉ)</span>` : escapeHtml(c.name || '')}
+            </div>
             ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
-            ${periodBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;">${periodBadges}</div>` : ''}
+            ${periodBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;">${periodBadges}</div>` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
               <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
-              ${checkPermission('manage_schedule') ? `
-                <div style="display: flex; gap: 6px;">
-                  <button class="btn-add-event" onclick="openEventModal('${matchedWeekKey}', '${dayName}', ${c.originalIndex})">📢 Đổi lịch</button>
-                  <button class="btn-action-pill" onclick="editClass('${dayName}', ${c.originalIndex})">✏️ Sửa</button>
-                  <button class="btn-action-pill danger" onclick="deleteClass('${dayName}', ${c.originalIndex})">🗑️ Xóa</button>
-                </div>
-              ` : ''}
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn-action-pill" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', ${c.originalIndex}, 'schedule_change', 'Đổi lịch môn ${escapeHtml(c.name || '')}')" title="Đổi lịch/phòng cho tiết này trong tuần (tính vào log thay đổi)">🔄 Đổi lịch</button>
+                <button type="button" class="btn-action-pill danger" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', ${c.originalIndex}, 'day_off', 'Nghỉ tiết ${escapeHtml(c.name || '')}')" title="Báo nghỉ/bỏ tiết này trong tuần (tính vào log thay đổi)">🚫 Bỏ tiết</button>
+                ${checkPermission('manage_schedule') ? `
+                  <button type="button" class="btn-action-pill" onclick="editClass('${dayName}', ${c.originalIndex})" title="Sửa TKB gốc">✏️ Gốc</button>
+                  <button type="button" class="btn-action-pill danger" onclick="deleteClass('${dayName}', ${c.originalIndex})" title="Xóa TKB gốc">🗑️</button>
+                ` : ''}
+              </div>
             </div>
           </div>
         `;
-      }).join('') + `</div>`;
+      }).join('') + (dayEventsAll.filter(e => e.type === 'extra_class' && (e.periodIndex === null || e.periodIndex === undefined)).map(ev => `
+        <div class="day-class-card-detailed extra-class-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <span class="class-card-time" style="color: #059669; font-weight: 700;">⏰ Tiết học thêm / bù tuần này</span>
+            <span class="event-inline-badge" style="background: rgba(16,185,129,0.2); color: #047857; border-color: rgba(16,185,129,0.4);">➕ Tăng cường</span>
+          </div>
+          <div class="class-card-name" style="font-size: 1.05rem; color: #065f46; font-weight: 800;">${escapeHtml(ev.title)}</div>
+          ${ev.note ? `<div class="class-card-sub" style="color: #047857;"><em>📝 ${escapeHtml(ev.note)}</em></div>` : ''}
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+            <button type="button" class="btn-action-pill" onclick="editEvent('${matchedWeekKey || currentWeekKey}','${ev.id}')" title="Sửa tiết này">✏️ Sửa</button>
+            <button type="button" class="btn-action-pill danger" onclick="deleteEventById('${matchedWeekKey || currentWeekKey}','${ev.id}')" title="Hủy tiết này">🗑️ Hủy</button>
+          </div>
+        </div>
+      `).join('')) + `</div>`;
 
   container.innerHTML = `
     <div class="day-view-header-bar">
@@ -955,12 +1008,15 @@ function renderDayView() {
         <button class="c7-btn c7-btn-secondary" onclick="nextDay()" title="Xem ngày tiếp theo">
           Ngày sau →
         </button>
+        <button class="c7-btn c7-btn-primary" style="background: linear-gradient(135deg, #f97316, #ea580c); border: none; color: white;" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', null, 'extra_class', 'Thêm tiết học ${DAY_LABELS[dayName]}')">
+          ➕ Thêm tiết tuần này
+        </button>
+        <button class="c7-btn c7-btn-secondary" style="border-color:#f97316;color:#f97316;" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', null, 'schedule_change')">
+          📢 Đổi lịch ngày này
+        </button>
         ${checkPermission('manage_schedule') ? `
-          <button class="c7-btn c7-btn-primary" onclick="openAddClassForCurrentDay('${dayName}')">
-            + Thêm tiết ngày này
-          </button>
-          <button class="c7-btn c7-btn-secondary" style="border-color:#f97316;color:#f97316;" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', null)">
-            📢 Thêm thông báo đổi lịch
+          <button class="c7-btn c7-btn-secondary" onclick="openAddClassForCurrentDay('${dayName}')" title="Thêm vào TKB gốc">
+            + Thêm tiết TKB gốc
           </button>
         ` : ''}
       </div>
@@ -1023,46 +1079,72 @@ function renderTimetable() {
       : classes.map(c => {
           const color = getSubjectColor(c.name || c.subject);
           const periodEvts = dayEventsInWeek.filter(e =>
-            (e.periodIndex === null || e.periodIndex === undefined || e.periodIndex === c.originalIndex)
+            (e.periodIndex !== null && e.periodIndex !== undefined && parseInt(e.periodIndex) === c.originalIndex)
           );
+          const isCancelled = periodEvts.some(e => e.type === 'day_off');
+          const isChanged = periodEvts.some(e => e.type === 'schedule_change');
           const pBadges = periodEvts.map(ev =>
-            `<span class="event-inline-badge ${ev.severity === 'danger' ? 'danger' : ''}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</span>`
+            `<span class="event-inline-badge ${ev.severity === 'danger' || ev.type === 'day_off' ? 'danger' : ''}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</span>`
           ).join('');
 
           return `
-            <div class="class-card-item" style="border-left-color: ${color}">
+            <div class="class-card-item ${isCancelled ? 'period-cancelled' : ''} ${isChanged ? 'period-changed' : ''}" style="border-left-color: ${color}">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="class-card-time">⏰ ${escapeHtml(c.time || '')}</span>
                 ${c.className ? `<span class="class-card-grade-badge">🏫 ${escapeHtml(c.className)}</span>` : ''}
               </div>
-              <div class="class-card-name">${escapeHtml(c.name || '')}</div>
+              <div class="class-card-name">
+                ${isCancelled ? `<s>${escapeHtml(c.name || '')}</s> <span style="font-size:0.75rem;color:#ef4444;font-weight:700;">(Đã báo nghỉ)</span>` : escapeHtml(c.name || '')}
+              </div>
               ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
               ${pBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;">${pBadges}</div>` : ''}
               <div class="class-card-room">📍 ${escapeHtml(c.room || 'Chưa rõ')}</div>
-              ${checkPermission('manage_schedule') ? `
-                <div style="display: flex; gap: 6px; margin-top: 6px;">
-                  <button class="btn-action-pill" onclick="editClass('${day}', ${c.originalIndex})">✏️ Sửa</button>
-                  <button class="btn-action-pill danger" onclick="deleteClass('${day}', ${c.originalIndex})">🗑️ Xóa</button>
-                </div>
-              ` : ''}
+              <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn-action-pill" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'schedule_change', 'Đổi lịch môn ${escapeHtml(c.name || '')}')" title="Đổi lịch/phòng cho tiết này trong tuần (tính vào log thay đổi)">🔄 Đổi</button>
+                <button type="button" class="btn-action-pill danger" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'day_off', 'Nghỉ tiết ${escapeHtml(c.name || '')}')" title="Báo nghỉ/bỏ tiết này trong tuần (tính vào log thay đổi)">🚫 Bỏ tiết</button>
+                ${checkPermission('manage_schedule') ? `
+                  <button type="button" class="btn-action-pill" onclick="editClass('${day}', ${c.originalIndex})" title="Sửa TKB gốc">✏️ Gốc</button>
+                ` : ''}
+              </div>
             </div>
           `;
         }).join('');
 
+    const extraClassesColHtml = dayEventsInWeek
+      .filter(e => e.type === 'extra_class' && (e.periodIndex === null || e.periodIndex === undefined))
+      .map(ev => `
+        <div class="class-card-item extra-class-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="class-card-time" style="color: #059669; font-weight: 700;">⏰ Tiết học thêm tuần này</span>
+            <span class="event-inline-badge" style="background: rgba(16,185,129,0.2); color: #047857; font-size:0.65rem;">➕ Bù</span>
+          </div>
+          <div class="class-card-name" style="color: #065f46; font-weight: 700;">${escapeHtml(ev.title)}</div>
+          ${ev.note ? `<div class="class-card-sub" style="color: #047857;"><em>${escapeHtml(ev.note)}</em></div>` : ''}
+          <div style="display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end;">
+            <button type="button" class="btn-action-pill" onclick="editEvent('${currentWeekKey}','${ev.id}')">✏️ Sửa</button>
+            <button type="button" class="btn-action-pill danger" onclick="deleteEventById('${currentWeekKey}','${ev.id}')">🗑️ Hủy</button>
+          </div>
+        </div>
+      `).join('');
+
     return `
-      <div class="day-timetable-col ${isToday ? 'is-today-col' : ''} ${isSelected ? 'is-selected-col' : ''}">
+      <div class="day-timetable-col ${isToday ? 'is-today-col' : ''} ${isSelected ? 'is-selected-col' : ''} ${dayEventsInWeek.length > 0 ? 'has-events' : ''}">
         <div class="day-col-header" style="cursor: pointer;" onclick="selectDayColumn('${day}')" title="Click để xem chi tiết ${DAY_LABELS[day]}">
           <div class="day-col-title">
             <span>${DAY_LABELS[day]} <small style="font-size: 0.8rem; font-weight: 500; opacity: 0.8;">(${dateFormatted})</small></span>
             ${isToday ? '<span style="background: var(--primary); color: white; border-radius: 99px; padding: 2px 6px; font-size: 0.7rem; font-weight: 700;">Hôm nay</span>' : ''}
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
-            ${dayEventsInWeek.length > 0 ? `<span class="event-inline-badge" style="font-size:0.65rem;">📢 ${dayEventsInWeek.length}</span>` : ''}
+            ${dayEventsInWeek.length > 0 ? `<span class="day-mod-badge" title="Có ${dayEventsInWeek.length} thay đổi lịch trong ngày này">📢 ${dayEventsInWeek.length}</span>` : ''}
             <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết 🔍</span>
           </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           ${classesHtml}
+          ${extraClassesColHtml}
+          <button type="button" class="btn-add-period-col" onclick="openEventModal('${currentWeekKey}', '${day}', null, 'extra_class', 'Thêm tiết học ${DAY_LABELS[day]}')" title="Thêm tiết học bù / tăng cường cho thứ này trong tuần (tính vào log thay đổi)">
+            + Thêm tiết tuần này
+          </button>
         </div>
       </div>
     `;
@@ -1309,24 +1391,18 @@ function renderMonthView() {
       const sched = getEffectiveSchedule(activeWKey);
       let dayList = (sched[dayName] || []);
       if (selectedClassFilter) dayList = dayList.filter(c => !c.className || c.className === selectedClassFilter);
-      const MAX_SHOW = 2;
-      dayList.slice(0, MAX_SHOW).forEach((c, i) => {
-        const col = CHIP_COLORS[i % CHIP_COLORS.length];
-        classChips += `<div class="month-class-chip" style="background:${col};">${escapeHtml(c.name || '')}</div>`;
+      dayList.forEach((c, i) => {
+        const col = getSubjectColor(c.name || c.subject) || CHIP_COLORS[i % CHIP_COLORS.length];
+        const timeShort = c.time ? `[${c.time.split(' ')[0]}] ` : '';
+        classChips += `<div class="month-class-chip" style="background:${col};" title="${escapeHtml(c.name || '')} (${c.time || ''} - ${c.room || ''})">${timeShort}${escapeHtml(c.name || '')}</div>`;
       });
-      if (dayList.length > MAX_SHOW) {
-        classChips += `<div class="month-more-badge">+${dayList.length - MAX_SHOW} tiết</div>`;
-      }
     }
 
     const dayEvents = getEventsForDate(dateKey);
     let eventChips = '';
-    dayEvents.slice(0, 1).forEach(ev => {
-      eventChips += `<div class="month-event-chip">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</div>`;
+    dayEvents.forEach(ev => {
+      eventChips += `<div class="month-event-chip" title="${escapeHtml(ev.title)}: ${escapeHtml(ev.note || '')}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</div>`;
     });
-    if (dayEvents.length > 1) {
-      eventChips += `<div class="month-more-badge" style="color:#f97316;">+${dayEvents.length-1}</div>`;
-    }
 
     cells += `
       <div class="month-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}"
@@ -1369,16 +1445,16 @@ function renderYearView() {
   if (!container) return;
 
   const ay = getActiveAcademicYear();
-  const year = currentDate.getFullYear();
   const today = new Date();
   const todayStr = toDateStringKey(today);
   const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
   let monthCards = '';
 
-  for (let m = 0; m < 12; m++) {
-    const targetYear = m >= 8 ? year : year + 1; // Năm học: T9 năm N - T5 năm N+1
-    // Heuristic: nếu tháng >= 9 → thuộc năm "year", nếu < 6 → thuộc "year+1"
+  // Thứ tự tháng theo niên khóa Việt Nam: Tháng 9 (m=8) -> Tháng 8 năm sau (m=7)
+  const schoolYearMonths = [8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7];
+
+  for (const m of schoolYearMonths) {
     const realYear = (m >= 8) ? parseInt(ay.id.split('-')[0]) : parseInt(ay.id.split('-')[1]);
     const firstDay = new Date(realYear, m, 1);
     const daysInMonth = new Date(realYear, m + 1, 0).getDate();
@@ -1400,9 +1476,12 @@ function renderYearView() {
       const isToday = dateKey === todayStr;
       let classes = 'year-mini-day';
       let hasC = false, hasE = false;
-      if (wKey) {
-        const sched = getEffectiveSchedule(wKey);
-        hasC = (sched[dayName] || []).length > 0;
+      const activeWKey = wKey || (weekMetadata['week-1'] ? 'week-1' : Object.keys(weekMetadata)[0]) || 'week-1';
+      if (activeWKey) {
+        const sched = getEffectiveSchedule(activeWKey);
+        let dayList = sched[dayName] || [];
+        if (selectedClassFilter) dayList = dayList.filter(c => !c.className || c.className === selectedClassFilter);
+        hasC = dayList.length > 0;
         hasE = getEventsForDate(dateKey).length > 0;
       }
       if (isToday) classes += ' is-today';
@@ -1431,16 +1510,81 @@ function renderYearView() {
   `;
 }
 
+// ============= WEEK EVENTS LOG CARD (NHẬT KÝ THAY ĐỔI LỊCH) =============
+function renderWeekEventsLogCard() {
+  const container = document.getElementById('weekEventsLogCard');
+  if (!container) return;
+
+  const events = getEventsForWeek(currentWeekKey);
+  if (events.length === 0) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  container.style.display = 'flex';
+  const meta = weekMetadata[currentWeekKey] || {};
+  const weekName = meta.name || currentWeekKey;
+
+  const itemsHtml = events.map(ev => {
+    const icon = EVENT_TYPE_ICONS[ev.type] || '📋';
+    const dayLabel = ev.day ? (DAY_LABELS[ev.day] || ev.day) : 'Cả tuần';
+    const periodLabel = (ev.periodIndex !== null && ev.periodIndex !== undefined && ev.periodIndex !== '') 
+      ? `Tiết ${parseInt(ev.periodIndex) + 1}` 
+      : 'Tất cả tiết';
+    const isDanger = ev.severity === 'danger' || ev.type === 'day_off';
+
+    return `
+      <div class="week-event-item ${isDanger ? 'danger' : ''}">
+        <div class="week-event-info">
+          <span class="week-event-title-text">${icon} ${escapeHtml(ev.title)}</span>
+          <span class="week-event-sub-text">📅 ${dayLabel} • ⏰ ${periodLabel} ${ev.note ? `• <em>${escapeHtml(ev.note)}</em>` : ''}</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button type="button" class="btn-action-pill" onclick="editEvent('${currentWeekKey}','${ev.id}')" title="Chỉnh sửa">✏️ Sửa</button>
+          <button type="button" class="btn-action-pill danger" onclick="deleteEventById('${currentWeekKey}','${ev.id}')" title="Hủy thay đổi này">🗑️ Hủy</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="week-events-header">
+      <div class="week-events-title">
+        <span>📢 Nhật ký thay đổi lịch — ${escapeHtml(weekName)} (${events.length} thay đổi ghi nhận)</span>
+      </div>
+      <button type="button" class="c7-btn c7-btn-secondary" style="font-size:0.8rem;padding:4px 10px;" onclick="openEventModal('${currentWeekKey}')">
+        + Thêm thay đổi khác
+      </button>
+    </div>
+    <div class="week-events-list">
+      ${itemsHtml}
+    </div>
+  `;
+}
+
+function deleteEventById(weekKey, eventId) {
+  showConfirm('Hủy thay đổi lịch', 'Bạn có chắc muốn hủy thay đổi này trong tuần không?', () => {
+    if (scheduleEvents[weekKey]) {
+      scheduleEvents[weekKey] = scheduleEvents[weekKey].filter(e => e.id !== eventId);
+      saveScheduleEvents();
+      showToast('Đã hủy thay đổi lịch trong tuần!', 'success');
+      renderAll();
+    }
+  });
+}
+
 // ============= EVENT MODAL FUNCTIONS =============
-function openEventModal(weekKey, day, periodIndex) {
-  if (!checkPermission('manage_schedule')) return;
+function openEventModal(weekKey = null, day = null, periodIndex = null, defaultType = 'schedule_change', defaultTitle = '') {
   editingEventWeekKey = weekKey || currentWeekKey;
   editingEventId = null;
 
-  document.getElementById('eventModalTitle').textContent = '📢 Thêm Thông Báo Thay Đổi Lịch';
-  document.getElementById('inputEventType').value = 'schedule_change';
-  document.getElementById('inputEventSeverity').value = 'info';
-  document.getElementById('inputEventTitle').value = '';
+  document.getElementById('eventModalTitle').textContent = defaultType === 'day_off' 
+    ? '🚫 Báo Nghỉ Tiết / Bỏ Tiết (Tuần này)' 
+    : (defaultType === 'extra_class' ? '➕ Thêm Tiết Học Tuần Này' : '📢 Thay Đổi Lịch Tuần Này');
+  document.getElementById('inputEventType').value = defaultType || 'schedule_change';
+  document.getElementById('inputEventSeverity').value = defaultType === 'day_off' ? 'warning' : 'info';
+  document.getElementById('inputEventTitle').value = defaultTitle || '';
   document.getElementById('inputEventNote').value = '';
   document.getElementById('inputEventDay').value = day || '';
   document.getElementById('inputEventPeriod').value = (periodIndex !== null && periodIndex !== undefined) ? String(periodIndex) : '';
@@ -1452,7 +1596,6 @@ function openEventModal(weekKey, day, periodIndex) {
 }
 
 function editEvent(weekKey, eventId) {
-  if (!checkPermission('manage_schedule')) return;
   const events = getEventsForWeek(weekKey);
   const ev = events.find(e => e.id === eventId);
   if (!ev) return;

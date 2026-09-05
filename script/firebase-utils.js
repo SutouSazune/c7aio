@@ -334,6 +334,38 @@ async function saveSharedWeekMetadata(metadata) {
   }
 }
 
+// --- SHARED SCHEDULE EVENTS (THÔNG BÁO ĐỔI LỊCH) ---
+function onSharedScheduleEventsChanged(callback) {
+  const db = getDb();
+  if (!db) {
+    const cached = JSON.parse(localStorage.getItem('c7aio_schedule_events') || '{}');
+    callback(cached);
+    return () => {};
+  }
+
+  const ref = db.ref('shared/scheduleEvents');
+  const listener = ref.on('value', snapshot => {
+    const data = snapshot.val() || {};
+    localStorage.setItem('c7aio_schedule_events', JSON.stringify(data));
+    callback(data);
+  });
+
+  return () => ref.off('value', listener);
+}
+
+async function saveSharedScheduleEvents(events) {
+  const db = getDb();
+  // Always update local cache immediately
+  localStorage.setItem('c7aio_schedule_events', JSON.stringify(events || {}));
+  if (!db) return;
+  try {
+    await db.ref('shared/scheduleEvents').set(events || {});
+    console.log('✅ Đã đồng bộ thông báo đổi lịch lên Firebase');
+  } catch (error) {
+    console.error('❌ Lỗi lưu thông báo đổi lịch Firebase:', error);
+  }
+}
+
 // --- SHARED INPUT HISTORY ---
 function onSharedInputHistoryChanged(callback) {
   const db = getDb();

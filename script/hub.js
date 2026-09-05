@@ -284,21 +284,48 @@ function updateDashboardScheduleWidget() {
   const dayDisplay = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const currentDayName = dayNames[today.getDay()];
 
-  // Tìm week key hiện tại
-  let currentWeekKey = 'week-1';
+  // Format local YYYY-MM-DD để tránh lệch múi giờ UTC
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  const todayKey = `${y}-${m}-${d}`;
+
+  // Tìm week key hiện tại chuẩn theo chuỗi ngày địa phương
+  let currentWeekKey = null;
   for (const [key, meta] of Object.entries(hubWeekMetadata)) {
-    if (meta.startDate) {
-      const start = new Date(meta.startDate);
-      const end = meta.endDate ? new Date(meta.endDate) : null;
-      if (meta.infinite || (end && today >= start && today <= end)) {
+    if (meta && meta.startDate) {
+      if (meta.infinite) {
+        currentWeekKey = key;
+        break;
+      }
+      if (meta.endDate && todayKey >= meta.startDate && todayKey <= meta.endDate) {
         currentWeekKey = key;
         break;
       }
     }
   }
 
-  const weekSchedule = hubSchedules[currentWeekKey] || {};
-  const todayClasses = weekSchedule[currentDayName] || [];
+  // Fallback: Ưu tiên TKB số 1 (week-1) nếu chưa đến ngày hoặc nằm ngoài tuần
+  if (!currentWeekKey) {
+    currentWeekKey = 'week-1';
+  }
+
+  // Kế thừa TKB số 1 nếu tuần hiện tại chưa có dữ liệu riêng
+  let weekSchedule = hubSchedules[currentWeekKey] || {};
+  let todayClasses = weekSchedule[currentDayName] || [];
+  if (todayClasses.length === 0 && currentWeekKey !== 'week-1' && hubSchedules['week-1']) {
+    todayClasses = hubSchedules['week-1'][currentDayName] || [];
+  }
+
+  // Lọc theo lớp học của người dùng nếu có (mặc định 11C7)
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const userClass = (user && (user.class || user.previousClass)) ? (user.class || user.previousClass) : '11C7';
+  if (userClass && todayClasses.length > 0) {
+    const classFiltered = todayClasses.filter(c => !c.className || c.className === userClass);
+    if (classFiltered.length > 0) {
+      todayClasses = classFiltered;
+    }
+  }
 
   let html = `
     <div class="widget-header">
