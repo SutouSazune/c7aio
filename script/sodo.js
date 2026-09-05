@@ -1008,7 +1008,6 @@ function ctxInsertRowBelow() {
 
 function ctxDeleteThisRow() {
   if (ctxRow===null) return;
-  if (editorRows <= 1) { showToast('Phải có ít nhất 1 hàng', 'warning'); hideCtxMenu(); return; }
   editorDeleteRowAt(ctxRow);
   hideCtxMenu();
 }
@@ -1027,7 +1026,6 @@ function ctxInsertColRight() {
 
 function ctxDeleteThisCol() {
   if (ctxCol===null) return;
-  if (editorCols <= 1) { showToast('Phải có ít nhất 1 cột', 'warning'); hideCtxMenu(); return; }
   editorDeleteColAt(ctxCol);
   hideCtxMenu();
 }
@@ -1067,7 +1065,7 @@ function editorInsertColAt(atIndex) {
 }
 
 function editorDeleteRowAt(atIndex) {
-  if (editorRows <= 1 || atIndex < 0 || atIndex >= editorRows) return;
+  if (atIndex < 0 || atIndex >= editorRows) return;
   editorPushUndo();
   editorLayout.splice(atIndex, 1);
   editorRows--;
@@ -1076,7 +1074,7 @@ function editorDeleteRowAt(atIndex) {
 }
 
 function editorDeleteColAt(atIndex) {
-  if (editorCols <= 1 || atIndex < 0 || atIndex >= editorCols) return;
+  if (atIndex < 0 || atIndex >= editorCols) return;
   editorPushUndo();
   editorLayout.forEach(r => r.splice(atIndex, 1));
   editorCols--;
