@@ -574,18 +574,10 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         <div class="sodo-editor-canvas">
           <div class="sodo-editor-canvas-header">
             <div class="sodo-grid-controls">
-              <select id="sel-row-pos" class="sodo-pos-select" title="Vị trí hàng">
-                ${Array.from({length: Math.max(editorRows, 1)}, (_, i) => `<option value="${i}">Hàng ${i + 1}</option>`).join('')}
-                <option value="${editorRows}">Cuối cùng</option>
-              </select>
-              <button class="sodo-ctrl-btn" onclick="editorInsertRow(parseInt(document.getElementById('sel-row-pos').value))">+ Chèn Hàng</button>
-              <button class="sodo-ctrl-btn" onclick="editorDeleteRow(parseInt(document.getElementById('sel-row-pos').value))">− Xóa Hàng</button>
-              <select id="sel-col-pos" class="sodo-pos-select" title="Vị trí cột">
-                ${Array.from({length: Math.max(editorCols, 1)}, (_, i) => `<option value="${i}">Cột ${i + 1}</option>`).join('')}
-                <option value="${editorCols}">Cuối cùng</option>
-              </select>
-              <button class="sodo-ctrl-btn" onclick="editorInsertCol(parseInt(document.getElementById('sel-col-pos').value))">+ Chèn Cột</button>
-              <button class="sodo-ctrl-btn" onclick="editorDeleteCol(parseInt(document.getElementById('sel-col-pos').value))">− Xóa Cột</button>
+              <button class="sodo-ctrl-btn" onclick="editorAddRow()" title="Thêm hàng cuối">+ Hàng</button>
+              <button class="sodo-ctrl-btn" onclick="editorRemoveRow()" title="Xóa hàng cuối">− Hàng</button>
+              <button class="sodo-ctrl-btn" onclick="editorAddCol()" title="Thêm cột cuối">+ Cột</button>
+              <button class="sodo-ctrl-btn" onclick="editorRemoveCol()" title="Xóa cột cuối">− Cột</button>
               <span class="sodo-grid-size-badge" id="sodo-grid-size">${editorRows} × ${editorCols}</span>
             </div>
             <div class="sodo-desk-type-controls">
@@ -632,6 +624,13 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <button onclick="ctxMarkEmptySeat()">🏷️ Đánh dấu ghế trống</button>
       <hr>
       <button onclick="ctxCycleDesk()">🔄 Đổi loại ghế/bàn</button>
+      <hr>
+      <button onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
+      <button onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
+      <button onclick="ctxDeleteThisRow()">－ Xóa hàng này</button>
+      <button onclick="ctxInsertColLeft()">＋ Chèn cột bên trái</button>
+      <button onclick="ctxInsertColRight()">＋ Chèn cột bên phải</button>
+      <button onclick="ctxDeleteThisCol()">－ Xóa cột này</button>
       <hr>
       <button onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
       <hr>
@@ -757,22 +756,6 @@ function editorUpdateCount() {
 function editorUpdateBtns() {
   const sz = document.getElementById('sodo-grid-size');
   if (sz) sz.textContent = `${editorRows} × ${editorCols}`;
-
-  const rowSel = document.getElementById('sel-row-pos');
-  if (rowSel) {
-    const cur = parseInt(rowSel.value);
-    rowSel.innerHTML = Array.from({length: Math.max(editorRows, 1)}, (_, i) => `<option value="${i}">Hàng ${i + 1}</option>`).join('') +
-      `<option value="${editorRows}">Cuối cùng</option>`;
-    rowSel.value = Math.min(cur, editorRows);
-  }
-
-  const colSel = document.getElementById('sel-col-pos');
-  if (colSel) {
-    const cur = parseInt(colSel.value);
-    colSel.innerHTML = Array.from({length: Math.max(editorCols, 1)}, (_, i) => `<option value="${i}">Cột ${i + 1}</option>`).join('') +
-      `<option value="${editorCols}">Cuối cùng</option>`;
-    colSel.value = Math.min(cur, editorCols);
-  }
 }
 
 function editorRenderExtraList() {
@@ -1011,6 +994,44 @@ function ctxMarkEmptySeat() {
   hideCtxMenu();
 }
 
+function ctxInsertRowAbove() {
+  if (ctxRow===null) return;
+  editorInsertRowAt(ctxRow);
+  hideCtxMenu();
+}
+
+function ctxInsertRowBelow() {
+  if (ctxRow===null) return;
+  editorInsertRowAt(ctxRow + 1);
+  hideCtxMenu();
+}
+
+function ctxDeleteThisRow() {
+  if (ctxRow===null) return;
+  if (editorRows <= 1) { showToast('Phải có ít nhất 1 hàng', 'warning'); hideCtxMenu(); return; }
+  editorDeleteRowAt(ctxRow);
+  hideCtxMenu();
+}
+
+function ctxInsertColLeft() {
+  if (ctxCol===null) return;
+  editorInsertColAt(ctxCol);
+  hideCtxMenu();
+}
+
+function ctxInsertColRight() {
+  if (ctxCol===null) return;
+  editorInsertColAt(ctxCol + 1);
+  hideCtxMenu();
+}
+
+function ctxDeleteThisCol() {
+  if (ctxCol===null) return;
+  if (editorCols <= 1) { showToast('Phải có ít nhất 1 cột', 'warning'); hideCtxMenu(); return; }
+  editorDeleteColAt(ctxCol);
+  hideCtxMenu();
+}
+
 // ============= SEAT TYPE =============
 function editorSetSeatType(type) {
   editorDefaultSeatType = type;
@@ -1028,7 +1049,7 @@ function editorRemoveRow() { if(editorRows<=1)return; editorPushUndo(); editorRo
 function editorAddCol()    { editorPushUndo(); editorCols++; editorLayout.forEach(r=>r.push(makeEmptyCell())); editorRenderGrid(); }
 function editorRemoveCol() { if(editorCols<=1)return; editorPushUndo(); editorCols--; editorLayout.forEach(r=>r.pop()); editorRenderGrid(); editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||''); }
 
-function editorInsertRow(atIndex) {
+function editorInsertRowAt(atIndex) {
   if (atIndex < 0 || atIndex > editorRows) return;
   editorPushUndo();
   const newRow = Array.from({length:editorCols},()=>makeEmptyCell());
@@ -1037,7 +1058,7 @@ function editorInsertRow(atIndex) {
   editorRenderGrid();
 }
 
-function editorInsertCol(atIndex) {
+function editorInsertColAt(atIndex) {
   if (atIndex < 0 || atIndex > editorCols) return;
   editorPushUndo();
   editorLayout.forEach(r => r.splice(atIndex, 0, makeEmptyCell()));
@@ -1045,7 +1066,7 @@ function editorInsertCol(atIndex) {
   editorRenderGrid();
 }
 
-function editorDeleteRow(atIndex) {
+function editorDeleteRowAt(atIndex) {
   if (editorRows <= 1 || atIndex < 0 || atIndex >= editorRows) return;
   editorPushUndo();
   editorLayout.splice(atIndex, 1);
@@ -1054,7 +1075,7 @@ function editorDeleteRow(atIndex) {
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
 }
 
-function editorDeleteCol(atIndex) {
+function editorDeleteColAt(atIndex) {
   if (editorCols <= 1 || atIndex < 0 || atIndex >= editorCols) return;
   editorPushUndo();
   editorLayout.forEach(r => r.splice(atIndex, 1));
