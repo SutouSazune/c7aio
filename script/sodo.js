@@ -1111,6 +1111,15 @@ function ctxMergeConfirm() {
     return;
   }
 
+  const alreadyMerged = group.every(([r, c]) => (editorLayout[r]?.[c]?.seatType || editorDefaultSeatType) === mergeType);
+  if (alreadyMerged) {
+    showToast('Các ghế này đã được ghép rồi', 'info');
+    exitMergeMode();
+    hideCtxMenu();
+    editorRenderGrid();
+    return;
+  }
+
   editorPushUndo();
 
   const firstCell = editorLayout[group[0][0]]?.[group[0][1]];
