@@ -457,21 +457,19 @@ function openEditor(mode, chartId) {
   editorUndoStack = []; editorRedoStack = [];
   editorSelectedCell = null; dragStudentId = null; dragFromCell = null; dragIsAnyone = false;
   editorAnyoneCounter = 0; editorPickedIcon = '🪑';
+  editorRowGroups = []; editorActiveRowGroupId = null;
 
   const isNew = chartId === '__new__';
 
   if (mode === 'default') {
-    const d = sodoData.default;
-    if (d?.layout) _loadLayout(d, 'double');
-    else _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, 'double');
+    editorDefaultSeatType = 'double';
+    editorRows = 0; editorCols = 0; editorLayout = [];
     editorExtraPeople = [];
     showEditor('Sơ Đồ Lớp Hiện Tại', '🏫', false, false);
 
   } else if (mode === 'subject') {
-    const sub = sodoData.subjects[chartId]; const fallback = sodoData.default;
-    if (sub?.layout) _loadLayout(sub, 'double');
-    else if (fallback?.layout) _loadLayout(fallback, 'double');
-    else _emptyLayout(SODO_DEFAULT_ROWS, SODO_DEFAULT_COLS, 'double');
+    editorDefaultSeatType = 'double';
+    editorRows = 0; editorCols = 0; editorLayout = [];
     editorExtraPeople = [];
     const s = SODO_SUBJECT_LIST.find(x => x.key === chartId);
     showEditor(`Môn ${s?.label || chartId}`, s?.icon || '📚', false, false);
@@ -590,8 +588,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
             <h4>📚 Dãy</h4>
           </div>
           <div class="sodo-row-group-form">
-            <input id="sodo-row-group-name" type="text" placeholder="Tên dãy..." onkeydown="if(event.key==='Enter')editorAddRowGroup()">
-            <button onclick="editorAddRowGroup()">Thêm</button>
+            <button class="sodo-row-group-create-btn" onclick="editorAddRowGroup()">➕ Tạo dãy</button>
           </div>
           <div id="sodo-row-group-list" class="sodo-row-group-list"></div>
 
@@ -633,6 +630,7 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
               <button class="sodo-ctrl-btn" onclick="editorRemoveCol()" title="Xóa cột cuối">− Cột</button>
               ` : ''}
               <span class="sodo-grid-size-badge" id="sodo-grid-size">${editorRows} × ${editorCols}</span>
+              ${isIndoor ? `<span class="sodo-grid-size-badge" style="background:var(--primary-light);color:var(--primary);margin-left:6px">${editorRowGroups.length} dãy</span>` : ''}
             </div>
             <div class="sodo-desk-type-controls">
               <label>Loại:</label>
@@ -678,8 +676,6 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <button onclick="ctxAddTableToRowGroup('quad_v')">⏣ Thêm bàn 4 dọc vào dãy</button>
       <button onclick="ctxAddTableToRowGroup('single')">◻ Thêm bàn đơn vào dãy</button>
       <hr>
-      <button onclick="ctxSplitByRow()">✂️ Tách dãy</button>
-      <hr>
       ` : `
       <button onclick="ctxInsertRowAbove()">＋ Chèn hàng phía trên</button>
       <button onclick="ctxInsertRowBelow()">＋ Chèn hàng phía dưới</button>
@@ -724,7 +720,7 @@ function editorRenderGrid() {
 function updateRowGroupSpacingStyle() {
   const styleEl = document.getElementById('sodo-row-group-spacing-style');
   if (!styleEl) return;
-  
+
   if (!editorRowGroups.length || editorRowGroupSpacing <= 0) {
     styleEl.textContent = '';
     return;
@@ -733,12 +729,8 @@ function updateRowGroupSpacingStyle() {
   let css = '';
   editorRowGroups.forEach((rg, i) => {
     if (i < editorRowGroups.length - 1) {
-      const nextRg = editorRowGroups[i + 1];
-      const startCol = rg.startCol + rg.width;
-      const endCol = nextRg.startCol;
-      for (let c = startCol; c < endCol; c++) {
-        css += `.sodo-editor-cell[data-col="${c}"] { margin-right: ${editorRowGroupSpacing}px; }\n`;
-      }
+      const lastCol = rg.startCol + rg.width - 1;
+      css += `.sodo-editor-cell[data-col="${lastCol}"] { margin-right: ${editorRowGroupSpacing}px; }\n`;
     }
   });
   styleEl.textContent = css;
@@ -825,14 +817,14 @@ function editorFilterSidebar(val) { editorRenderSidebar(val); }
 
 // ============= ROW GROUP (DÃY) MANAGEMENT =============
 function editorAddRowGroup() {
-  const input = document.getElementById('sodo-row-group-name');
-  const name = input?.value.trim();
-  if (!name) { showToast('Nhập tên dãy', 'warning'); return; }
+  const defaultName = `Dãy ${editorRowGroups.length + 1}`;
+  const name = (typeof prompt === 'function' ? prompt('Tên dãy mới:', defaultName) : defaultName)?.trim();
+  if (!name) return;
 
   editorRowGroupCounter++;
   const id = 'rg_' + editorRowGroupCounter;
-  const startCol = editorRowGroups.length > 0 
-    ? Math.max(...editorRowGroups.map(rg => rg.startCol + rg.width)) 
+  const startCol = editorRowGroups.length > 0
+    ? Math.max(...editorRowGroups.map(rg => rg.startCol + rg.width))
     : 0;
 
   editorRowGroups.push({
@@ -843,7 +835,7 @@ function editorAddRowGroup() {
   });
 
   editorActiveRowGroupId = id;
-  if (input) input.value = '';
+  recomputeRowGroupLayout();
   editorRenderRowGroupList();
   editorRenderGrid();
 }
@@ -853,6 +845,7 @@ function editorDeleteRowGroup(id) {
   if (editorActiveRowGroupId === id) {
     editorActiveRowGroupId = editorRowGroups.length > 0 ? editorRowGroups[editorRowGroups.length - 1].id : null;
   }
+  recomputeRowGroupLayout();
   editorRenderRowGroupList();
   editorRenderGrid();
 }
@@ -874,15 +867,15 @@ function editorRenderRowGroupList() {
   if (!list) return;
 
   if (!editorRowGroups.length) {
-    list.innerHTML = `<div class="sodo-sidebar-empty">Chưa có dãy nào. Thêm dãy để bắt đầu.</div>`;
+    list.innerHTML = `<div class="sodo-sidebar-empty">Chưa có dãy nào. Nhấn <b>Tạo dãy</b> để bắt đầu.</div>`;
     return;
   }
 
   list.innerHTML = editorRowGroups.map(rg => `
     <div class="sodo-row-group-item ${rg.id === editorActiveRowGroupId ? 'active' : ''}" onclick="editorSetActiveRowGroup('${rg.id}')">
       <span class="sodo-row-group-name">${sodoEsc(rg.name)}</span>
-      <span class="sodo-row-group-meta">Cột ${rg.startCol + 1} (rộng ${rg.width})</span>
-      <button class="sodo-row-group-delete" onclick="event.stopPropagation(); editorDeleteRowGroup('${rg.id}')">✕</button>
+      <span class="sodo-row-group-meta">${countTablesInRowGroup(rg)} bàn</span>
+      <button class="sodo-row-group-delete" onclick="event.stopPropagation(); editorDeleteRowGroup('${rg.id}')" title="Xóa dãy">✕</button>
     </div>
   `).join('');
 }
@@ -896,12 +889,8 @@ function getRowGroupSpacingCSS() {
   let css = '';
   editorRowGroups.forEach((rg, i) => {
     if (i < editorRowGroups.length - 1) {
-      const nextRg = editorRowGroups[i + 1];
-      const startCol = rg.startCol + rg.width;
-      const endCol = nextRg.startCol;
-      for (let c = startCol; c < endCol; c++) {
-        css += `.sodo-editor-cell[data-col="${c}"] { margin-right: ${editorRowGroupSpacing}px; }\n`;
-      }
+      const lastCol = rg.startCol + rg.width - 1;
+      css += `.sodo-editor-cell[data-col="${lastCol}"] { margin-right: ${editorRowGroupSpacing}px; }\n`;
     }
   });
   return css;
@@ -927,6 +916,8 @@ function editorUpdateCount() {
 function editorUpdateBtns() {
   const sz = document.getElementById('sodo-grid-size');
   if (sz) sz.textContent = `${editorRows} × ${editorCols}`;
+  const badges = document.querySelectorAll('.sodo-grid-size-badge');
+  badges.forEach(b => { if (b.id !== 'sodo-grid-size' && b.textContent.includes('dãy')) b.textContent = `${editorRowGroups.length} dãy`; });
 }
 
 function editorRenderExtraList() {
@@ -1159,30 +1150,6 @@ function ctxMarkEmptySeat() {
   hideCtxMenu();
 }
 
-function ctxSplitByRow() {
-  if (ctxRow===null) return;
-  editorPushUndo();
-
-  const processed = new Set();
-  for (let c = 0; c < editorCols; c++) {
-    const cell = editorLayout[ctxRow]?.[c];
-    const seatType = cell?.seatType || editorDefaultSeatType;
-    if (!isMultiSeatTable(seatType)) continue;
-
-    const group = getTableGroupCells(ctxRow, c, seatType);
-    const groupKey = group.map(([r, cc]) => `${r},${cc}`).sort().join('|');
-    if (processed.has(groupKey)) continue;
-
-    processed.add(groupKey);
-    group.forEach(([r, cc]) => {
-      if (editorLayout[r]?.[cc]) editorLayout[r][cc].seatType = 'single';
-    });
-  }
-
-  editorRenderGrid();
-  hideCtxMenu();
-}
-
 function ctxAddTableToRowGroup(seatType) {
   if (!editorActiveRowGroupId) {
     showToast('Chọn dãy trước ở sidebar', 'warning');
@@ -1190,43 +1157,111 @@ function ctxAddTableToRowGroup(seatType) {
     return;
   }
 
-  const rg = editorRowGroups.find(r => r.id === editorActiveRowGroupId);
-  if (!rg) {
-    showToast('Dãy không hợp lệ', 'warning');
-    hideCtxMenu();
-    return;
-  }
+  const rgIdx = editorRowGroups.findIndex(r => r.id === editorActiveRowGroupId);
+  if (rgIdx < 0) { showToast('Dãy không hợp lệ', 'warning'); hideCtxMenu(); return; }
+  const rg = editorRowGroups[rgIdx];
 
   editorPushUndo();
 
-  let startRow = 0;
-  for (let r = 0; r < editorRows; r++) {
-    const cell = editorLayout[r]?.[rg.startCol];
-    const isEmpty = !cell || (!cell.studentId && !cell.label && cell.type !== 'anyone');
-    if (isEmpty) {
-      startRow = r;
-      break;
-    }
-    if (r === editorRows - 1) {
-      startRow = editorRows;
-    }
+  const tableShape = getTableShape(seatType);
+  const requiredWidth = tableShape.width;
+  const requiredHeight = tableShape.height;
+
+  if (rg.width < requiredWidth) {
+    rg.width = requiredWidth;
+    recomputeRowGroupLayout();
   }
 
-  if (startRow >= editorRows) {
-    editorRows++;
-    editorLayout.push(Array.from({length: editorCols}, () => makeEmptyCell()));
+  const startCol = rg.startCol;
+  let startRow = -1;
+  for (let r = 0; r <= editorRows; r++) {
+    let fits = true;
+    for (let dr = 0; dr < requiredHeight && fits; dr++) {
+      for (let dc = 0; dc < requiredWidth && fits; dc++) {
+        const rr = r + dr, cc = startCol + dc;
+        if (!editorLayout[rr] || !editorLayout[rr][cc]) continue;
+        const cell = editorLayout[rr][cc];
+        const isTableHere = cell.seatType && cell.seatType !== editorDefaultSeatType;
+        if (isTableHere) fits = false;
+      }
+    }
+    if (fits) { startRow = r; break; }
   }
 
-  const group = getTableGroupCells(startRow, rg.startCol, seatType);
-  group.forEach(([r, c]) => {
-    if (r < editorRows && c < editorCols) {
-      editorLayout[r][c].seatType = seatType;
+  if (startRow < 0) {
+    startRow = editorRows;
+  }
+
+  ensureGridSize(startRow + requiredHeight, editorCols);
+
+  for (let dr = 0; dr < requiredHeight; dr++) {
+    for (let dc = 0; dc < requiredWidth; dc++) {
+      const rr = startRow + dr, cc = startCol + dc;
+      editorLayout[rr][cc].seatType = seatType;
+      if (!editorLayout[rr][cc]._isEmpty || editorLayout[rr][cc].studentId || editorLayout[rr][cc].type === 'anyone') continue;
     }
-  });
+  }
 
   editorRenderGrid();
   hideCtxMenu();
   showToast(`Đã thêm bàn ${seatType} vào dãy "${rg.name}"`, 'success');
+}
+
+function getTableShape(seatType) {
+  switch (seatType) {
+    case 'quad':    return { width:2, height:2 };
+    case 'double':  return { width:2, height:1 };
+    case 'quad_h':  return { width:4, height:1 };
+    case 'quad_v':  return { width:1, height:4 };
+    case 'single':  return { width:1, height:1 };
+    case 'chair':   return { width:1, height:1 };
+    case 'standing':return { width:1, height:1 };
+    default:        return { width:1, height:1 };
+  }
+}
+
+function recomputeRowGroupLayout() {
+  const totalWidth = editorRowGroups.reduce((sum, rg) => sum + rg.width, 0);
+  let col = 0;
+  editorRowGroups.forEach(rg => {
+    rg.startCol = col;
+    col += rg.width;
+  });
+  editorCols = Math.max(totalWidth, 1);
+  ensureGridSize(editorRows, editorCols);
+}
+
+function ensureGridSize(rows, cols) {
+  while (editorLayout.length < rows) {
+    editorLayout.push(Array.from({length: editorCols}, () => makeEmptyCell()));
+  }
+  for (let r = 0; r < editorLayout.length; r++) {
+    while (editorLayout[r].length < cols) {
+      editorLayout[r].push(makeEmptyCell());
+    }
+    while (editorLayout[r].length > cols) {
+      editorLayout[r].pop();
+    }
+  }
+  editorRows = editorLayout.length;
+  editorCols = cols;
+}
+
+function countTablesInRowGroup(rg) {
+  const counted = new Set();
+  for (let r = 0; r < editorRows; r++) {
+    for (let dc = 0; dc < rg.width; dc++) {
+      const c = rg.startCol + dc;
+      const cell = editorLayout[r]?.[c];
+      if (!cell || !cell.seatType) continue;
+      if (cell.seatType === editorDefaultSeatType) continue;
+      const group = getTableGroupCells(r, c, cell.seatType);
+      const key = group.map(([rr, cc]) => `${rr},${cc}`).sort().join('|');
+      if (counted.has(key)) continue;
+      counted.add(key);
+    }
+  }
+  return counted.size;
 }
 
 function ctxInsertRowAbove() {

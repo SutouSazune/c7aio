@@ -1087,6 +1087,34 @@
   color: var(--text-muted);
 }
 
+.sodo-row-group-width {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sodo-row-group-width-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--input-border);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.sodo-row-group-width-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 .sodo-row-group-delete {
   background: none;
   border: none;
@@ -1129,6 +1157,25 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+}
+
+.sodo-row-group-create-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1.5px dashed var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+.sodo-row-group-create-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-style: solid;
 }
 
 .sodo-editor-avatar {
