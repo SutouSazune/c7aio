@@ -640,7 +640,8 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
       <button id="ctx-btn-merge-confirm" onclick="ctxMergeConfirm()" style="display:none">✅ Xác nhận ghép</button>
       <button id="ctx-btn-merge-cancel" onclick="ctxMergeCancel()" style="display:none">❌ Hủy chọn</button>
       <hr>
-      <button onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
+      <button id="ctx-btn-swap" onclick="ctxSwap()">🔁 Hoán đổi với ghế đã chọn</button>
+      <button id="ctx-btn-delete-sel" onclick="ctxDeleteSelected()" style="display:none">🗑️ Xóa ghế đã chọn</button>
       <hr>
       <button class="ctx-danger" onclick="ctxClear()">❌ Xóa người ngồi</button>
     </div>`;
@@ -904,7 +905,43 @@ function cellClick(r, c) {
     return;
   }
 
-  editorSelectedCell = (editorSelectedCell?.r===r && editorSelectedCell?.c===c) ? null : { r, c };
+  if (editorSelectedCell) {
+    const sel = editorSelectedCell;
+    if (sel.r === r && sel.c === c) {
+      editorSelectedCell = null;
+      editorRenderGrid();
+      return;
+    }
+
+    const src = editorLayout[sel.r]?.[sel.c];
+    const tgt = editorLayout[r]?.[c];
+    const srcOccupied = src && (src.type === 'student' || src.type === 'anyone');
+    const tgtOccupied = tgt && (tgt.type === 'student' || tgt.type === 'anyone');
+
+    if (srcOccupied && !tgtOccupied) {
+      editorPushUndo();
+      editorLayout[r][c] = { ...tgt, ...src };
+      editorLayout[sel.r][sel.c] = makeEmptyCell(src.seatType || editorDefaultSeatType);
+      editorSelectedCell = null;
+      editorRenderGrid();
+      editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value || '');
+      return;
+    }
+
+    if (srcOccupied && tgtOccupied) {
+      editorPushUndo();
+      const srcData = { type:src.type, studentId:src.studentId, label:src.label, empty:src.empty };
+      const tgtData = { type:tgt.type, studentId:tgt.studentId, label:tgt.label, empty:tgt.empty };
+      Object.assign(editorLayout[sel.r][sel.c], tgtData);
+      Object.assign(editorLayout[r][c], srcData);
+      editorSelectedCell = null;
+      editorRenderGrid();
+      editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value || '');
+      return;
+    }
+  }
+
+  editorSelectedCell = { r, c };
   editorRenderGrid();
 }
 
@@ -933,6 +970,11 @@ function showCtxMenu(event, r, c) {
     }
     if (btnConfirm) btnConfirm.style.display = 'none';
     if (btnCancel) btnCancel.style.display = 'none';
+  }
+
+  const btnDeleteSel = document.getElementById('ctx-btn-delete-sel');
+  if (btnDeleteSel) {
+    btnDeleteSel.style.display = editorSelectedCell ? 'block' : 'none';
   }
 
   menu.style.display = 'block';
@@ -993,26 +1035,25 @@ function ctxSwap() {
 
   const a = editorLayout[ctxRow][ctxCol];
   const b = editorLayout[editorSelectedCell.r][editorSelectedCell.c];
-  const seatTypeA = a.seatType || editorDefaultSeatType;
-  const seatTypeB = b.seatType || editorDefaultSeatType;
-
-  if (seatTypeA !== seatTypeB) {
-    showToast('Chỉ hoán đổi trong cùng loại bàn', 'warning');
-    hideCtxMenu();
-    return;
-  }
-
-  if (isMultiSeatTable(seatTypeA) && !isSameTable(ctxRow, ctxCol, editorSelectedCell.r, editorSelectedCell.c)) {
-    showToast('Chỉ hoán đổi trong cùng một bàn', 'warning');
-    hideCtxMenu();
-    return;
-  }
 
   editorPushUndo();
   const aData = { type:a.type, studentId:a.studentId, label:a.label, empty:a.empty };
   const bData = { type:b.type, studentId:b.studentId, label:b.label, empty:b.empty };
   Object.assign(editorLayout[ctxRow][ctxCol], bData);
   Object.assign(editorLayout[editorSelectedCell.r][editorSelectedCell.c], aData);
+  editorSelectedCell = null;
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
+  hideCtxMenu();
+}
+
+function ctxDeleteSelected() {
+  if (!editorSelectedCell) { showToast('Hãy chọn một ghế trước (nhấn vào ghế)', 'warning'); hideCtxMenu(); return; }
+
+  const { r, c } = editorSelectedCell;
+  editorPushUndo();
+  const seatType = editorLayout[r]?.[c]?.seatType || editorDefaultSeatType;
+  editorLayout[r][c] = makeEmptyCell(seatType);
   editorSelectedCell = null;
   editorRenderGrid();
   editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value||'');
