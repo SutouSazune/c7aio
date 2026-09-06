@@ -580,8 +580,6 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         </div>
       </div>
 
-      <style id="sodo-row-group-spacing-style"></style>
-
       <!-- Export Modal -->
       <div id="sodo-export-modal" class="sodo-modal" style="display:none">
         <div class="sodo-modal-content">
@@ -743,34 +741,30 @@ function editorRenderGrid() {
   const grid = document.getElementById('sodo-editor-grid');
   if (!grid) return;
   grid.style.setProperty('--sodo-cols', editorCols);
+
+  let template = '';
+  const spacerWidth = Math.max(0, editorRowGroupSpacing - 16);
+  for (let c = 0; c < editorCols; c++) {
+    const rg = getRowGroupAtCol(c);
+    const isSpacer = !rg && editorRowGroups.length > 0;
+    template += isSpacer ? `${spacerWidth}px ` : 'minmax(92px, 1fr) ';
+  }
+  grid.style.gridTemplateColumns = template.trim();
+
   let html = '';
-  for (let r = 0; r < editorRows; r++)
-    for (let c = 0; c < editorCols; c++)
+  for (let r = 0; r < editorRows; r++) {
+    for (let c = 0; c < editorCols; c++) {
+      const rg = getRowGroupAtCol(c);
+      if (!rg && editorRowGroups.length > 0) {
+        html += `<div class="sodo-editor-cell sodo-editor-cell-spacer" data-col="${c}" data-row="${r}"></div>`;
+        continue;
+      }
       html += buildEditorCell(r, c);
+    }
+  }
   grid.innerHTML = html;
   editorUpdateCount();
   editorUpdateBtns();
-  updateRowGroupSpacingStyle();
-}
-
-function updateRowGroupSpacingStyle() {
-  const styleEl = document.getElementById('sodo-row-group-spacing-style');
-  if (!styleEl) return;
-
-  if (!editorRowGroups.length || editorRowGroupSpacing <= 0) {
-    styleEl.textContent = '';
-    return;
-  }
-
-  let css = '';
-  editorRowGroups.forEach((rg, i) => {
-    if (i < editorRowGroups.length - 1) {
-      const shape = getTableShape(rg.deskType || 'double');
-      const lastCol = rg.startCol + rg.width * shape.width - 1;
-      css += `.sodo-editor-cell[data-col="${lastCol}"] { margin-right: ${editorRowGroupSpacing}px; }\n`;
-    }
-  });
-  styleEl.textContent = css;
 }
 
 function buildEditorCell(r, c) {
@@ -892,9 +886,9 @@ function editorDeleteRowGroup(id) {
 function fillRowGroupCells(rg) {
   const shape = getTableShape(rg.deskType || 'double');
   const totalCols = rg.width * shape.width;
-  const totalRows = Math.max(shape.height, 1);
+  const totalRows = editorRows;
 
-  ensureGridSize(Math.max(editorRows, totalRows), editorCols);
+  ensureGridSize(totalRows, editorCols);
 
   for (let r = 0; r < totalRows; r++) {
     for (let dc = 0; dc < totalCols; dc++) {
@@ -966,19 +960,6 @@ function getRowGroupAtCol(col) {
     const endCol = rg.startCol + rg.width * shape.width;
     return col >= rg.startCol && col < endCol;
   }) || null;
-}
-
-function getRowGroupSpacingCSS() {
-  if (!editorRowGroups.length || editorRowGroupSpacing <= 0) return '';
-  let css = '';
-  editorRowGroups.forEach((rg, i) => {
-    if (i < editorRowGroups.length - 1) {
-      const shape = getTableShape(rg.deskType || 'double');
-      const lastCol = rg.startCol + rg.width * shape.width - 1;
-      css += `.sodo-editor-cell[data-col="${lastCol}"] { margin-right: ${editorRowGroupSpacing}px; }\n`;
-    }
-  });
-  return css;
 }
 
 function editorGetPlacedIds() {
@@ -1271,10 +1252,13 @@ function getTableShape(seatType) {
 function recomputeRowGroupLayout() {
   let col = 0;
   let maxRowNeeded = 1;
-  editorRowGroups.forEach(rg => {
+  editorRowGroups.forEach((rg, i) => {
     rg.startCol = col;
     const shape = getTableShape(rg.deskType || 'double');
     col += rg.width * shape.width;
+    if (i < editorRowGroups.length - 1) {
+      col += 1;
+    }
     maxRowNeeded = Math.max(maxRowNeeded, shape.height);
   });
   editorCols = Math.max(col, 1);

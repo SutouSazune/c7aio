@@ -1211,6 +1211,13 @@
   border-color: var(--primary);
 }
 
+.sodo-editor-cell-spacer {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
 .sodo-editor-avatar {
   width: 34px;
   height: 34px;
