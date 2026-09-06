@@ -1548,9 +1548,9 @@
   border-top-style: dashed !important;
 }
 
-/* Đánh dấu nhãn bàn nhóm Bàn 4 */
-.sodo-cell[data-seat-type="quad"][data-quad-idx="0"]::before,
-.sodo-editor-cell[data-seat-type="quad"][data-quad-idx="0"]::before {
+/* Đánh dấu nhãn bàn nhóm Bàn 4 — chỉ ở bàn đầu tiên của mỗi dãy */
+.sodo-cell[data-seat-type="quad"][data-dg-start="1"]::before,
+.sodo-editor-cell[data-seat-type="quad"][data-dg-start="1"]::before {
   content: '⊞ Bàn 4';
   position: absolute;
   top: 3px;
@@ -1560,6 +1560,7 @@
   color: #8b5cf6;
   opacity: 0.8;
   letter-spacing: 0.5px;
+  pointer-events: none;
 }
 
 /* Bàn đôi (Bàn 2 người): ghế trái bo góc ngoài trái, ghế phải bo góc ngoài phải */
@@ -1576,9 +1577,9 @@
   border-left-color: rgba(99,102,241,0.25) !important;
 }
 
-/* Nhãn Bàn 2 ở ghế trái */
-.sodo-cell[data-seat-type="double"][data-desk-pos="left"]::before,
-.sodo-editor-cell[data-seat-type="double"][data-desk-pos="left"]::before {
+/* Nhãn Bàn 2 — chỉ ở bàn đầu tiên của mỗi dãy (data-dg-start="1") */
+.sodo-cell[data-seat-type="double"][data-dg-start="1"]::before,
+.sodo-editor-cell[data-seat-type="double"][data-dg-start="1"]::before {
   content: '▣ Bàn 2';
   position: absolute;
   top: 3px;
@@ -1588,6 +1589,7 @@
   color: var(--primary);
   opacity: 0.75;
   letter-spacing: 0.5px;
+  pointer-events: none;
 }
 
 /* --- Quad horizontal (Bàn 4 ngang 1x4) --- */
@@ -1608,8 +1610,8 @@
   border-left-style: dashed !important;
 }
 
-.sodo-cell[data-seat-type="quad_h"][data-quad-idx="0"]::before,
-.sodo-editor-cell[data-seat-type="quad_h"][data-quad-idx="0"]::before {
+.sodo-cell[data-seat-type="quad_h"][data-dg-start="1"]::before,
+.sodo-editor-cell[data-seat-type="quad_h"][data-dg-start="1"]::before {
   content: '⊟ Bàn 4 ngang';
   position: absolute;
   top: 3px;
@@ -1619,6 +1621,7 @@
   color: #8b5cf6;
   opacity: 0.8;
   letter-spacing: 0.5px;
+  pointer-events: none;
 }
 
 /* --- Quad vertical (Bàn 4 dọc 4x1) --- */
@@ -1639,8 +1642,8 @@
   border-top-style: dashed !important;
 }
 
-.sodo-cell[data-seat-type="quad_v"][data-quad-idx="0"]::before,
-.sodo-editor-cell[data-seat-type="quad_v"][data-quad-idx="0"]::before {
+.sodo-cell[data-seat-type="quad_v"][data-dg-start="1"]::before,
+.sodo-editor-cell[data-seat-type="quad_v"][data-dg-start="1"]::before {
   content: 'Bàn 4 dọc';
   position: absolute;
   top: 3px;

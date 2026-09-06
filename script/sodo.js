@@ -425,8 +425,9 @@ function renderSeatingGrid(containerId, layout, opts = {}) {
       const seatType = cell?.seatType || opts.seatType || 'double';
       // Tính vị trí trong nhóm bàn
       const { deskPos, deskQuadIdx } = getDeskPosition(r, c, seatType);
-      
-      const deskAttrs = `data-col="${c}" data-row="${r}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}"`;
+      // First seat of each desk carries the "Bàn 2 / Bàn 4" label.
+      const dgStart = deskQuadIdx === 0 ? '1' : '';
+      const deskAttrs = `data-col="${c}" data-row="${r}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}" ${dgStart ? 'data-dg-start="1"' : ''}`;
 
       if (!cell || cell.empty) {
         html += `<div class="sodo-cell sodo-cell-empty sodo-seat-${seatType}" ${deskAttrs}><span class="sodo-empty-seat">—</span></div>`;
@@ -664,13 +665,21 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
               <span class="sodo-grid-size-badge" id="sodo-grid-size">${editorRows} × ${editorCols}</span>
               ${isIndoor ? `<span class="sodo-grid-size-badge" style="background:var(--primary-light);color:var(--primary);margin-left:6px">${editorRowGroups.length} dãy</span>` : ''}
             </div>
+            ${editorRowGroups.length ? `
+            <div class="sodo-desk-type-controls">
+              <label>Loại dãy chọn:</label>
+              ${SODO_SEAT_TYPE_LIST.map(t => `
+                <button class="sodo-ctrl-btn ${(editorActiveRowGroupId ? (editorRowGroups.find(r=>r.id===editorActiveRowGroupId)?.deskType||'double') : editorDefaultSeatType)===t.key?'active':''}"
+                  id="btn-seat-${t.key}" title="${t.desc}" onclick="editorApplySeatTypeToActive('${t.key}')">
+                  ${t.icon} ${t.label}</button>`).join('')}
+            </div>` : `
             <div class="sodo-desk-type-controls">
               <label>Loại:</label>
               ${SODO_SEAT_TYPE_LIST.map(t => `
                 <button class="sodo-ctrl-btn ${editorDefaultSeatType===t.key?'active':''}"
                   id="btn-seat-${t.key}" title="${t.desc}" onclick="editorSetSeatType('${t.key}')">
                   ${t.icon} ${t.label}</button>`).join('')}
-            </div>
+            </div>`}
           </div>
 
           <div class="sodo-board-label-editor">🖥️ &nbsp;PHÍA TRƯỚC / HƯỚNG NHÌN &nbsp;🖥️</div>
@@ -769,13 +778,19 @@ function buildEditorCell(r, c) {
   const cell = editorLayout[r]?.[c] || makeEmptyCell();
   const isEmpty = !cell.studentId && !cell.label && cell.type !== 'anyone';
   const seatType = cell.seatType || editorDefaultSeatType;
-  
-   const { deskPos, deskQuadIdx } = getDeskPosition(r, c, seatType);
+
+  const rg = editorRowGroups.length ? getRowGroupAtCol(c) : null;
+  const startCol = rg ? rg.startCol : 0;
+  const { deskPos, deskQuadIdx } = getDeskPosition(r, c, seatType, startCol);
+
+  // Only the first desk of a row group carries the "Bàn 2 / Bàn 4" label,
+  // and only on its anchor seat (left/top-left of the desk).
+  const isFirstDeskOfGroup = rg && (c - startCol) < getTableShape(seatType).width && deskQuadIdx === 0;
 
   const isSelected = editorSelectedCell?.r === r && editorSelectedCell?.c === c;
   const selCls = isSelected ? 'sodo-cell-selected' : '';
 
-  const base = `data-row="${r}" data-col="${c}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}"`;
+  const base = `data-row="${r}" data-col="${c}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}" ${isFirstDeskOfGroup ? 'data-dg-start="1"' : ''}`;
   const drop = `ondragover="cellDragOver(event,${r},${c})" ondrop="cellDrop(event,${r},${c})" ondragleave="cellDragLeave(event)"`;
   const events = `onclick="cellClick(${r},${c})" oncontextmenu="showCtxMenu(event,${r},${c})"`;
 
@@ -902,15 +917,79 @@ function fillRowGroupCells(rg) {
   }
 }
 
+function editorApplySeatTypeToActive(type) {
+  if (!editorActiveRowGroupId) {
+    editorSetSeatType(type);
+    return;
+  }
+  editorSetRowGroupDeskType(editorActiveRowGroupId, type);
+}
+
 function editorSetRowGroupDeskType(id, type) {
   const rg = editorRowGroups.find(r => r.id === id);
   if (!rg || rg.deskType === type) return;
   editorPushUndo();
   rg.deskType = type;
-  recomputeRowGroupLayout();
-  fillRowGroupCells(rg);
+  rebuildRowGroupsLayout();
   editorRenderRowGroupList();
   editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value || '');
+}
+
+// Thay đổi số bàn trong một dãy (giữ nguyên thứ tự học sinh hiện có).
+function editorChangeRowGroupWidth(id, delta) {
+  const rg = editorRowGroups.find(r => r.id === id);
+  if (!rg) return;
+  const newWidth = Math.max(1, Math.min(24, rg.width + delta));
+  if (newWidth === rg.width) return;
+  editorPushUndo();
+  rg.width = newWidth;
+  rebuildRowGroupsLayout();
+  editorRenderRowGroupList();
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value || '');
+}
+
+// Xây dựng lại toàn bộ lưới từ các dãy: an toàn khi đổi loại bàn / chiều rộng dãy.
+// Học sinh được giữ nguyên theo thứ tự đọc (trái→phải, trước→sau) để không bị mất dữ liệu.
+function rebuildRowGroupsLayout() {
+  if (!editorRowGroups.length) return;
+
+  const snapshots = editorRowGroups.map(rg => {
+    const shape = getTableShape(rg.deskType || 'double');
+    const start = rg.startCol;
+    const end   = start + rg.width * shape.width;
+    const items = [];
+    for (let r = 0; r < editorRows; r++)
+      for (let c = start; c < end && editorLayout[r] && editorLayout[r][c]; c++) {
+        const cell = editorLayout[r][c];
+        if (cell.studentId || cell.type === 'anyone')
+          items.push({ type: cell.type, studentId: cell.studentId, label: cell.label });
+      }
+    return { deskType: rg.deskType || 'double', width: rg.width, items };
+  });
+
+  recomputeRowGroupLayout();
+
+  // editorRows/cols now reflect the tallest dãy, so rebuild the grid at the
+  // right size before refilling students.
+  editorLayout = emptyGrid(editorRows, editorCols, 'double');
+  let idxAll = 0;
+  snapshots.forEach(s => {
+    const shape = getTableShape(s.deskType);
+    const start = editorRowGroups[idxAll].startCol;
+    const end   = start + s.width * shape.width;
+    for (let r = 0; r < editorRows; r++)
+      for (let c = start; c < end; c++)
+        if (editorLayout[r] && editorLayout[r][c]) editorLayout[r][c].seatType = s.deskType;
+    let i = 0;
+    for (let r = 0; r < editorRows && i < s.items.length; r++)
+      for (let c = start; c < end && i < s.items.length; c++) {
+        const it = s.items[i++];
+        editorLayout[r][c] = { ...it, empty: false, seatType: s.deskType };
+      }
+    idxAll++;
+  });
 }
 
 function editorSetActiveRowGroup(id) {
@@ -934,22 +1013,28 @@ function editorRenderRowGroupList() {
     return;
   }
 
-  list.innerHTML = editorRowGroups.map(rg => `
+  list.innerHTML = editorRowGroups.map(rg => {
+    const shape = getTableShape(rg.deskType || 'double');
+    return `
     <div class="sodo-row-group-item ${rg.id === editorActiveRowGroupId ? 'active' : ''}" onclick="editorSetActiveRowGroup('${rg.id}')">
       <span class="sodo-row-group-name">${sodoEsc(rg.name)}</span>
-      <span class="sodo-row-group-meta">${rg.width} bàn</span>
+      <span class="sodo-row-group-meta">${rg.width} bàn · ${shape.height} hàng</span>
       <div class="sodo-row-group-desk-type" onclick="event.stopPropagation()">
         ${SODO_SEAT_TYPE_LIST.map(t => `
-          <button class="sodo-row-group-desk-btn ${(rg.deskType||'double')===t.key?'active':''}" 
+          <button class="sodo-row-group-desk-btn ${(rg.deskType||'double')===t.key?'active':''}"
                   onclick="editorSetRowGroupDeskType('${rg.id}', '${t.key}')"
                   title="${t.desc}">
             ${t.icon}
           </button>
         `).join('')}
       </div>
+      <div class="sodo-row-group-width" onclick="event.stopPropagation()">
+        <button class="sodo-row-group-width-btn" onclick="editorChangeRowGroupWidth('${rg.id}', -1)" title="Bớt 1 bàn">−</button>
+        <button class="sodo-row-group-width-btn" onclick="editorChangeRowGroupWidth('${rg.id}', 1)" title=" thêm 1 bàn">+</button>
+      </div>
       <button class="sodo-row-group-delete" onclick="event.stopPropagation(); editorDeleteRowGroup('${rg.id}')" title="Xóa dãy">✕</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function getRowGroupAtCol(col) {
@@ -1226,8 +1311,7 @@ function ctxAddTableToRowGroup(seatType) {
 
   editorPushUndo();
   rg.deskType = seatType;
-  recomputeRowGroupLayout();
-  fillRowGroupCells(rg);
+  rebuildRowGroupsLayout();
   editorRenderGrid();
   hideCtxMenu();
   const label = SODO_SEAT_TYPE_LIST.find(t => t.key === seatType)?.label || seatType;
@@ -1253,6 +1337,7 @@ function recomputeRowGroupLayout() {
   editorRowGroups.forEach((rg, i) => {
     rg.startCol = col;
     const shape = getTableShape(rg.deskType || 'double');
+    rg.height = shape.height;
     col += rg.width * shape.width;
     if (i < editorRowGroups.length - 1) {
       col += 1;
@@ -1260,7 +1345,14 @@ function recomputeRowGroupLayout() {
     maxRowNeeded = Math.max(maxRowNeeded, shape.height);
   });
   editorCols = Math.max(col, 1);
-  ensureGridSize(Math.max(editorRows, maxRowNeeded), editorCols);
+  // Each dãy owns its own vertical band; the whole grid grows to fit the tallest dãy.
+  // Never shrink editorRows automatically — students already placed in higher rows
+  // would be silently lost. Only grow when a taller desk type (bàn 4 = 2 rows, etc.) needs it.
+  const newRows = Math.max(editorRows, maxRowNeeded);
+  if (newRows !== editorRows) {
+    editorRows = newRows;
+  }
+  ensureGridSize(editorRows, editorCols);
 }
 
 function ensureGridSize(rows, cols) {
@@ -1277,6 +1369,39 @@ function ensureGridSize(rows, cols) {
   }
   editorRows = editorLayout.length;
   editorCols = cols;
+}
+
+// ============= GRID RESIZE (legacy row/col controls — outdoor & custom) =============
+function editorAddRow() {
+  editorPushUndo();
+  editorRows++;
+  editorLayout.push(Array.from({length: editorCols}, () => makeEmptyCell()));
+  editorRenderGrid();
+}
+
+function editorRemoveRow() {
+  if (editorRows <= 1) return;
+  editorPushUndo();
+  editorRows--;
+  editorLayout.pop();
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value || '');
+}
+
+function editorAddCol() {
+  editorPushUndo();
+  editorCols++;
+  editorLayout.forEach(r => r.push(makeEmptyCell()));
+  editorRenderGrid();
+}
+
+function editorRemoveCol() {
+  if (editorCols <= 1) return;
+  editorPushUndo();
+  editorCols--;
+  editorLayout.forEach(r => r.pop());
+  editorRenderGrid();
+  editorRenderSidebar(document.getElementById('sodo-sidebar-search')?.value || '');
 }
 
 function countTablesInRowGroup(rg) {
@@ -1574,22 +1699,26 @@ function isMultiSeatTable(seatType) {
   return getTableCapacity(seatType) > 1;
 }
 
-function getDeskPosition(r, c, seatType) {
+function getDeskPosition(r, c, seatType, startCol = 0) {
   const type = seatType || 'double';
+  //-relative to the row group's start column so desk pairing stays
+  //correct when a later dãy begins on an odd absolute column.
+  const relC = c - startCol;
+  const relR = r;
   if (type === 'double') {
-    return { deskPos: c % 2 === 0 ? 'left' : 'right', deskQuadIdx: c % 2 };
+    return { deskPos: relC % 2 === 0 ? 'left' : 'right', deskQuadIdx: relC % 2 };
   }
   if (type === 'quad') {
-    return { deskPos: c % 2 === 0 ? 'left' : 'right', deskQuadIdx: (r % 2) * 2 + (c % 2) };
+    return { deskPos: relC % 2 === 0 ? 'left' : 'right', deskQuadIdx: (relR % 2) * 2 + (relC % 2) };
   }
   if (type === 'quad_h') {
-    const baseC = Math.floor(c / 4) * 4;
-    const idx = c - baseC;
+    const baseC = Math.floor(relC / 4) * 4;
+    const idx = relC - baseC;
     return { deskPos: ['left', 'mid1', 'mid2', 'right'][idx] || 'left', deskQuadIdx: idx };
   }
   if (type === 'quad_v') {
-    const baseR = Math.floor(r / 4) * 4;
-    const idx = r - baseR;
+    const baseR = Math.floor(relR / 4) * 4;
+    const idx = relR - baseR;
     return { deskPos: ['top', 'upper-mid', 'lower-mid', 'bottom'][idx] || 'left', deskQuadIdx: idx };
   }
   return { deskPos: 'left', deskQuadIdx: 0 };
