@@ -684,7 +684,9 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
 
           <div class="sodo-board-label-editor">🖥️ &nbsp;PHÍA TRƯỚC / HƯỚNG NHÌN &nbsp;🖥️</div>
 
-          <div id="sodo-editor-grid" class="sodo-editor-grid" style="--sodo-cols:${editorCols}"></div>
+          <div class="sodo-editor-grid-wrapper">
+            <div id="sodo-editor-grid" class="sodo-editor-grid" style="--sodo-cols:${editorCols}"></div>
+          </div>
 
           <div class="sodo-editor-legend">
             💡 Kéo học sinh / Bất Kỳ vào ghế &nbsp;·&nbsp; Kéo trong bảng để hoán đổi &nbsp;·&nbsp; Chuột phải để tùy chọn &nbsp;·&nbsp; Ctrl+Z hoàn tác &nbsp;·&nbsp; Ctrl+S lưu
