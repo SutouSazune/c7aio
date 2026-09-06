@@ -522,7 +522,23 @@ function resolveInitialWeek() {
 
 function resolveWeekFromDate(date) {
   const matchedKey = getWeekKeyForDate(date);
-  currentWeekKey = matchedKey;
+  if (matchedKey) {
+    currentWeekKey = matchedKey;
+    return;
+  }
+  // Fallback: date outside active weeks (e.g. before/after semester) must not
+  // null out currentWeekKey, otherwise renderTimetable() crashes on
+  // weekMetadata[currentWeekKey] and the day/week views show no periods.
+  // 07/09 (TKB số 1 start) falls in week-1; if week metadata is stale or
+  // regenerated, keep the previous/current week instead of null.
+  if (!currentWeekKey || !weekMetadata[currentWeekKey]) {
+    if (weekMetadata['week-1']) currentWeekKey = 'week-1';
+    else if (schedules['week-1']) currentWeekKey = 'week-1';
+    else {
+      const keys = Object.keys(schedules);
+      if (keys.length > 0) currentWeekKey = keys[0];
+    }
+  }
 }
 
 function renderAll() {
