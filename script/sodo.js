@@ -657,12 +657,10 @@ function buildEditorHTML(title, icon, allowExtra, showNameInput, existingName, e
         <div class="sodo-editor-canvas">
           <div class="sodo-editor-canvas-header">
             <div class="sodo-grid-controls">
-              ${!isIndoor ? `
               <button class="sodo-ctrl-btn" onclick="editorAddRow()" title="Thêm hàng cuối">+ Hàng</button>
               <button class="sodo-ctrl-btn" onclick="editorRemoveRow()" title="Xóa hàng cuối">− Hàng</button>
               <button class="sodo-ctrl-btn" onclick="editorAddCol()" title="Thêm cột cuối">+ Cột</button>
               <button class="sodo-ctrl-btn" onclick="editorRemoveCol()" title="Xóa cột cuối">− Cột</button>
-              ` : ''}
               <span class="sodo-grid-size-badge" id="sodo-grid-size">${editorRows} × ${editorCols}</span>
               ${isIndoor ? `<span class="sodo-grid-size-badge" style="background:var(--primary-light);color:var(--primary);margin-left:6px">${editorRowGroups.length} dãy</span>` : ''}
             </div>
