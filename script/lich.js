@@ -27,6 +27,11 @@ const DAY_LABELS = {
   sunday: 'Chủ Nhật'
 };
 
+// Sentinel used for weeks with no end date (TKB số 1, v.v.). Stored as a normal
+// date key so it survives JSON round-trips and matches every date after startDate.
+const WEEK_END_SENTINEL = '9999-12-31';
+function isWeekEndSentinel(str) { return str === WEEK_END_SENTINEL; }
+
 const PERIOD_TIMES = {
   1: '07:00 - 07:45',
   2: '07:50 - 08:35',
@@ -271,7 +276,7 @@ function getEventsForDayInWeek(weekKey, day) {
 function getEventsForDate(dateKey) {
   // Find which weekKey owns this date
   for (const [wKey, meta] of Object.entries(weekMetadata)) {
-    if (meta && meta.startDate && meta.endDate && dateKey >= meta.startDate && dateKey <= meta.endDate) {
+    if (meta && meta.startDate && meta.endDate && dateKey >= meta.startDate && dateKey <= weekEndForCompare(meta.endDate)) {
       const dayDate = parseLocalDate(dateKey);
       const dayName = getDayNameFromDate(dayDate);
       return getEventsForDayInWeek(wKey, dayName);
@@ -411,11 +416,14 @@ function ensureSemesterWeeksMetadata() {
     const s = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + (i - 1) * 7);
     const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
     // Always overwrite startDate/endDate/academicYear to fix stale-cache bugs
+    // Preserve a user-set "Vô hạn" (sentinel) — the last TKB has no next
+    // semester to inherit an end date from, so regenerating it would hide it.
+    const existingEnd = weekMetadata[wKey] && weekMetadata[wKey].endDate;
     weekMetadata[wKey] = {
       name: `Tuần ${i}`,
       ...(weekMetadata[wKey] || {}),
       startDate: toDateStringKey(s),
-      endDate: toDateStringKey(e),
+      endDate: isWeekEndSentinel(existingEnd) ? existingEnd : toDateStringKey(e),
       className: ay.grade,
       academicYear: ay.id,
     };
@@ -456,6 +464,7 @@ function parseLocalDate(str) {
 
 function formatDateDisplay(str) {
   if (!str) return '';
+  if (isWeekEndSentinel(str)) return 'Vô hạn';
   const parts = String(str).split('T')[0].split(/[-/]/);
   if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   return str;
@@ -479,12 +488,19 @@ function getWeekKeyForDate(date) {
   if (!dateKey) return null;
   for (const [key, meta] of Object.entries(weekMetadata)) {
     if (meta && meta.startDate && meta.endDate) {
-      if (dateKey >= meta.startDate && dateKey <= meta.endDate) {
+      const end = weekEndForCompare(meta.endDate);
+      if (dateKey >= meta.startDate && dateKey <= end) {
         return key;
       }
     }
   }
   return null;
+}
+
+// Sentinel-aware end date used for range comparisons. '9999-12-31' means
+// "no end date" (TKB số 1) and therefore matches every date after startDate.
+function weekEndForCompare(endDate) {
+  return isWeekEndSentinel(endDate) ? '9999-12-31' : endDate;
 }
 
 function getDateForDayInWeek(weekKey, dayName) {
@@ -583,7 +599,7 @@ function switchScheduleViewMode(mode) {
     const meta = weekMetadata[currentWeekKey] || {};
     if (meta.startDate && meta.endDate) {
       const dateKey = toDateStringKey(selectedDate);
-      if (dateKey < meta.startDate || dateKey > meta.endDate) {
+      if (dateKey < meta.startDate || dateKey > weekEndForCompare(meta.endDate)) {
         const currDayName = getDayNameFromDate(selectedDate);
         selectedDate = getDateForDayInWeek(currentWeekKey, currDayName);
         currentDate = new Date(selectedDate);
@@ -1336,8 +1352,27 @@ function openWeekManagementModal() {
   const classInput = document.getElementById('inputWeekClass');
   if (classInput) classInput.value = meta.className || selectedClassFilter || '11C7';
   document.getElementById('inputWeekStartDate').value = meta.startDate || '';
-  document.getElementById('inputWeekEndDate').value = meta.endDate || '';
+  const endInput = document.getElementById('inputWeekEndDate');
+  const infCheckbox = document.getElementById('inputWeekEndInfinite');
+  const infinite = isWeekEndSentinel(meta.endDate);
+  if (infCheckbox) infCheckbox.checked = infinite;
+  if (endInput) {
+    endInput.value = infinite ? '' : (meta.endDate || '');
+    endInput.disabled = infinite;
+  }
   document.getElementById('weekModalOverlay').style.display = 'flex';
+}
+
+function toggleWeekEndInfinite(checkbox) {
+  const endInput = document.getElementById('inputWeekEndDate');
+  if (!endInput) return;
+  if (checkbox.checked) {
+    endInput.value = '';
+    endInput.disabled = true;
+  } else {
+    endInput.disabled = false;
+    endInput.focus();
+  }
 }
 
 function closeWeekModal() {
@@ -1348,7 +1383,11 @@ async function submitWeekMetadata() {
   const name = document.getElementById('inputWeekName').value.trim();
   const className = document.getElementById('inputWeekClass')?.value.trim() || '11C7';
   const startDate = document.getElementById('inputWeekStartDate').value;
-  const endDate = document.getElementById('inputWeekEndDate').value;
+  const infinite = document.getElementById('inputWeekEndInfinite')?.checked;
+  const endDateInput = document.getElementById('inputWeekEndDate').value;
+  // Khi bỏ "Vô hạn" nhưng để trống ngày kết thúc, fallback về ngày bắt đầu + 6
+  // để tuần vẫn còn hiệu lực (match được các ngày trong tuần).
+  const endDate = infinite ? WEEK_END_SENTINEL : (endDateInput || toDateStringKey(new Date(parseLocalDate(startDate).getFullYear(), parseLocalDate(startDate).getMonth(), parseLocalDate(startDate).getDate() + 6)));
 
   weekMetadata[currentWeekKey] = {
     name: name || currentWeekKey,

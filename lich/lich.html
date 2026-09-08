@@ -257,7 +257,10 @@
           </div>
           <div>
             <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày kết thúc</label>
-            <input type="date" id="inputWeekEndDate" class="form-control-custom">
+            <input type="date" id="inputWeekEndDate" class="form-control-custom" disabled>
+            <label style="display:flex;align-items:center;gap:5px;margin-top:5px;cursor:pointer;font-size:0.82rem;color:var(--text-sub);">
+              <input type="checkbox" id="inputWeekEndInfinite" onclick="toggleWeekEndInfinite(this)" style="accent-color:var(--primary);"> Vô hạn (không bao giờ hết hạn)
+            </label>
           </div>
         </div>
       </div>
