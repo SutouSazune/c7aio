@@ -557,11 +557,27 @@ function resolveWeekFromDate(date) {
   }
 }
 
-function renderAll() {
+let _renderPending = false;
+function renderAll({ scrollToActive = false } = {}) {
+  // Firebase realtime callbacks (and our own saves) can fire several times in
+  // a tick. Coalesce them into a single paint so the page does not drop frames
+  // while re-rendering calendar matrix + chips + banner repeatedly.
+  if (_renderPending) return;
+  _renderPending = true;
+  requestAnimationFrame(() => {
+    try {
+      _doRender({ scrollToActive });
+    } finally {
+      _renderPending = false;
+    }
+  });
+}
+
+function _doRender({ scrollToActive = false } = {}) {
   renderAcademicYearProgressWidget();
   populateClassFilterOptions();
   renderCalendar();
-  renderWeekChips();
+  renderWeekChips({ scrollToActive });
   updateCurrentWeekBanner();
   renderWeekEventsLogCard();
 
@@ -831,7 +847,7 @@ function getDayNameFromDate(date) {
 }
 
 // ============= WEEK CHIPS =============
-function renderWeekChips() {
+function renderWeekChips({ scrollToActive = false } = {}) {
   const container = document.getElementById('weekChipsBar');
   if (!container) return;
 
@@ -848,8 +864,8 @@ function renderWeekChips() {
     const isActive = wKey === currentWeekKey;
     const events = getEventsForWeek(wKey);
     const hasMod = events.length > 0;
-    const badgeHtml = hasMod 
-      ? `<span class="week-chip-badge" title="Tuần này có ${events.length} thay đổi lịch">⚡${events.length}</span>` 
+    const badgeHtml = hasMod
+      ? `<span class="week-chip-badge" title="Tuần này có ${events.length} thay đổi lịch">⚡${events.length}</span>`
       : '';
     return `
       <button class="week-chip-btn ${isActive ? 'active' : ''} ${hasMod ? 'has-changes' : ''}" onclick="selectWeekKey('${wKey}')">
@@ -862,7 +878,10 @@ function renderWeekChips() {
     </button>
   ` : '');
 
-  if (currentWeekKey) {
+  // Only scroll when the user explicitly picked a week. Auto-renders from
+  // Firebase callbacks would otherwise trigger a smooth scroll on every tick,
+  // forcing layout invalidations that drop frames.
+  if (scrollToActive && currentWeekKey) {
     const activeChip = container.querySelector('.week-chip-btn.active');
     if (activeChip) {
       activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -876,7 +895,8 @@ function selectWeekKey(wKey) {
   const currDayName = getDayNameFromDate(selectedDate);
   selectedDate = getDateForDayInWeek(wKey, currDayName);
   currentDate = new Date(selectedDate);
-  renderAll();
+  // User-initiated: keep the chip in view
+  renderAll({ scrollToActive: true });
 }
 
 function addNewWeek() {
