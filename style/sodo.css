@@ -289,6 +289,9 @@
   font-size: 1.1rem;
   opacity: 0.4;
 }
+.sodo-cell-empty .sodo-empty-seat {
+  display: none;
+}
 
 /* Desk number badge */
 .sodo-desk-num {
