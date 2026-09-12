@@ -1578,7 +1578,7 @@
 }
 
 /* Nhãn Bàn 2 — chỉ ở bàn đầu tiên của mỗi dãy (data-dg-start="1") */
-.sodo-cell[data-seat-type="double"][data-dg-start="1"]::before,
+.sodo-cell[data-seat-type="double"][data-dg-start="1"]:not(.sodo-cell-empty)::before,
 .sodo-editor-cell[data-seat-type="double"][data-dg-start="1"]::before {
   content: '▣ Bàn 2';
   position: absolute;
