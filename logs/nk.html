@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
@@ -37,34 +37,79 @@
 
   <main class="nk-page-container">
 
-    <section class="nk-top-header">
-      <div>
-        <h2 style="font-size: 1.25rem; font-weight: 800;">Lịch Sử Thao Tác Hệ Thống</h2>
-        <p style="font-size: 0.85rem; color: var(--text-sub);">Ghi lại 150 hành động gần nhất của người dùng</p>
-      </div>
-      <div class="c7-search-box" style="max-width: 340px;">
-        <span class="c7-search-icon">🔍</span>
-        <input type="text" id="logSearchInput" class="c7-search-input" placeholder="Lọc người dùng hoặc hành động..." oninput="handleLogSearch(this.value)">
+    <!-- Admin dashboard -->
+    <section id="adminPanel" style="display:none;">
+      <div class="nk-stats-grid">
+        <div class="nk-stat-card"><div class="nk-stat-num" id="stOnline">0</div><div class="nk-stat-label">🟢 Đang online</div></div>
+        <div class="nk-stat-card"><div class="nk-stat-num" id="stToday">0</div><div class="nk-stat-label">👤 Người dùng hôm nay</div></div>
+        <div class="nk-stat-card"><div class="nk-stat-num" id="stLogins">0</div><div class="nk-stat-label">🔑 Lượt đăng nhập hôm nay</div></div>
+        <div class="nk-stat-card"><div class="nk-stat-num" id="stWeek">0</div><div class="nk-stat-label">📅 Hoạt động 7 ngày</div></div>
+        <div class="nk-stat-card"><div class="nk-stat-num" id="stNever">0</div><div class="nk-stat-label">💤 Chưa từng đăng nhập</div></div>
+        <div class="nk-stat-card"><div class="nk-stat-num" id="stFail">0</div><div class="nk-stat-label">⚠️ Đăng nhập thất bại (150 log gần nhất)</div></div>
       </div>
     </section>
 
-    <section class="nk-table-card">
-      <table class="c7-table">
-        <thead>
-          <tr>
-            <th style="width: 160px;">Thời gian</th>
-            <th>Người thực hiện</th>
-            <th>Chức vụ</th>
-            <th>Hành động</th>
-            <th>Chi tiết nội dung</th>
-          </tr>
-        </thead>
-        <tbody id="logsTableBody">
-          <!-- Rendered by nk.js -->
-        </tbody>
-      </table>
+    <section class="nk-tabs">
+      <button class="nk-tab active" data-tab="logs" onclick="switchTab('logs')">📜 Nhật ký</button>
+      <button class="nk-tab admin-only" data-tab="users" onclick="switchTab('users')" style="display:none;">👥 Người dùng</button>
     </section>
 
+    <section id="tabLogs">
+      <div class="nk-top-header">
+        <div>
+          <h2 style="font-size: 1.25rem; font-weight: 800;">Lịch Sử Thao Tác Hệ Thống</h2>
+          <p style="font-size: 0.85rem; color: var(--text-sub);">Ghi lại 500 hành động gần nhất (đăng nhập, truy cập trang, thao tác)</p>
+        </div>
+        <div class="nk-filters">
+          <select id="logUserFilter" class="nk-select" onchange="handleLogFilter()"><option value="">Tất cả người dùng</option></select>
+          <select id="logTypeFilter" class="nk-select" onchange="handleLogFilter()">
+            <option value="">Tất cả loại</option>
+            <option value="login">Đăng nhập</option>
+            <option value="login_failed">Đăng nhập thất bại</option>
+            <option value="logout">Đăng xuất</option>
+            <option value="pageview">Truy cập trang</option>
+            <option value="action">Thao tác dữ liệu</option>
+          </select>
+          <div class="c7-search-box" style="max-width: 260px;">
+            <span class="c7-search-icon">🔍</span>
+            <input type="text" id="logSearchInput" class="c7-search-input" placeholder="Tìm kiếm..." oninput="handleLogSearch(this.value)">
+          </div>
+          <button class="nk-btn admin-only" style="display:none;" onclick="exportLogsCsv()">⬇️ CSV</button>
+          <button class="nk-btn danger admin-only" style="display:none;" onclick="purgeOldLogs()">🗑️ Xóa log &gt;30 ngày</button>
+        </div>
+      </div>
+
+      <div class="nk-table-card" style="margin-top:1.5rem;">
+        <table class="c7-table">
+          <thead>
+            <tr>
+              <th style="width: 160px;">Thời gian</th>
+              <th>Người thực hiện</th>
+              <th>Chức vụ</th>
+              <th>Hành động</th>
+              <th>Chi tiết nội dung</th>
+              <th class="admin-col" style="display:none;">Thiết bị</th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tabUsers" style="display:none;">
+      <div class="nk-table-card">
+        <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:1rem;">Hoạt động từng người dùng</h2>
+        <table class="c7-table">
+          <thead>
+            <tr>
+              <th>Trạng thái</th><th>Người dùng</th><th>Chức vụ</th><th>Đăng nhập lần cuối</th>
+              <th>Số lần đăng nhập</th><th>Số thao tác</th><th>Đang ở trang</th><th>Thiết bị</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">

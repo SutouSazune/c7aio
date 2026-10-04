@@ -390,25 +390,59 @@ async function saveSharedInputHistory(type, list) {
 }
 
 // --- SHARED LOGS (NHẬT KÝ HOẠT ĐỘNG) ---
-async function logAction(action, detail) {
+function getUserKey(user) {
+  if (!user) return 'guest';
+  if (user.id === 0 || user.isAdmin) return 'admin';
+  return 'u' + String(user.id).replace(/[.#$\[\]\/]/g, '_');
+}
+
+function getDeviceInfo() {
+  const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+  let os = 'Khác', browser = 'Khác';
+  if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Android/i.test(ua)) os = 'Android';
+  else if (/iPhone|iPad|iOS/i.test(ua)) os = 'iOS';
+  else if (/Mac OS/i.test(ua)) os = 'macOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+  if (/Edg\//i.test(ua)) browser = 'Edge';
+  else if (/OPR\//i.test(ua)) browser = 'Opera';
+  else if (/Chrome\//i.test(ua)) browser = 'Chrome';
+  else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+  else if (/Safari\//i.test(ua)) browser = 'Safari';
+  const mobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+  return `${browser} / ${os} (${mobile ? 'Điện thoại' : 'Máy tính'})`;
+}
+
+function getRoleDisplay(user) {
+  if (!user) return 'Khách';
+  const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+  return roles.map(r => (typeof ROLES !== 'undefined' && ROLES[r]) ? ROLES[r] : r).join(', ');
+}
+
+function getPageName() {
+  try {
+    const p = window.location.pathname.split('/').filter(Boolean);
+    return p.length ? p.slice(-2).join('/') : 'index';
+  } catch (e) { return ''; }
+}
+
+async function logAction(action, detail, extra) {
   const db = getDb();
   if (!db) return;
+  // Đọc user ngay (đồng bộ) để logout vẫn ghi đúng người
   const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
 
-  let roleDisplay = 'Khách';
-  if (user) {
-    const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
-    roleDisplay = roles.map(r => (typeof ROLES !== 'undefined' && ROLES[r]) ? ROLES[r] : r).join(', ');
-  }
-
-  const logEntry = {
+  const logEntry = Object.assign({
     id: Date.now(),
+    userKey: getUserKey(user),
     user: user ? user.name : 'Unknown',
-    role: roleDisplay,
+    role: getRoleDisplay(user),
     action: action,
-    detail: detail,
+    detail: detail || '',
+    page: getPageName(),
+    device: getDeviceInfo(),
     timestamp: new Date().toISOString()
-  };
+  }, extra || {});
 
   try {
     await db.ref('shared/logs').push(logEntry);
@@ -418,10 +452,134 @@ async function logAction(action, detail) {
   }
 }
 
-function onSharedLogsChanged(callback) {
+// Ghi nhận đăng nhập thành công + thống kê từng người dùng
+async function logLogin(user) {
+  const db = getDb();
+  if (!user) return;
+  logAction('Đăng nhập', 'Đăng nhập thành công', { type: 'login' });
+  if (!db) return;
+  try {
+    const now = new Date().toISOString();
+    await db.ref(`shared/userStats/${getUserKey(user)}`).transaction(cur => {
+      cur = cur || {};
+      return Object.assign(cur, {
+        name: user.name,
+        role: getRoleDisplay(user),
+        loginCount: (cur.loginCount || 0) + 1,
+        firstLogin: cur.firstLogin || now,
+        lastLogin: now,
+        device: getDeviceInfo()
+      });
+    });
+  } catch (e) { console.error('❌ Lỗi cập nhật thống kê user:', e); }
+}
+
+function logLoginFailed(name, isAdminAttempt) {
+  const db = getDb();
+  if (!db) return;
+  db.ref('shared/logs').push({
+    id: Date.now(),
+    userKey: 'guest',
+    user: name || 'Unknown',
+    role: 'Khách',
+    action: 'Đăng nhập thất bại',
+    detail: isAdminAttempt ? 'Sai mã bảo mật Admin' : 'Sai ngày sinh xác thực',
+    page: getPageName(),
+    device: getDeviceInfo(),
+    type: 'login_failed',
+    timestamp: new Date().toISOString()
+  }).catch(() => {});
+}
+
+function logLogout() {
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (!user) return;
+  logAction('Đăng xuất', 'Đăng xuất khỏi hệ thống', { type: 'logout' });
+  stopPresence();
+}
+
+// --- PRESENCE (AI ĐANG ONLINE) ---
+let _presenceTimer = null;
+let _presenceRef = null;
+
+function startPresence() {
+  const db = getDb();
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (!db || !user || _presenceRef) return;
+
+  let sid = sessionStorage.getItem('c7aio_sid');
+  if (!sid) {
+    sid = Math.random().toString(36).slice(2, 10);
+    sessionStorage.setItem('c7aio_sid', sid);
+  }
+  _presenceRef = db.ref(`shared/presence/${getUserKey(user)}/${sid}`);
+  const beat = () => {
+    _presenceRef.set({
+      name: user.name,
+      role: getRoleDisplay(user),
+      page: getPageName(),
+      device: getDeviceInfo(),
+      lastSeen: firebase.database.ServerValue.TIMESTAMP
+    }).catch(() => {});
+  };
+  _presenceRef.onDisconnect().remove();
+  beat();
+  _presenceTimer = setInterval(beat, 60000);
+
+  // Ghi lượt truy cập trang (bỏ qua nếu reload cùng trang trong 30s)
+  const page = getPageName();
+  const last = JSON.parse(sessionStorage.getItem('c7aio_lastPv') || 'null');
+  if (!last || last.page !== page || Date.now() - last.t > 30000) {
+    logAction('Truy cập trang', page, { type: 'pageview' });
+  }
+  sessionStorage.setItem('c7aio_lastPv', JSON.stringify({ page, t: Date.now() }));
+}
+
+function stopPresence() {
+  if (_presenceTimer) clearInterval(_presenceTimer);
+  _presenceTimer = null;
+  if (_presenceRef) {
+    try { _presenceRef.remove(); } catch (e) {}
+    _presenceRef = null;
+  }
+}
+
+function onSharedPresenceChanged(callback) {
   const db = getDb();
   if (!db) return () => {};
-  const ref = db.ref('shared/logs').limitToLast(150);
+  const ref = db.ref('shared/presence');
+  const listener = ref.on('value', snap => callback(snap.val() || {}));
+  return () => ref.off('value', listener);
+}
+
+function onSharedUserStatsChanged(callback) {
+  const db = getDb();
+  if (!db) return () => {};
+  const ref = db.ref('shared/userStats');
+  const listener = ref.on('value', snap => callback(snap.val() || {}));
+  return () => ref.off('value', listener);
+}
+
+// Admin: xóa log cũ hơn N ngày
+async function clearOldLogs(days) {
+  const db = getDb();
+  if (!db) return 0;
+  const cutoff = Date.now() - days * 86400000;
+  const snap = await db.ref('shared/logs').once('value');
+  const updates = {};
+  let n = 0;
+  snap.forEach(child => {
+    const v = child.val();
+    if (v && new Date(v.timestamp).getTime() < cutoff) { updates[child.key] = null; n++; }
+  });
+  if (n) await db.ref('shared/logs').update(updates);
+  return n;
+}
+
+function onSharedLogsChanged(callback, limit) {
+  const db = getDb();
+  if (!db) return () => {};
+  const ref = db.ref('shared/logs').limitToLast(limit || 500);
   const listener = ref.on('value', snapshot => {
     const logs = [];
     snapshot.forEach(child => {

@@ -67,3 +67,15 @@
   background: rgba(99, 102, 241, 0.15);
   color: var(--primary);
 }
+.nk-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; }
+.nk-stat-card { background: var(--card-bg); backdrop-filter: blur(16px); border: var(--glass-border); border-radius: var(--radius-lg); padding: 1.1rem 1.2rem; box-shadow: var(--shadow-sm); }
+.nk-stat-num { font-size: 2rem; font-weight: 800; color: var(--primary); line-height: 1.1; }
+.nk-stat-label { font-size: 0.8rem; color: var(--text-sub); margin-top: 4px; }
+.nk-tabs { display: flex; gap: 8px; }
+.nk-tab { border: var(--glass-border); background: var(--card-bg); color: var(--text-sub); padding: 8px 18px; border-radius: var(--radius-full); font-weight: 700; cursor: pointer; font-family: inherit; }
+.nk-tab.active { background: var(--primary); color: #fff; border-color: transparent; }
+.nk-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.nk-select { padding: 8px 12px; border-radius: var(--radius-md, 10px); border: var(--glass-border); background: var(--card-bg); color: inherit; font-family: inherit; max-width: 200px; }
+.nk-btn { border: var(--glass-border); background: var(--card-bg); color: inherit; padding: 7px 12px; border-radius: 10px; font-weight: 600; font-size: 0.82rem; cursor: pointer; font-family: inherit; }
+.nk-btn:hover { background: rgba(99,102,241,0.15); }
+.nk-btn.danger { color: #ef4444; }

@@ -617,6 +617,7 @@ function initHubPage() {
     updateWelcomeMessage();
     checkAdminButtons();
     updateOnlineStatus();
+    if (typeof startPresence === 'function') startPresence();
     loadStats();
     updateDashboardWidgets();
   }

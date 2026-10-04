@@ -174,8 +174,10 @@ function loginUser(name, secret) {
         isAdmin: true
       };
       setCurrentUser(adminObj);
+      if (typeof logLogin === 'function') logLogin(adminObj);
       return adminObj;
     }
+    if (typeof logLoginFailed === 'function') logLoginFailed('Admin', true);
     return null;
   }
 
@@ -203,8 +205,10 @@ function loginUser(name, secret) {
       note: student.note || ''
     };
     setCurrentUser(userObj);
+    if (typeof logLogin === 'function') logLogin(userObj);
     return userObj;
   }
+  if (typeof logLoginFailed === 'function') logLoginFailed(student.name, false);
   return null;
 }
 
@@ -226,6 +230,7 @@ function setCurrentUser(user) {
 }
 
 function logoutUser() {
+  if (typeof logLogout === 'function') logLogout();
   localStorage.removeItem('c7aio_currentUser');
   localStorage.removeItem('c7aio_loginTime');
 }
