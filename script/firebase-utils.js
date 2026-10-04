@@ -513,6 +513,7 @@ function startPresence() {
     sessionStorage.setItem('c7aio_sid', sid);
   }
   _presenceRef = db.ref(`shared/presence/${getUserKey(user)}/${sid}`);
+  const statsSeenRef = db.ref(`shared/userStats/${getUserKey(user)}/lastSeen`);
   const beat = () => {
     _presenceRef.set({
       name: user.name,
@@ -521,8 +522,10 @@ function startPresence() {
       device: getDeviceInfo(),
       lastSeen: firebase.database.ServerValue.TIMESTAMP
     }).catch(() => {});
+    statsSeenRef.set(firebase.database.ServerValue.TIMESTAMP).catch(() => {});
   };
   _presenceRef.onDisconnect().remove();
+  statsSeenRef.onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
   beat();
   _presenceTimer = setInterval(beat, 60000);
 

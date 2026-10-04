@@ -43,7 +43,44 @@ window.addEventListener('load', () => {
       }
     });
   }
+
+  // Trạng thái online học sinh
+  if (typeof onSharedPresenceChanged === 'function') {
+    onSharedPresenceChanged((p) => { hsPresence = p; renderStudentsTable(); });
+  }
+  if (typeof onSharedUserStatsChanged === 'function') {
+    onSharedUserStatsChanged((s) => { hsUserStats = s; renderStudentsTable(); });
+  }
+  setInterval(renderStudentsTable, 30000);
 });
+
+let hsPresence = {};
+let hsUserStats = {};
+
+function hsTimeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return 'vừa xong';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + ' phút trước';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + ' giờ trước';
+  const d = Math.floor(h / 24);
+  if (d < 30) return d + ' ngày trước';
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return mo + ' tháng trước';
+  return Math.floor(mo / 12) + ' năm trước';
+}
+
+function getStudentStatusHtml(s) {
+  const key = 'u' + s.id;
+  const now = Date.now();
+  const online = Object.values(hsPresence[key] || {}).some(x => x && x.lastSeen && now - x.lastSeen < 3 * 60 * 1000);
+  if (online) return '<span style="color:#10b981;font-weight:700;font-size:0.85rem;">🟢 Đang online</span>';
+  const st = hsUserStats[key];
+  const last = st && (st.lastSeen || (st.lastLogin ? new Date(st.lastLogin).getTime() : 0));
+  if (!last) return '<span style="color:var(--text-muted);font-size:0.82rem;">⚪ Chưa từng truy cập</span>';
+  return `<span style="color:var(--text-sub);font-size:0.82rem;">⚪ Lần cuối mở ${hsTimeAgo(last)}</span>`;
+}
 
 function populateRolesSelect(selectedRoles = ['student']) {
   const container = document.getElementById('rolesCheckboxContainer');
@@ -105,7 +142,7 @@ function renderStudentsTable() {
   if (list.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+        <td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
           Không tìm thấy học sinh nào phù hợp.
         </td>
       </tr>
@@ -149,6 +186,7 @@ function renderStudentsTable() {
             ${emailLink}
           </div>
         </td>
+        <td>${getStudentStatusHtml(s)}</td>
         <td>Tổ ${s.group || 1}</td>
         <td>
           <div style="display: flex; gap: 6px;">
