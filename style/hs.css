@@ -4,9 +4,9 @@
  */
 
 .hs-page-container {
-  max-width: 1200px;
+  max-width: min(1800px, 98vw);
   margin: 0 auto;
-  padding: 1.2rem 1.5rem;
+  padding: 1.2rem clamp(0.6rem, 1.5vw, 1.5rem);
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
@@ -47,7 +47,7 @@
 
 .hs-table-card table {
   width: 100%;
-  min-width: 820px;
+  min-width: 1150px;
   border-collapse: collapse;
 }
 
