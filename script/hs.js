@@ -286,9 +286,6 @@ function renderCompactRow(s, idx, canEdit, extraField = requiredField) {
         <strong class="hs-compact-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</strong>
       </div>
       ${reqHtml ? `<div class="hs-compact-details">${reqHtml}</div>` : ''}
-      <div class="hs-compact-actions">
-        ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})" title="Chỉnh sửa hồ sơ">✏️</button>` : ''}
-      </div>
     </div>
   `;
 }
@@ -438,9 +435,6 @@ function renderSplitRoles(list, container, canEdit) {
                   ${roleBadges}
                   ${extraReq}
                 </div>
-                <div class="hs-compact-actions">
-                  ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️</button>` : ''}
-                </div>
               </div>
             `;
           }).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có cán sự nào</div>'}
@@ -512,9 +506,8 @@ function renderByField(list, container, canEdit) {
         <thead>
           <tr>
             <th style="width: 45px; text-align: center;">STT</th>
-            <th style="min-width: 200px;">Họ và Tên</th>
-            <th style="min-width: 180px;">${colTitle}</th>
-            <th style="width: 70px; text-align: center;">Hành động</th>
+            <th style="min-width: 220px;">Họ và Tên</th>
+            <th style="min-width: 200px;">${colTitle}</th>
           </tr>
         </thead>
         <tbody id="hsStudentsTableBody">
@@ -523,9 +516,6 @@ function renderByField(list, container, canEdit) {
               <td style="text-align: center;">${idx + 1}</td>
               <td><strong>${escapeHtml(s.name)}</strong></td>
               <td>${renderRequiredFieldCell(s, currentReq) || '<span style="color:var(--text-muted);">-</span>'}</td>
-              <td style="text-align: center;">
-                ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️ Sửa</button>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Xem</span>'}
-              </td>
             </tr>
           `).join('')}
         </tbody>
