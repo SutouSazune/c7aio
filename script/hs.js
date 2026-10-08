@@ -6,32 +6,23 @@
 let editingStudentId = null;
 let searchQuery = '';
 
-// ============= VIEW MODE & CUSTOM COLUMN STATE =============
+// ============= VIEW MODE & REQUIRED COLUMN STATE =============
 let currentViewMode = localStorage.getItem('c7aio_hs_view_mode') || 'table_full';
 let currentFilter = 'all';
+let requiredField = localStorage.getItem('c7aio_hs_req_field') || 'none';
 
-const ALL_FIELDS = ['role', 'dob', 'gender', 'previousClass', 'contact', 'status', 'group', 'cccd', 'address'];
-const DEFAULT_FIELDS = ['role', 'dob', 'gender', 'previousClass', 'contact', 'status', 'group'];
-
-let activeFields = new Set();
-try {
-  const saved = JSON.parse(localStorage.getItem('c7aio_hs_fields'));
-  if (Array.isArray(saved)) {
-    activeFields = new Set(saved);
-  } else {
-    activeFields = new Set(DEFAULT_FIELDS);
-  }
-} catch (e) {
-  activeFields = new Set(DEFAULT_FIELDS);
-}
-
-const FIELD_PRESETS = {
-  'full': ['role', 'dob', 'gender', 'previousClass', 'contact', 'status', 'group', 'cccd', 'address'],
-  'name_only': [], // Chỉ hiện họ tên, không hiện trường phụ
-  'contact': ['contact'], // Chỉ họ tên + SĐT/Email
-  'dob': ['dob', 'gender'], // Chỉ họ tên + Ngày sinh + Giới tính
-  'role_group': ['role', 'group'], // Chỉ họ tên + Chức vụ + Tổ
-  'identity': ['dob', 'gender', 'cccd', 'address'] // Họ tên + Sơ yếu lý lịch
+const FIELD_LABELS = {
+  'none': 'Chỉ hiện tên (Mặc định)',
+  'dob': 'Ngày sinh',
+  'phone': 'Số điện thoại',
+  'email': 'Email',
+  'role': 'Chức vụ / Vai trò',
+  'previousClass': 'Lớp cũ',
+  'group': 'Tổ sinh hoạt',
+  'gender': 'Giới tính',
+  'cccd': 'Số CCCD',
+  'address': 'Địa chỉ thường trú',
+  'status': 'Trạng thái Online'
 };
 
 window.addEventListener('load', () => {
@@ -165,6 +156,20 @@ function setViewMode(mode) {
   document.querySelectorAll('.hs-mode-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === mode);
   });
+  if (mode === 'by_field' && requiredField === 'none') {
+    requiredField = 'phone';
+    const sel = document.getElementById('selectRequiredField');
+    if (sel) sel.value = 'phone';
+    try { localStorage.setItem('c7aio_hs_req_field', 'phone'); } catch (e) {}
+  }
+  renderStudentsTable();
+}
+
+function setRequiredField(val) {
+  requiredField = val || 'none';
+  try { localStorage.setItem('c7aio_hs_req_field', requiredField); } catch (e) {}
+  const sel = document.getElementById('selectRequiredField');
+  if (sel) sel.value = requiredField;
   renderStudentsTable();
 }
 
@@ -176,74 +181,6 @@ function setQuickFilter(filter) {
   renderStudentsTable();
 }
 
-function toggleColumnDropdown(e) {
-  if (e) e.stopPropagation();
-  const dd = document.getElementById('columnChooserDropdown');
-  if (!dd) return;
-  const isHidden = dd.style.display === 'none' || !dd.style.display;
-  dd.style.display = isHidden ? 'flex' : 'none';
-  if (isHidden) {
-    syncColumnCheckboxes();
-  }
-}
-
-function closeColumnDropdown() {
-  const dd = document.getElementById('columnChooserDropdown');
-  if (dd) dd.style.display = 'none';
-}
-
-function syncColumnCheckboxes() {
-  document.querySelectorAll('.hs-col-checkbox-item input[type="checkbox"]').forEach(cb => {
-    const col = cb.dataset.col;
-    cb.checked = activeFields.has(col);
-  });
-  updateColumnChooserBadge();
-}
-
-function updateColumnChooserBadge() {
-  const badge = document.getElementById('activeColCountBadge');
-  if (!badge) return;
-  if (activeFields.size === 0) {
-    badge.textContent = 'Chỉ họ tên';
-  } else if (activeFields.size === ALL_FIELDS.length) {
-    badge.textContent = 'Đầy đủ';
-  } else {
-    badge.textContent = `${activeFields.size} trường`;
-  }
-}
-
-function handleColumnToggle(cb) {
-  const col = cb.dataset.col;
-  if (cb.checked) {
-    activeFields.add(col);
-  } else {
-    activeFields.delete(col);
-  }
-  try { localStorage.setItem('c7aio_hs_fields', JSON.stringify(Array.from(activeFields))); } catch (e) {}
-  updateColumnChooserBadge();
-  renderStudentsTable();
-}
-
-function applyFieldPreset(presetKey) {
-  if (FIELD_PRESETS[presetKey] !== undefined) {
-    activeFields = new Set(FIELD_PRESETS[presetKey]);
-    try { localStorage.setItem('c7aio_hs_fields', JSON.stringify(Array.from(activeFields))); } catch (e) {}
-    syncColumnCheckboxes();
-    renderStudentsTable();
-    const names = {
-      'full': 'Đầy đủ tất cả thông tin',
-      'name_only': 'Chỉ họ tên (Tối giản)',
-      'contact': 'Họ tên + Liên hệ',
-      'dob': 'Họ tên + Ngày sinh',
-      'role_group': 'Họ tên + Chức vụ & Tổ',
-      'identity': 'Họ tên + Sơ yếu lý lịch'
-    };
-    if (typeof showToast === 'function') {
-      showToast(`Áp dụng mẫu: ${names[presetKey] || presetKey}`, 'info');
-    }
-  }
-}
-
 function initViewModeControls() {
   document.querySelectorAll('.hs-mode-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === currentViewMode);
@@ -251,18 +188,8 @@ function initViewModeControls() {
   document.querySelectorAll('.hs-filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.filter === currentFilter);
   });
-  syncColumnCheckboxes();
-
-  // Đóng dropdown khi nhấp chuột ra ngoài
-  document.addEventListener('click', (e) => {
-    const dd = document.getElementById('columnChooserDropdown');
-    const trigger = document.getElementById('btnColumnChooser');
-    if (dd && dd.style.display !== 'none') {
-      if (!dd.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
-        dd.style.display = 'none';
-      }
-    }
-  });
+  const sel = document.getElementById('selectRequiredField');
+  if (sel) sel.value = requiredField;
 }
 
 function getFilteredStudents() {
@@ -317,108 +244,72 @@ function renderStatsBar(filteredList) {
   `;
 }
 
-// Render các thẻ thông tin phụ (chỉ hiện các cột/trường được bật trong activeFields)
-function renderExtraFieldsTags(s) {
-  const parts = [];
-
-  if (activeFields.has('role')) {
-    const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
-    const roleBadges = roles.map(r => `
-      <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}; font-size: 0.72rem; padding: 2px 7px;">
-        ${ROLES[r] || r}
-      </span>
-    `).join(' ');
-    parts.push(roleBadges);
-  }
-
-  if (activeFields.has('dob') && s.dob) {
-    parts.push(`<span class="hs-meta-tag">🎂 ${formatDateVn(s.dob)}</span>`);
-  }
-
-  if (activeFields.has('gender')) {
-    const isFemale = (s.gender || '').toLowerCase() === 'nữ';
-    parts.push(`<span class="hs-meta-tag">${isFemale ? '👧 Nữ' : '👦 Nam'}</span>`);
-  }
-
-  if (activeFields.has('previousClass') && s.previousClass) {
-    parts.push(`<span class="hs-meta-tag" style="background: ${s.previousClass === '10C9' ? 'rgba(236,72,153,0.1)' : 'rgba(2,132,199,0.1)'}; color: ${s.previousClass === '10C9' ? '#db2777' : '#0284c7'};">🏫 ${escapeHtml(s.previousClass)}</span>`);
-  }
-
-  if (activeFields.has('contact')) {
-    if (s.phone) {
-      parts.push(`<a href="tel:${s.phone}" class="hs-quick-btn" title="Gọi ${s.phone}">📞 ${s.phone}</a>`);
+// Render đúng cột yêu cầu (nếu có)
+function renderRequiredFieldCell(s, field) {
+  if (!field || field === 'none') return '';
+  switch (field) {
+    case 'dob':
+      return `<span class="hs-meta-tag">🎂 ${formatDateVn(s.dob)}</span>`;
+    case 'phone':
+      return s.phone ? `<a href="tel:${s.phone}" class="hs-quick-btn">📞 ${s.phone}</a>` : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>';
+    case 'email':
+      return s.email ? `<a href="mailto:${s.email}" class="hs-quick-btn">✉️ ${escapeHtml(s.email)}</a>` : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>';
+    case 'role': {
+      const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+      return roles.map(r => `<span class="user-role-pill" style="background:${ROLE_COLORS[r] || '#6366f1'}; font-size:0.75rem;">${ROLES[r] || r}</span>`).join(' ');
     }
-    if (s.email) {
-      parts.push(`<a href="mailto:${s.email}" class="hs-quick-btn" title="${s.email}">✉️ Email</a>`);
-    }
+    case 'previousClass':
+      return `<span class="user-role-pill" style="background:${s.previousClass === '10C9' ? '#ec4899' : '#0284c7'}; font-size:0.75rem;">${escapeHtml(s.previousClass || '10C7')}</span>`;
+    case 'group':
+      return `<span class="hs-meta-tag">🚩 Tổ ${s.group || 1}</span>`;
+    case 'gender':
+      return `<span class="hs-meta-tag">${(s.gender || '').toLowerCase() === 'nữ' ? '👧 Nữ' : '👦 Nam'}</span>`;
+    case 'cccd':
+      return `<span class="hs-meta-tag" title="CCCD: ${escapeHtml(s.cccd || '')}">🪪 ${escapeHtml(s.cccd || '-')}</span>`;
+    case 'address':
+      return `<span class="hs-meta-tag" title="${escapeHtml(s.address || '')}">📍 ${escapeHtml(s.address || '-')}</span>`;
+    case 'status':
+      return getStudentStatusHtml(s);
+    default:
+      return '';
   }
-
-  if (activeFields.has('status')) {
-    parts.push(getStudentStatusHtml(s));
-  }
-
-  if (activeFields.has('group')) {
-    parts.push(`<span class="hs-meta-tag">🚩 Tổ ${s.group || 1}</span>`);
-  }
-
-  if (activeFields.has('cccd') && s.cccd) {
-    parts.push(`<span class="hs-meta-tag" title="CCCD: ${escapeHtml(s.cccd)}">🪪 ${escapeHtml(s.cccd)}</span>`);
-  }
-
-  if (activeFields.has('address') && s.address) {
-    parts.push(`<span class="hs-meta-tag" title="${escapeHtml(s.address)}">📍 ${escapeHtml(s.address)}</span>`);
-  }
-
-  return parts.join(' ');
 }
 
-function renderCompactRow(s, idx, canEdit) {
-  const extraFieldsHtml = renderExtraFieldsTags(s);
+// Hàng hiển thị gọn: CHỈ HIỆN STT + TÊN + CỘT YÊU CẦU
+function renderCompactRow(s, idx, canEdit, extraField = requiredField) {
+  const reqHtml = renderRequiredFieldCell(s, extraField);
 
   return `
     <div class="hs-compact-row">
       <div class="hs-compact-left">
         <span class="hs-compact-stt">${idx + 1}</span>
-        <div class="hs-avatar-bubble" style="background: ${getAvatarGradient(s.name)}; width: 28px; height: 28px; font-size: 0.72rem;">
-          ${getInitials(s.name)}
-        </div>
-        <span class="hs-compact-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>
+        <strong class="hs-compact-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</strong>
       </div>
-      ${extraFieldsHtml ? `<div class="hs-compact-details">${extraFieldsHtml}</div>` : ''}
+      ${reqHtml ? `<div class="hs-compact-details">${reqHtml}</div>` : ''}
       <div class="hs-compact-actions">
-        ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})" title="Chỉnh sửa hồ sơ">✏️ Sửa</button>` : ''}
+        ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})" title="Chỉnh sửa hồ sơ">✏️</button>` : ''}
       </div>
     </div>
   `;
 }
 
-// 1. Chế độ: Bảng đầy đủ / Bảng tùy biến cột
+// 1. Chế độ BẢNG ĐẦY ĐỦ (Hiển thị tất cả các cột của hồ sơ học sinh)
 function renderTableFull(list, container, canEdit) {
-  const cols = [
-    { key: 'stt', label: 'STT', align: 'center', width: '40px', fixed: true },
-    { key: 'name', label: 'Họ và Tên', minWidth: '170px', fixed: true },
-    { key: 'role', label: 'Chức vụ', minWidth: '110px' },
-    { key: 'dob', label: 'Ngày sinh', minWidth: '90px' },
-    { key: 'gender', label: 'Giới tính', minWidth: '60px' },
-    { key: 'previousClass', label: 'Lớp cũ', minWidth: '60px' },
-    { key: 'contact', label: 'Liên hệ', minWidth: '130px' },
-    { key: 'status', label: 'Trạng thái', minWidth: '150px' },
-    { key: 'group', label: 'Tổ', align: 'center', minWidth: '55px' },
-    { key: 'cccd', label: 'CCCD', minWidth: '110px' },
-    { key: 'address', label: 'Địa chỉ', minWidth: '150px' },
-    { key: 'action', label: 'Hành động', align: 'center', width: '70px', fixed: true }
-  ];
-
-  const visibleCols = cols.filter(c => c.fixed || activeFields.has(c.key));
-
   const theadHtml = `
     <thead>
       <tr>
-        ${visibleCols.map(c => `
-          <th style="${c.width ? `width: ${c.width};` : ''} ${c.minWidth ? `min-width: ${c.minWidth};` : ''} ${c.align ? `text-align: ${c.align};` : ''}">
-            ${c.label}
-          </th>
-        `).join('')}
+        <th style="width: 40px; text-align: center;">STT</th>
+        <th style="min-width: 170px;">Họ và Tên</th>
+        <th style="min-width: 110px;">Chức vụ</th>
+        <th style="min-width: 90px;">Ngày sinh</th>
+        <th style="min-width: 60px;">Giới tính</th>
+        <th style="min-width: 60px;">Lớp cũ</th>
+        <th style="min-width: 130px;">Liên hệ</th>
+        <th style="min-width: 150px;">Trạng thái</th>
+        <th style="min-width: 55px; text-align: center;">Tổ</th>
+        <th style="min-width: 110px;">CCCD</th>
+        <th style="min-width: 150px;">Địa chỉ</th>
+        <th style="width: 70px; text-align: center;">Hành động</th>
       </tr>
     </thead>
   `;
@@ -446,15 +337,15 @@ function renderTableFull(list, container, canEdit) {
             <strong>${escapeHtml(s.name)}</strong>
           </div>
         </td>
-        ${activeFields.has('role') ? `<td>${roleBadges}</td>` : ''}
-        ${activeFields.has('dob') ? `<td>${formatDateVn(s.dob)}</td>` : ''}
-        ${activeFields.has('gender') ? `<td>${s.gender || 'Nam'}</td>` : ''}
-        ${activeFields.has('previousClass') ? `<td>${prevBadge}</td>` : ''}
-        ${activeFields.has('contact') ? `<td><div style="display: flex; gap: 6px; flex-wrap: wrap;">${phoneLink} ${emailLink}</div></td>` : ''}
-        ${activeFields.has('status') ? `<td>${getStudentStatusHtml(s)}</td>` : ''}
-        ${activeFields.has('group') ? `<td style="text-align: center;">Tổ ${s.group || 1}</td>` : ''}
-        ${activeFields.has('cccd') ? `<td>${escapeHtml(s.cccd || '-')}</td>` : ''}
-        ${activeFields.has('address') ? `<td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(s.address || '')}">${escapeHtml(s.address || '-')}</td>` : ''}
+        <td>${roleBadges}</td>
+        <td>${formatDateVn(s.dob)}</td>
+        <td>${s.gender || 'Nam'}</td>
+        <td>${prevBadge}</td>
+        <td><div style="display: flex; gap: 6px; flex-wrap: wrap;">${phoneLink} ${emailLink}</div></td>
+        <td>${getStudentStatusHtml(s)}</td>
+        <td style="text-align: center;">Tổ ${s.group || 1}</td>
+        <td>${escapeHtml(s.cccd || '-')}</td>
+        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(s.address || '')}">${escapeHtml(s.address || '-')}</td>
         <td style="text-align: center;">
           <div style="display: flex; gap: 6px; justify-content: center;">
             ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️ Sửa</button>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Xem</span>'}
@@ -476,10 +367,11 @@ function renderTableFull(list, container, canEdit) {
   `;
 }
 
-// 2. Chế độ: 2 Cột Nam - Nữ
+// 2. Chế độ: 2 Cột Nam - Nữ (CHỈ HIỆN TÊN VÀ CỘT YÊU CẦU)
 function renderSplitGender(list, container, canEdit) {
   const males = list.filter(s => (s.gender || 'Nam').toLowerCase() === 'nam');
   const females = list.filter(s => (s.gender || '').toLowerCase() === 'nữ');
+  const reqNote = requiredField !== 'none' ? ` (${FIELD_LABELS[requiredField] || ''})` : '';
 
   container.innerHTML = `
     <div class="hs-split-columns">
@@ -490,10 +382,10 @@ function renderSplitGender(list, container, canEdit) {
             <span>👦</span>
             <span>Học Sinh Nam</span>
           </div>
-          <span class="hs-col-count-badge male">${males.length} học sinh</span>
+          <span class="hs-col-count-badge male">${males.length} hs${reqNote}</span>
         </div>
         <div class="hs-compact-list">
-          ${males.length > 0 ? males.map((s, idx) => renderCompactRow(s, idx, canEdit)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có học sinh nam nào</div>'}
+          ${males.length > 0 ? males.map((s, idx) => renderCompactRow(s, idx, canEdit, requiredField)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có học sinh nam nào</div>'}
         </div>
       </div>
 
@@ -504,20 +396,21 @@ function renderSplitGender(list, container, canEdit) {
             <span>👧</span>
             <span>Học Sinh Nữ</span>
           </div>
-          <span class="hs-col-count-badge female">${females.length} học sinh</span>
+          <span class="hs-col-count-badge female">${females.length} hs${reqNote}</span>
         </div>
         <div class="hs-compact-list">
-          ${females.length > 0 ? females.map((s, idx) => renderCompactRow(s, idx, canEdit)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có học sinh nữ nào</div>'}
+          ${females.length > 0 ? females.map((s, idx) => renderCompactRow(s, idx, canEdit, requiredField)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có học sinh nữ nào</div>'}
         </div>
       </div>
     </div>
   `;
 }
 
-// 3. Chế độ: 2 Cột Ban Cán Sự - Học Sinh
+// 3. Chế độ: 2 Cột Ban Cán Sự - Học Sinh (CHỈ HIỆN TÊN, CHỨC VỤ VÀ CỘT YÊU CẦU)
 function renderSplitRoles(list, container, canEdit) {
   const cadres = list.filter(s => isCadre(s));
   const members = list.filter(s => !isCadre(s));
+  const reqNote = requiredField !== 'none' ? ` (${FIELD_LABELS[requiredField] || ''})` : '';
 
   container.innerHTML = `
     <div class="hs-split-columns">
@@ -528,32 +421,53 @@ function renderSplitRoles(list, container, canEdit) {
             <span>🎖️</span>
             <span>Ban Cán Sự Lớp</span>
           </div>
-          <span class="hs-col-count-badge cadre">${cadres.length} học sinh</span>
+          <span class="hs-col-count-badge cadre">${cadres.length} hs</span>
         </div>
         <div class="hs-compact-list">
-          ${cadres.length > 0 ? cadres.map((s, idx) => renderCompactRow(s, idx, canEdit)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có cán sự nào</div>'}
+          ${cadres.length > 0 ? cadres.map((s, idx) => {
+            const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+            const roleBadges = roles.map(r => `<span class="user-role-pill" style="background:${ROLE_COLORS[r] || '#6366f1'}; font-size:0.75rem;">${ROLES[r] || r}</span>`).join(' ');
+            const extraReq = (requiredField !== 'none' && requiredField !== 'role') ? renderRequiredFieldCell(s, requiredField) : '';
+            return `
+              <div class="hs-compact-row">
+                <div class="hs-compact-left">
+                  <span class="hs-compact-stt">${idx + 1}</span>
+                  <strong class="hs-compact-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</strong>
+                </div>
+                <div class="hs-compact-details">
+                  ${roleBadges}
+                  ${extraReq}
+                </div>
+                <div class="hs-compact-actions">
+                  ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️</button>` : ''}
+                </div>
+              </div>
+            `;
+          }).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có cán sự nào</div>'}
         </div>
       </div>
 
-      <!-- Cột Thành Viên Thường -->
+      <!-- Cột Thành Viên Thường (Chỉ tên + Cột yêu cầu) -->
       <div class="hs-split-col">
         <div class="hs-col-header">
           <div class="hs-col-title">
             <span>🧑‍🎓</span>
             <span>Thành Viên Lớp</span>
           </div>
-          <span class="hs-col-count-badge">${members.length} học sinh</span>
+          <span class="hs-col-count-badge">${members.length} hs${reqNote}</span>
         </div>
         <div class="hs-compact-list">
-          ${members.length > 0 ? members.map((s, idx) => renderCompactRow(s, idx, canEdit)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có học sinh thành viên</div>'}
+          ${members.length > 0 ? members.map((s, idx) => renderCompactRow(s, idx, canEdit, requiredField)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">Không có học sinh thành viên</div>'}
         </div>
       </div>
     </div>
   `;
 }
 
-// 4. Chế độ: Theo Tổ (1 - 4)
+// 4. Chế độ: Theo Tổ (1 - 4) (CHỈ HIỆN TÊN VÀ CỘT YÊU CẦU)
 function renderByGroups(list, container, canEdit) {
+  const reqNote = requiredField !== 'none' ? ` (${FIELD_LABELS[requiredField] || ''})` : '';
+
   const groupsHtml = [1, 2, 3, 4].map(g => {
     const groupStudents = list.filter(s => Number(s.group || 1) === g);
     return `
@@ -563,10 +477,10 @@ function renderByGroups(list, container, canEdit) {
             <span>🚩</span>
             <span>Tổ ${g}</span>
           </div>
-          <span class="hs-col-count-badge">${groupStudents.length} hs</span>
+          <span class="hs-col-count-badge">${groupStudents.length} hs${reqNote}</span>
         </div>
         <div class="hs-compact-list">
-          ${groupStudents.length > 0 ? groupStudents.map((s, idx) => renderCompactRow(s, idx, canEdit)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 1.5rem 0; font-size: 0.82rem;">Chưa có học sinh</div>'}
+          ${groupStudents.length > 0 ? groupStudents.map((s, idx) => renderCompactRow(s, idx, canEdit, requiredField)).join('') : '<div style="text-align: center; color: var(--text-muted); padding: 1.5rem 0; font-size: 0.82rem;">Chưa có học sinh</div>'}
         </div>
       </div>
     `;
@@ -579,77 +493,48 @@ function renderByGroups(list, container, canEdit) {
   `;
 }
 
-// 5. Chế độ: Dạng Thẻ Profile (Cards)
-function renderCardsGrid(list, container, canEdit) {
-  const cardsHtml = list.map((s, idx) => {
-    const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
-    const roleBadges = roles.map(r => `
-      <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}; font-size: 0.72rem;">
-        ${ROLES[r] || r}
-      </span>
-    `).join(' ');
-
-    const fields = [];
-    if (activeFields.has('role')) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Chức vụ</span><div>${roleBadges}</div></div>`);
-    }
-    if (activeFields.has('dob') && s.dob) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Ngày sinh</span><strong>${formatDateVn(s.dob)}</strong></div>`);
-    }
-    if (activeFields.has('gender')) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Giới tính</span><span>${s.gender || 'Nam'}</span></div>`);
-    }
-    if (activeFields.has('previousClass') && s.previousClass) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Lớp cũ</span><span>${escapeHtml(s.previousClass)}</span></div>`);
-    }
-    if (activeFields.has('contact')) {
-      const links = [];
-      if (s.phone) links.push(`<a href="tel:${s.phone}" class="hs-quick-btn">📞 ${s.phone}</a>`);
-      if (s.email) links.push(`<a href="mailto:${s.email}" class="hs-quick-btn">✉️</a>`);
-      if (links.length) fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Liên hệ</span><div style="display:flex;gap:4px;">${links.join('')}</div></div>`);
-    }
-    if (activeFields.has('group')) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Tổ</span><strong>Tổ ${s.group || 1}</strong></div>`);
-    }
-    if (activeFields.has('status')) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Trạng thái</span><div>${getStudentStatusHtml(s)}</div></div>`);
-    }
-    if (activeFields.has('cccd') && s.cccd) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">CCCD</span><span>${escapeHtml(s.cccd)}</span></div>`);
-    }
-    if (activeFields.has('address') && s.address) {
-      fields.push(`<div class="hs-card-field-row"><span class="hs-card-field-label">Địa chỉ</span><span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(s.address)}">${escapeHtml(s.address)}</span></div>`);
-    }
-
-    return `
-      <div class="hs-student-card">
-        <div class="hs-card-top">
-          <div class="hs-card-avatar" style="background: ${getAvatarGradient(s.name)}">
-            ${getInitials(s.name)}
-          </div>
-          <div class="hs-card-name-block">
-            <div class="hs-card-stt">#${idx + 1}</div>
-            <div class="hs-card-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</div>
-          </div>
-        </div>
-        ${fields.length > 0 ? `<div class="hs-card-fields">${fields.join('')}</div>` : ''}
-        ${canEdit ? `
-          <div class="hs-card-actions">
-            <button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️ Chỉnh sửa</button>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
+// 5. Chế độ: THEO THÔNG TIN (Bảng rút gọn: STT + Họ và tên + Cột yêu cầu)
+function renderByField(list, container, canEdit) {
+  const currentReq = (requiredField && requiredField !== 'none') ? requiredField : 'phone';
+  const colTitle = FIELD_LABELS[currentReq] || 'Thông tin yêu cầu';
 
   container.innerHTML = `
-    <div class="hs-cards-grid">
-      ${cardsHtml}
+    <div class="hs-table-card">
+      <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">
+          📑 Danh sách học sinh theo cột: <strong style="color: var(--primary);">${colTitle}</strong>
+        </span>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">
+          (Chỉ hiện STT, Họ và tên và cột được chọn)
+        </span>
+      </div>
+      <table class="c7-table">
+        <thead>
+          <tr>
+            <th style="width: 45px; text-align: center;">STT</th>
+            <th style="min-width: 200px;">Họ và Tên</th>
+            <th style="min-width: 180px;">${colTitle}</th>
+            <th style="width: 70px; text-align: center;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="hsStudentsTableBody">
+          ${list.map((s, idx) => `
+            <tr class="hs-student-row">
+              <td style="text-align: center;">${idx + 1}</td>
+              <td><strong>${escapeHtml(s.name)}</strong></td>
+              <td>${renderRequiredFieldCell(s, currentReq) || '<span style="color:var(--text-muted);">-</span>'}</td>
+              <td style="text-align: center;">
+                ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️ Sửa</button>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Xem</span>'}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>
   `;
 }
 
-// Master Dispatcher: Render toàn bộ hệ thống hiển thị
+// Master Dispatcher: Điều phối hiển thị toàn bộ
 function renderStudentsTable() {
   const container = document.getElementById('hsActiveViewContainer');
   if (!container) return;
@@ -680,8 +565,8 @@ function renderStudentsTable() {
     case 'by_groups':
       renderByGroups(list, container, canEdit);
       break;
-    case 'cards':
-      renderCardsGrid(list, container, canEdit);
+    case 'by_field':
+      renderByField(list, container, canEdit);
       break;
     case 'table_full':
     default:
@@ -690,7 +575,7 @@ function renderStudentsTable() {
   }
 }
 
-// Tiện ích: Sao chép danh sách theo định dạng chế độ xem hiện thời
+// Tiện ích: Sao chép danh sách theo định dạng (Chỉ tên và cột yêu cầu)
 function copyCurrentViewText() {
   const list = getFilteredStudents();
   if (list.length === 0) {
@@ -698,41 +583,52 @@ function copyCurrentViewText() {
     return;
   }
 
-  const getExtraText = (s) => {
-    const items = [];
-    if (activeFields.has('role')) {
-      const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
-      items.push(roles.map(r => ROLES[r] || r).join(', '));
+  const getExtraText = (s, forceField = null) => {
+    const f = forceField || requiredField;
+    if (!f || f === 'none') return '';
+    switch (f) {
+      case 'dob': return ` (${formatDateVn(s.dob)})`;
+      case 'phone': return s.phone ? ` (${s.phone})` : '';
+      case 'email': return s.email ? ` (${s.email})` : '';
+      case 'role': {
+        const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
+        return ` [${roles.map(r => ROLES[r] || r).join(', ')}]`;
+      }
+      case 'previousClass': return ` (${s.previousClass || '10C7'})`;
+      case 'group': return ` (Tổ ${s.group || 1})`;
+      case 'gender': return ` (${s.gender || 'Nam'})`;
+      case 'cccd': return s.cccd ? ` (CCCD: ${s.cccd})` : '';
+      case 'address': return s.address ? ` (${s.address})` : '';
+      default: return '';
     }
-    if (activeFields.has('dob') && s.dob) items.push(formatDateVn(s.dob));
-    if (activeFields.has('gender')) items.push(s.gender || 'Nam');
-    if (activeFields.has('contact') && s.phone) items.push(s.phone);
-    if (activeFields.has('group')) items.push(`Tổ ${s.group || 1}`);
-    return items.length > 0 ? ` (${items.join(' - ')})` : '';
   };
 
   let text = '';
   if (currentViewMode === 'split_gender') {
     const males = list.filter(s => (s.gender || 'Nam').toLowerCase() === 'nam');
     const females = list.filter(s => (s.gender || '').toLowerCase() === 'nữ');
-    text = `=== DANH SÁCH HỌC SINH NAM (${males.length} hs) ===\n`;
+    text = `=== 👦 HỌC SINH NAM (${males.length} hs) ===\n`;
     text += males.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s)}`).join('\n');
-    text += `\n\n=== DANH SÁCH HỌC SINH NỮ (${females.length} hs) ===\n`;
+    text += `\n\n=== 👧 HỌC SINH NỮ (${females.length} hs) ===\n`;
     text += females.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s)}`).join('\n');
   } else if (currentViewMode === 'split_roles') {
     const cadres = list.filter(s => isCadre(s));
     const members = list.filter(s => !isCadre(s));
-    text = `=== BAN CÁN SỰ LỚP (${cadres.length} hs) ===\n`;
-    text += cadres.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s)}`).join('\n');
-    text += `\n\n=== THÀNH VIÊN LỚP (${members.length} hs) ===\n`;
+    text = `=== 🎖️ BAN CÁN SỰ LỚP (${cadres.length} hs) ===\n`;
+    text += cadres.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s, 'role')}`).join('\n');
+    text += `\n\n=== 🧑‍🎓 THÀNH VIÊN LỚP (${members.length} hs) ===\n`;
     text += members.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s)}`).join('\n');
   } else if (currentViewMode === 'by_groups') {
-    text = `=== DANH SÁCH THEO TỔ - 11C7 ===\n`;
+    text = `=== 🚩 DANH SÁCH THEO TỔ - 11C7 ===\n`;
     [1, 2, 3, 4].forEach(g => {
       const gs = list.filter(s => Number(s.group || 1) === g);
       text += `\n-- TỔ ${g} (${gs.length} hs) --\n`;
       text += gs.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s)}`).join('\n');
     });
+  } else if (currentViewMode === 'by_field') {
+    const currentReq = (requiredField && requiredField !== 'none') ? requiredField : 'phone';
+    text = `=== DANH SÁCH HỌC SINH (Kèm ${FIELD_LABELS[currentReq] || currentReq}) ===\n`;
+    text += list.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s, currentReq)}`).join('\n');
   } else {
     text = `=== DANH SÁCH LỚP 11C7 (${list.length} học sinh) ===\n`;
     text += list.map((s, i) => `${i + 1}. ${s.name}${getExtraText(s)}`).join('\n');

@@ -219,6 +219,32 @@
   transition: transform 0.2s ease;
 }
 
+/* Required Field Select Box */
+.hs-req-field-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hs-select-field {
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hs-select-field:focus,
+.hs-select-field:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
 /* Quick Filter Pills */
 .hs-filter-chips {
   display: flex;

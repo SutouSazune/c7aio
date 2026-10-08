@@ -65,7 +65,7 @@
         <div class="hs-mode-group" role="tablist">
           <span class="hs-hub-label">Bố cục:</span>
           <button type="button" class="hs-mode-btn active" data-mode="table_full" onclick="setViewMode('table_full')">
-            <span class="hs-btn-icon">📋</span> Bảng danh sách
+            <span class="hs-btn-icon">📋</span> Bảng đầy đủ
           </button>
           <button type="button" class="hs-mode-btn" data-mode="split_gender" onclick="setViewMode('split_gender')">
             <span class="hs-btn-icon">🚻</span> 2 Cột Nam - Nữ
@@ -76,79 +76,31 @@
           <button type="button" class="hs-mode-btn" data-mode="by_groups" onclick="setViewMode('by_groups')">
             <span class="hs-btn-icon">👥</span> Theo Tổ (1-4)
           </button>
-          <button type="button" class="hs-mode-btn" data-mode="cards" onclick="setViewMode('cards')">
-            <span class="hs-btn-icon">📇</span> Dạng thẻ
+          <button type="button" class="hs-mode-btn" data-mode="by_field" onclick="setViewMode('by_field')">
+            <span class="hs-btn-icon">📑</span> Theo thông tin
           </button>
+        </div>
+
+        <!-- Required Extra Column Selector (Chỉ hiện tên & cột yêu cầu) -->
+        <div class="hs-req-field-container">
+          <span class="hs-hub-label">Cột yêu cầu:</span>
+          <select id="selectRequiredField" class="hs-select-field" onchange="setRequiredField(this.value)">
+            <option value="none">Chỉ hiện tên (Mặc định)</option>
+            <option value="dob">🎂 Ngày sinh</option>
+            <option value="phone">📞 Số điện thoại</option>
+            <option value="email">✉️ Email</option>
+            <option value="role">🎖️ Chức vụ / Vai trò</option>
+            <option value="previousClass">🏫 Lớp cũ</option>
+            <option value="group">🚩 Tổ sinh hoạt</option>
+            <option value="gender">🚻 Giới tính</option>
+            <option value="cccd">🪪 Số CCCD</option>
+            <option value="address">📍 Địa chỉ</option>
+            <option value="status">🟢 Trạng thái Online</option>
+          </select>
         </div>
 
         <!-- Utility Buttons -->
         <div class="hs-hub-actions">
-          <!-- Column / Field Chooser Popover Dropdown -->
-          <div class="hs-dropdown-container">
-            <button type="button" class="c7-btn c7-btn-secondary hs-dropdown-trigger" id="btnColumnChooser" onclick="toggleColumnDropdown(event)">
-              ⚙️ Chọn thông tin <span id="activeColCountBadge" class="hs-badge-pill">Đầy đủ</span> ▾
-            </button>
-            <div id="columnChooserDropdown" class="hs-dropdown-menu" style="display: none;" onclick="event.stopPropagation()">
-              <div class="hs-dd-header">
-                <div>
-                  <strong>Thông tin hiển thị</strong>
-                  <div class="hs-dd-subtitle">Áp dụng cho mọi chế độ xem</div>
-                </div>
-                <button type="button" class="hs-dd-close-btn" onclick="closeColumnDropdown()">✕</button>
-              </div>
-              <div class="hs-dd-presets">
-                <span class="hs-preset-title">MẪU NHANH (1-CHẠM):</span>
-                <div class="hs-preset-chips">
-                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('full')">Đầy đủ</button>
-                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('name_only')">Chỉ họ tên</button>
-                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('contact')">Liên hệ</button>
-                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('dob')">Ngày sinh</button>
-                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('role_group')">Chức vụ & Tổ</button>
-                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('identity')">Sơ yếu</button>
-                </div>
-              </div>
-              <hr class="hs-dd-divider">
-              <div class="hs-dd-checkboxes">
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="role" onchange="handleColumnToggle(this)">
-                  <span>Chức vụ / Vai trò</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="dob" onchange="handleColumnToggle(this)">
-                  <span>Ngày sinh</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="gender" onchange="handleColumnToggle(this)">
-                  <span>Giới tính</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="previousClass" onchange="handleColumnToggle(this)">
-                  <span>Lớp cũ</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="contact" onchange="handleColumnToggle(this)">
-                  <span>Liên hệ (SĐT / Email)</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="status" onchange="handleColumnToggle(this)">
-                  <span>Trạng thái Online</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="group" onchange="handleColumnToggle(this)">
-                  <span>Tổ sinh hoạt</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="cccd" onchange="handleColumnToggle(this)">
-                  <span>CCCD / Mã định danh</span>
-                </label>
-                <label class="hs-col-checkbox-item">
-                  <input type="checkbox" data-col="address" onchange="handleColumnToggle(this)">
-                  <span>Địa chỉ thường trú</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
           <button type="button" class="c7-btn c7-btn-secondary" onclick="copyCurrentViewText()" title="Sao chép danh sách học sinh theo chế độ xem hiện tại">
             📋 Sao chép danh sách
           </button>
