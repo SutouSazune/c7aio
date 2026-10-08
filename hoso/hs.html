@@ -58,27 +58,131 @@
       </div>
     </section>
 
-    <!-- Students Table Card -->
-    <section class="hs-table-card">
-      <table class="c7-table">
-        <thead>
-          <tr>
-            <th style="width: 40px; text-align: center;">STT</th>
-            <th style="min-width: 170px;">Họ và Tên</th>
-            <th style="min-width: 110px;">Chức vụ</th>
-            <th style="min-width: 90px;">Ngày sinh</th>
-            <th style="min-width: 60px;">Giới tính</th>
-            <th style="min-width: 60px;">Lớp cũ</th>
-            <th style="min-width: 120px;">Liên hệ</th>
-            <th style="min-width: 150px;">Trạng thái</th>
-            <th style="min-width: 55px; text-align: center;">Tổ</th>
-            <th style="width: 70px; text-align: center;">Hành động</th>
-          </tr>
-        </thead>
-        <tbody id="hsStudentsTableBody">
-          <!-- Rendered by hs.js -->
-        </tbody>
-      </table>
+    <!-- View Controls & Layout Switcher Hub -->
+    <section class="hs-view-hub">
+      <div class="hs-view-hub-top">
+        <!-- Layout Mode Switcher -->
+        <div class="hs-mode-group" role="tablist">
+          <span class="hs-hub-label">Bố cục:</span>
+          <button type="button" class="hs-mode-btn active" data-mode="table_full" onclick="setViewMode('table_full')">
+            <span class="hs-btn-icon">📋</span> Bảng danh sách
+          </button>
+          <button type="button" class="hs-mode-btn" data-mode="split_gender" onclick="setViewMode('split_gender')">
+            <span class="hs-btn-icon">🚻</span> 2 Cột Nam - Nữ
+          </button>
+          <button type="button" class="hs-mode-btn" data-mode="split_roles" onclick="setViewMode('split_roles')">
+            <span class="hs-btn-icon">🎖️</span> Cán sự - Học sinh
+          </button>
+          <button type="button" class="hs-mode-btn" data-mode="by_groups" onclick="setViewMode('by_groups')">
+            <span class="hs-btn-icon">👥</span> Theo Tổ (1-4)
+          </button>
+          <button type="button" class="hs-mode-btn" data-mode="cards" onclick="setViewMode('cards')">
+            <span class="hs-btn-icon">📇</span> Dạng thẻ
+          </button>
+        </div>
+
+        <!-- Utility Buttons -->
+        <div class="hs-hub-actions">
+          <!-- Column / Field Chooser Popover Dropdown -->
+          <div class="hs-dropdown-container">
+            <button type="button" class="c7-btn c7-btn-secondary hs-dropdown-trigger" id="btnColumnChooser" onclick="toggleColumnDropdown(event)">
+              ⚙️ Chọn thông tin <span id="activeColCountBadge" class="hs-badge-pill">Đầy đủ</span> ▾
+            </button>
+            <div id="columnChooserDropdown" class="hs-dropdown-menu" style="display: none;" onclick="event.stopPropagation()">
+              <div class="hs-dd-header">
+                <div>
+                  <strong>Thông tin hiển thị</strong>
+                  <div class="hs-dd-subtitle">Áp dụng cho mọi chế độ xem</div>
+                </div>
+                <button type="button" class="hs-dd-close-btn" onclick="closeColumnDropdown()">✕</button>
+              </div>
+              <div class="hs-dd-presets">
+                <span class="hs-preset-title">MẪU NHANH (1-CHẠM):</span>
+                <div class="hs-preset-chips">
+                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('full')">Đầy đủ</button>
+                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('name_only')">Chỉ họ tên</button>
+                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('contact')">Liên hệ</button>
+                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('dob')">Ngày sinh</button>
+                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('role_group')">Chức vụ & Tổ</button>
+                  <button type="button" class="hs-preset-btn" onclick="applyFieldPreset('identity')">Sơ yếu</button>
+                </div>
+              </div>
+              <hr class="hs-dd-divider">
+              <div class="hs-dd-checkboxes">
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="role" onchange="handleColumnToggle(this)">
+                  <span>Chức vụ / Vai trò</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="dob" onchange="handleColumnToggle(this)">
+                  <span>Ngày sinh</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="gender" onchange="handleColumnToggle(this)">
+                  <span>Giới tính</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="previousClass" onchange="handleColumnToggle(this)">
+                  <span>Lớp cũ</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="contact" onchange="handleColumnToggle(this)">
+                  <span>Liên hệ (SĐT / Email)</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="status" onchange="handleColumnToggle(this)">
+                  <span>Trạng thái Online</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="group" onchange="handleColumnToggle(this)">
+                  <span>Tổ sinh hoạt</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="cccd" onchange="handleColumnToggle(this)">
+                  <span>CCCD / Mã định danh</span>
+                </label>
+                <label class="hs-col-checkbox-item">
+                  <input type="checkbox" data-col="address" onchange="handleColumnToggle(this)">
+                  <span>Địa chỉ thường trú</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="c7-btn c7-btn-secondary" onclick="copyCurrentViewText()" title="Sao chép danh sách học sinh theo chế độ xem hiện tại">
+            📋 Sao chép danh sách
+          </button>
+          <button type="button" class="c7-btn c7-btn-secondary" onclick="window.print()" title="In danh sách học sinh theo chế độ xem hiện tại">
+            🖨️ In
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Filter Bar & Live Counters -->
+      <div class="hs-view-hub-bottom">
+        <div class="hs-filter-chips">
+          <span class="hs-hub-label">Lọc đối tượng:</span>
+          <button type="button" class="hs-filter-btn active" data-filter="all" onclick="setQuickFilter('all')">Tất cả</button>
+          <button type="button" class="hs-filter-btn" data-filter="male" onclick="setQuickFilter('male')">👦 Chỉ Nam</button>
+          <button type="button" class="hs-filter-btn" data-filter="female" onclick="setQuickFilter('female')">👧 Chỉ Nữ</button>
+          <button type="button" class="hs-filter-btn" data-filter="cadre" onclick="setQuickFilter('cadre')">🎖️ Ban cán sự</button>
+          <button type="button" class="hs-filter-btn" data-filter="g1" onclick="setQuickFilter('g1')">Tổ 1</button>
+          <button type="button" class="hs-filter-btn" data-filter="g2" onclick="setQuickFilter('g2')">Tổ 2</button>
+          <button type="button" class="hs-filter-btn" data-filter="g3" onclick="setQuickFilter('g3')">Tổ 3</button>
+          <button type="button" class="hs-filter-btn" data-filter="g4" onclick="setQuickFilter('g4')">Tổ 4</button>
+        </div>
+
+        <div id="hsStatsBar" class="hs-stats-bar">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Dynamic Display Area -->
+    <section id="hsDisplayCard" class="hs-display-card">
+      <div id="hsActiveViewContainer">
+        <!-- Rendered dynamically by hs.js based on currentViewMode -->
+      </div>
     </section>
 
   </main>

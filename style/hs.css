@@ -128,3 +128,622 @@
   color: var(--primary);
   transform: translateY(-1px);
 }
+
+/* ============================================================
+   MULTI-MODE VIEW CONTROLS & DISPLAY HUB (UI/UX PRO MAX)
+   ============================================================ */
+
+.hs-view-hub {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hs-view-hub-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hs-view-hub-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--input-border);
+}
+
+.hs-hub-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+}
+
+/* Layout Mode Segmented Buttons */
+.hs-mode-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hs-mode-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  color: var(--text-main);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.hs-mode-btn:hover {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.08);
+  transform: translateY(-1px);
+}
+
+.hs-mode-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.hs-mode-btn.active .hs-btn-icon {
+  transform: scale(1.1);
+}
+
+.hs-btn-icon {
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+/* Quick Filter Pills */
+.hs-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hs-filter-btn {
+  background: transparent;
+  border: 1px solid var(--input-border);
+  color: var(--text-sub);
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.hs-filter-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.hs-filter-btn.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+/* Live Stats Bar */
+.hs-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+
+.hs-stat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  font-weight: 600;
+}
+
+.hs-stat-tag strong {
+  color: var(--primary);
+}
+
+/* Actions & Column Chooser Dropdown */
+.hs-hub-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hs-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.hs-badge-pill {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.hs-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: var(--card-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 14px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: hsDropdownSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes hsDropdownSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hs-dd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hs-dd-header strong {
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.hs-dd-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.hs-dd-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.hs-dd-close-btn:hover {
+  color: var(--danger);
+}
+
+.hs-preset-title {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.hs-preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.hs-preset-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  color: var(--text-main);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hs-preset-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.hs-dd-divider {
+  border: none;
+  border-top: 1px solid var(--input-border);
+  margin: 2px 0;
+}
+
+.hs-dd-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hs-col-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.hs-col-checkbox-item:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.hs-col-checkbox-item input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+/* ============================================================
+   DISPLAY AREA & VIEW LAYOUTS
+   ============================================================ */
+
+.hs-display-card {
+  width: 100%;
+}
+
+/* Empty State */
+.hs-empty-state {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  color: var(--text-muted);
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.hs-empty-icon {
+  font-size: 2.8rem;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* 1. Split 2-Column Mode (Nam/Nữ & Cán sự/Học sinh) */
+.hs-split-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .hs-split-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hs-split-col {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hs-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--input-border);
+}
+
+.hs-col-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.hs-col-count-badge {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--primary);
+  border-radius: 99px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.hs-col-count-badge.male {
+  background: rgba(2, 132, 199, 0.15);
+  color: #0284c7;
+}
+
+.hs-col-count-badge.female {
+  background: rgba(236, 72, 153, 0.15);
+  color: #db2777;
+}
+
+.hs-col-count-badge.cadre {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.hs-compact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hs-compact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  transition: all 0.18s ease;
+}
+
+.hs-compact-row:hover {
+  border-color: var(--primary);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+}
+
+.hs-compact-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.hs-compact-stt {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.hs-compact-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hs-compact-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.hs-meta-tag {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  color: var(--text-sub);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.hs-compact-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* 2. Groups Layout Mode (Theo Tổ 1 - 4) */
+.hs-groups-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1200px) {
+  .hs-groups-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .hs-groups-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hs-group-box {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 3. Cards Grid Layout Mode (Dạng thẻ Profile) */
+.hs-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.hs-student-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.hs-student-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.hs-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hs-card-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.hs-card-name-block {
+  min-width: 0;
+  flex: 1;
+}
+
+.hs-card-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hs-card-stt {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.hs-card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  padding-top: 6px;
+  border-top: 1px dashed var(--input-border);
+}
+
+.hs-card-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hs-card-field-label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.hs-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+  border-top: 1px solid var(--input-border);
+}
+
+/* Print Optimization */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .header, .footer, .hs-top-bar, .hs-view-hub, .btn-action-pill, .hs-compact-actions, .hs-card-actions {
+    display: none !important;
+  }
+  .hs-page-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .hs-table-card, .hs-split-col, .hs-group-box, .hs-student-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    background: #ffffff !important;
+    break-inside: avoid;
+  }
+}
