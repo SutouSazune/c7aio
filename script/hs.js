@@ -25,6 +25,14 @@ const FIELD_LABELS = {
   'status': 'Trạng thái Online'
 };
 
+let renderTimer = null;
+function requestRenderStudents(delay = 100) {
+  if (renderTimer) clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => {
+    renderStudentsTable();
+  }, delay);
+}
+
 window.addEventListener('load', () => {
   const user = getCurrentUser();
   if (!user) {
@@ -50,7 +58,7 @@ window.addEventListener('load', () => {
         applyCustomRoles(data);
       }
       populateRolesSelect();
-      renderStudentsTable();
+      requestRenderStudents(100);
     });
   }
 
@@ -59,19 +67,19 @@ window.addEventListener('load', () => {
     onSharedStudentsChanged((data) => {
       if (data && data.length > 0) {
         STUDENTS = data;
-        renderStudentsTable();
+        requestRenderStudents(100);
       }
     });
   }
 
   // Trạng thái online học sinh
   if (typeof onSharedPresenceChanged === 'function') {
-    onSharedPresenceChanged((p) => { hsPresence = p; renderStudentsTable(); });
+    onSharedPresenceChanged((p) => { hsPresence = p; requestRenderStudents(300); });
   }
   if (typeof onSharedUserStatsChanged === 'function') {
-    onSharedUserStatsChanged((s) => { hsUserStats = s; renderStudentsTable(); });
+    onSharedUserStatsChanged((s) => { hsUserStats = s; requestRenderStudents(300); });
   }
-  setInterval(renderStudentsTable, 30000);
+  setInterval(() => requestRenderStudents(0), 30000);
 });
 
 let hsPresence = {};
@@ -147,7 +155,7 @@ function isCadre(s) {
 
 function handleStudentSearch(val) {
   searchQuery = (val || '').toLowerCase().trim();
-  renderStudentsTable();
+  requestRenderStudents(120);
 }
 
 function setViewMode(mode) {
@@ -295,17 +303,17 @@ function renderTableFull(list, container, canEdit) {
   const theadHtml = `
     <thead>
       <tr>
-        <th style="width: 40px; text-align: center;">STT</th>
-        <th style="min-width: 170px;">Họ và Tên</th>
-        <th style="min-width: 110px;">Chức vụ</th>
-        <th style="min-width: 90px;">Ngày sinh</th>
-        <th style="min-width: 60px;">Giới tính</th>
-        <th style="min-width: 60px;">Lớp cũ</th>
-        <th style="min-width: 130px;">Liên hệ</th>
-        <th style="min-width: 150px;">Trạng thái</th>
-        <th style="min-width: 55px; text-align: center;">Tổ</th>
-        <th style="min-width: 110px;">CCCD</th>
-        <th style="min-width: 150px;">Địa chỉ</th>
+        <th style="width: 42px; text-align: center;">STT</th>
+        <th style="min-width: 150px;">Họ và Tên</th>
+        <th style="min-width: 100px;">Chức vụ</th>
+        <th style="width: 85px;">Ngày sinh</th>
+        <th style="width: 60px; text-align: center;">Giới tính</th>
+        <th style="width: 65px; text-align: center;">Lớp cũ</th>
+        <th style="min-width: 120px;">Liên hệ</th>
+        <th style="min-width: 110px; max-width: 140px;">Trạng thái</th>
+        <th style="width: 55px; text-align: center;">Tổ</th>
+        <th style="min-width: 95px;">CCCD</th>
+        <th style="min-width: 120px; max-width: 170px;">Địa chỉ</th>
         <th style="width: 70px; text-align: center;">Hành động</th>
       </tr>
     </thead>
@@ -336,13 +344,13 @@ function renderTableFull(list, container, canEdit) {
         </td>
         <td>${roleBadges}</td>
         <td>${formatDateVn(s.dob)}</td>
-        <td>${s.gender || 'Nam'}</td>
-        <td>${prevBadge}</td>
+        <td style="text-align: center;">${s.gender || 'Nam'}</td>
+        <td style="text-align: center;">${prevBadge}</td>
         <td><div style="display: flex; gap: 6px; flex-wrap: wrap;">${phoneLink} ${emailLink}</div></td>
-        <td>${getStudentStatusHtml(s)}</td>
+        <td><div style="max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${getStudentStatusHtml(s)}</div></td>
         <td style="text-align: center;">Tổ ${s.group || 1}</td>
         <td>${escapeHtml(s.cccd || '-')}</td>
-        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(s.address || '')}">${escapeHtml(s.address || '-')}</td>
+        <td title="${escapeHtml(s.address || '')}"><div style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.address || '-')}</div></td>
         <td style="text-align: center;">
           <div style="display: flex; gap: 6px; justify-content: center;">
             ${canEdit ? `<button type="button" class="btn-action-pill" onclick="openEditStudentModal(${s.id})">✏️ Sửa</button>` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Xem</span>'}
