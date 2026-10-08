@@ -770,7 +770,8 @@ async function submitStudentForm() {
     }
 
     if (typeof logAction === 'function') {
-      logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (Lớp cũ: ${previousClass}, ${ROLES[role] || role})`);
+      const roleText = selectedRoles.map(r => ROLES[r] || r).join(', ');
+      logAction(isEdit ? 'Sửa hồ sơ học sinh' : 'Thêm học sinh', `Tên: ${name} (Lớp cũ: ${previousClass}, ${roleText})`);
     }
 
     showToast(isEdit ? 'Đã cập nhật hồ sơ!' : 'Đã thêm học sinh mới thành công!', 'success');
