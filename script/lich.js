@@ -418,11 +418,12 @@ function ensureSemesterWeeksMetadata() {
     // Always overwrite startDate/endDate/academicYear to fix stale-cache bugs
     // Preserve a user-set "Vô hạn" (sentinel) — the last TKB has no next
     // semester to inherit an end date from, so regenerating it would hide it.
+    const existingStart = weekMetadata[wKey] && weekMetadata[wKey].startDate;
     const existingEnd = weekMetadata[wKey] && weekMetadata[wKey].endDate;
     weekMetadata[wKey] = {
       name: `Tuần ${i}`,
       ...(weekMetadata[wKey] || {}),
-      startDate: toDateStringKey(s),
+      startDate: existingStart || toDateStringKey(s),
       endDate: isWeekEndSentinel(existingEnd) ? existingEnd : toDateStringKey(e),
       className: ay.grade,
       academicYear: ay.id,
@@ -695,9 +696,9 @@ function updateCurrentWeekBanner() {
     const selectedDateKey = toDateStringKey(selectedDate);
     const isBeforeSemester = selectedDateKey < firstWeekStart;
 
-    let title = meta.name ? `${meta.name} (TKB số 1)` : 'Thời khóa biểu số 1';
+    let title = meta.name || 'Thời khóa biểu';
     if (isBeforeSemester) {
-      title = `${meta.name || 'Tuần 1'} • TKB số 1`;
+      title = `${meta.name || 'Tuần 1'} • Chưa áp dụng`;
     }
     const classBadge = selectedClassFilter ? ` • Lớp ${selectedClassFilter}` : ' • Toàn trường (36 lớp)';
     const dateRange = (meta.startDate && meta.endDate) ? ` (${formatDateDisplay(meta.startDate)} → ${formatDateDisplay(meta.endDate)})` : '';
