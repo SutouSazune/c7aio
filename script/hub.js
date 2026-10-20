@@ -445,20 +445,289 @@ function updateWelcomeMessage() {
   }
 }
 
-function updateOnlineStatus() {
+function updateOnlineStatus(syncDetail) {
   const statusEl = document.getElementById('onlineStatus');
-  if (!statusEl) return;
-  if (navigator.onLine) {
-    statusEl.innerHTML = '🟢 Trực tuyến';
-    statusEl.style.color = '#10b981';
-  } else {
-    statusEl.innerHTML = '🔴 Ngoại tuyến (Đã lưu cache)';
-    statusEl.style.color = '#ef4444';
+  const isOnline = (syncDetail && typeof syncDetail.isOnline === 'boolean') ? syncDetail.isOnline : navigator.onLine;
+  const pending = (syncDetail && typeof syncDetail.pendingCount === 'number') ? syncDetail.pendingCount : 
+    (typeof OfflineSyncQueue !== 'undefined' ? OfflineSyncQueue.getQueue().length : 0);
+
+  if (statusEl) {
+    if (!isOnline) {
+      statusEl.innerHTML = '🔴 Ngoại tuyến (Đã lưu cache)';
+      statusEl.style.color = '#ef4444';
+    } else if (pending > 0) {
+      statusEl.innerHTML = `🟡 Đang đồng bộ (${pending} mục chờ...)`;
+      statusEl.style.color = '#f59e0b';
+    } else {
+      statusEl.innerHTML = '🟢 Trực tuyến - Đã đồng bộ';
+      statusEl.style.color = '#10b981';
+    }
+  }
+
+  // Update header pill if present
+  const headerPill = document.getElementById('c7HeaderSyncPill');
+  if (headerPill) {
+    if (!isOnline) {
+      headerPill.className = 'c7-sync-pill offline';
+      headerPill.innerHTML = '<span class="pill-dot"></span><span>Ngoại tuyến</span>';
+      headerPill.title = 'Đang dùng bộ nhớ cục bộ';
+    } else if (pending > 0) {
+      headerPill.className = 'c7-sync-pill pending';
+      headerPill.innerHTML = `<span class="pill-dot"></span><span>Đang đồng bộ (${pending})</span>`;
+      headerPill.title = `Có ${pending} tác vụ đang chờ đẩy lên server`;
+    } else {
+      headerPill.className = 'c7-sync-pill online';
+      headerPill.innerHTML = '<span class="pill-dot"></span><span>Đồng bộ</span>';
+      headerPill.title = 'Dữ liệu đã đồng bộ thời gian thực';
+    }
   }
 }
 
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
+window.addEventListener('online', () => updateOnlineStatus({ isOnline: true }));
+window.addEventListener('offline', () => updateOnlineStatus({ isOnline: false }));
+window.addEventListener('c7:sync-status', (e) => updateOnlineStatus(e.detail));
+
+// ============= COMMAND PALETTE & QUICK SEARCH (Ctrl + K) =============
+const CommandPalette = {
+  isOpen: false,
+  selectedIndex: 0,
+  items: [],
+
+  init() {
+    this.injectPaletteUI();
+    this.injectHeaderSearchBtn();
+    this.injectHeaderSyncPill();
+    this.bindEvents();
+  },
+
+  getAvailableItems() {
+    const isInsideSubdir = window.location.pathname.includes('/hoso/') || 
+                           window.location.pathname.includes('/lich/') || 
+                           window.location.pathname.includes('/nhiemvu/') || 
+                           window.location.pathname.includes('/logs/') || 
+                           window.location.pathname.includes('/perm/') || 
+                           window.location.pathname.includes('/sodo/') || 
+                           window.location.pathname.includes('/thongbao/') || 
+                           window.location.pathname.includes('/thongke/');
+    const prefix = isInsideSubdir ? '../' : '';
+
+    const list = [
+      { id: 'home', title: 'Trang chủ Hub', desc: 'Cổng thông tin & tổng quan lớp học', icon: '🏠', url: prefix + 'index.html', category: 'Điều hướng' },
+      { id: 'nv', title: 'Nhiệm vụ', desc: 'Quản lý bài tập & check-in tiến độ', icon: '📌', url: prefix + 'nhiemvu/nv.html', category: 'Chức năng' },
+      { id: 'lich', title: 'Thời khóa biểu', desc: 'Lịch học, phòng học & sự kiện theo tuần', icon: '📅', url: prefix + 'lich/lich.html', category: 'Chức năng' },
+      { id: 'tb', title: 'Thông báo', desc: 'Bảng tin & thông báo nhắc nhở quan trọng', icon: '🔔', url: prefix + 'thongbao/tb.html', category: 'Chức năng' },
+      { id: 'sodo', title: 'Sơ đồ lớp', desc: 'Bản đồ vị trí chỗ ngồi & phân tổ', icon: '🗺️', url: prefix + 'sodo/sd.html', category: 'Chức năng' },
+      { id: 'tk', title: 'Thống kê', desc: 'Báo cáo hoàn thành & phân tích tiến độ', icon: '📊', url: prefix + 'thongke/tk.html', category: 'Chức năng' },
+      { id: 'hs', title: 'Hồ sơ học sinh', desc: 'Danh sách và thông tin hồ sơ 11C7', icon: '👤', url: prefix + 'hoso/hs.html', category: 'Quản lý' },
+      { id: 'pq', title: 'Phân quyền', desc: 'Thiết lập ban cán sự và quyền thao tác', icon: '🛡️', url: prefix + 'perm/pq.html', category: 'Quản lý' },
+      { id: 'nk', title: 'Nhật ký hoạt động', desc: 'Lịch sử thao tác và sự kiện hệ thống', icon: '📜', url: prefix + 'logs/nk.html', category: 'Quản lý' }
+    ];
+
+    const stds = (typeof DEFAULT_STUDENTS !== 'undefined' && Array.isArray(DEFAULT_STUDENTS)) 
+      ? DEFAULT_STUDENTS 
+      : JSON.parse(localStorage.getItem('c7aio_students_cache') || '[]');
+    
+    stds.forEach(s => {
+      if (s && s.name) {
+        list.push({
+          id: 'std_' + (s.id || s.name),
+          title: s.name,
+          desc: `Học sinh 11C7 ${s.previousClass ? '(' + s.previousClass + ')' : ''}`,
+          icon: '🎓',
+          url: prefix + 'hoso/hs.html?search=' + encodeURIComponent(s.name),
+          category: 'Thành viên'
+        });
+      }
+    });
+
+    return list;
+  },
+
+  injectPaletteUI() {
+    if (document.getElementById('c7CommandPalette')) return;
+    const modal = document.createElement('div');
+    modal.id = 'c7CommandPalette';
+    modal.className = 'c7-palette-overlay';
+    modal.style.display = 'none';
+    modal.innerHTML = `
+      <div class="c7-palette-box">
+        <div class="c7-palette-header">
+          <span class="c7-palette-icon">🔍</span>
+          <input type="text" id="c7PaletteInput" class="c7-palette-input" placeholder="Tìm nhanh chức năng, học sinh, nhiệm vụ... (Esc để đóng)" autocomplete="off">
+          <span class="c7-palette-badge">ESC</span>
+        </div>
+        <div class="c7-palette-body" id="c7PaletteResults"></div>
+        <div class="c7-palette-footer">
+          <span><kbd>↑</kbd> <kbd>↓</kbd> Di chuyển</span>
+          <span><kbd>Enter</kbd> Mở</span>
+          <span><kbd>Esc</kbd> Đóng</span>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) this.close();
+    });
+
+    const input = document.getElementById('c7PaletteInput');
+    input.addEventListener('input', (e) => this.renderResults(e.target.value));
+    input.addEventListener('keydown', (e) => this.handleKeydown(e));
+  },
+
+  injectHeaderSearchBtn() {
+    if (document.getElementById('c7QuickSearchBtn')) return;
+    const headerRight = document.querySelector('.header-right') || document.querySelector('.header-content');
+    if (!headerRight) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'c7QuickSearchBtn';
+    btn.className = 'quick-search-trigger-btn';
+    btn.type = 'button';
+    btn.title = 'Tìm kiếm nhanh (Ctrl + K)';
+    btn.innerHTML = `<span>🔍</span><span class="search-btn-label">Tìm nhanh</span><kbd>Ctrl+K</kbd>`;
+    btn.onclick = () => this.open();
+
+    const themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn && themeBtn.parentNode) {
+      themeBtn.parentNode.insertBefore(btn, themeBtn);
+    } else if (headerRight.firstChild) {
+      headerRight.insertBefore(btn, headerRight.firstChild);
+    } else {
+      headerRight.appendChild(btn);
+    }
+  },
+
+  injectHeaderSyncPill() {
+    if (document.getElementById('c7HeaderSyncPill')) return;
+    const headerRight = document.querySelector('.header-right') || document.querySelector('.header-content');
+    if (!headerRight) return;
+
+    const pill = document.createElement('div');
+    pill.id = 'c7HeaderSyncPill';
+    pill.className = 'c7-sync-pill online';
+    pill.innerHTML = '<span class="pill-dot"></span><span>Đồng bộ</span>';
+    pill.title = 'Dữ liệu đã kết nối máy chủ';
+
+    const searchBtn = document.getElementById('c7QuickSearchBtn');
+    if (searchBtn && searchBtn.parentNode) {
+      searchBtn.parentNode.insertBefore(pill, searchBtn);
+    } else if (headerRight.firstChild) {
+      headerRight.insertBefore(pill, headerRight.firstChild);
+    } else {
+      headerRight.appendChild(pill);
+    }
+    updateOnlineStatus();
+  },
+
+  bindEvents() {
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        this.toggle();
+      } else if (e.key === 'Escape' && this.isOpen) {
+        this.close();
+      }
+    });
+  },
+
+  toggle() {
+    this.isOpen ? this.close() : this.open();
+  },
+
+  open() {
+    this.isOpen = true;
+    const modal = document.getElementById('c7CommandPalette');
+    if (modal) {
+      modal.style.display = 'flex';
+      const input = document.getElementById('c7PaletteInput');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      this.renderResults('');
+    }
+  },
+
+  close() {
+    this.isOpen = false;
+    const modal = document.getElementById('c7CommandPalette');
+    if (modal) modal.style.display = 'none';
+  },
+
+  renderResults(query) {
+    const container = document.getElementById('c7PaletteResults');
+    if (!container) return;
+
+    const all = this.getAvailableItems();
+    const q = (query || '').toLowerCase().trim();
+
+    this.items = q ? all.filter(item => 
+      item.title.toLowerCase().includes(q) || 
+      item.desc.toLowerCase().includes(q) ||
+      (item.category && item.category.toLowerCase().includes(q))
+    ) : all.slice(0, 10);
+
+    this.selectedIndex = 0;
+
+    if (this.items.length === 0) {
+      container.innerHTML = `
+        <div class="c7-palette-empty">
+          <span style="font-size: 1.8rem; margin-bottom: 0.5rem; display: block;">🔎</span>
+          <p>Không tìm thấy kết quả phù hợp với "${escapeHtml(query)}"</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = this.items.map((item, idx) => `
+      <div class="c7-palette-item ${idx === 0 ? 'selected' : ''}" data-index="${idx}" onclick="CommandPalette.select(${idx})">
+        <span class="c7-palette-item-icon">${item.icon}</span>
+        <div class="c7-palette-item-info">
+          <div class="c7-palette-item-title">${escapeHtml(item.title)}</div>
+          <div class="c7-palette-item-desc">${escapeHtml(item.desc)}</div>
+        </div>
+        <span class="c7-palette-item-cat">${escapeHtml(item.category)}</span>
+      </div>
+    `).join('');
+  },
+
+  handleKeydown(e) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      this.selectedIndex = (this.selectedIndex + 1) % Math.max(1, this.items.length);
+      this.updateSelection();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.selectedIndex = (this.selectedIndex - 1 + this.items.length) % Math.max(1, this.items.length);
+      this.updateSelection();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      this.select(this.selectedIndex);
+    }
+  },
+
+  updateSelection() {
+    const list = document.querySelectorAll('.c7-palette-item');
+    list.forEach((el, idx) => {
+      if (idx === this.selectedIndex) {
+        el.classList.add('selected');
+        el.scrollIntoView({ block: 'nearest' });
+      } else {
+        el.classList.remove('selected');
+      }
+    });
+  },
+
+  select(index) {
+    const item = this.items[index];
+    if (item && item.url) {
+      this.close();
+      window.location.href = item.url;
+    }
+  }
+};
+window.CommandPalette = CommandPalette;
 
 function escapeHtml(text) {
   if (!text) return '';
@@ -604,6 +873,10 @@ function initHubPage() {
 
   if (typeof ThemeEngine !== 'undefined' && ThemeEngine.injectThemeToggle) {
     ThemeEngine.injectThemeToggle();
+  }
+
+  if (typeof CommandPalette !== 'undefined' && CommandPalette.init) {
+    CommandPalette.init();
   }
 
   if (user) {

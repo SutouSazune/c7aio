@@ -20,6 +20,143 @@ function getAuth() {
   return null;
 }
 
+// Data Sanitizer: Strip undefined, format dates and prevent RTDB serialization crashes
+function sanitizeForFirebase(data) {
+  if (data === undefined) return null;
+  if (data === null || typeof data !== 'object') return data;
+  if (data instanceof Date) return data.toISOString();
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeForFirebase(item));
+  }
+  const clean = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      clean[key] = sanitizeForFirebase(value);
+    }
+  }
+  return clean;
+}
+window.sanitizeForFirebase = sanitizeForFirebase;
+
+// Offline Sync Queue & Network Resilience Engine
+const OfflineSyncQueue = {
+  STORAGE_KEY: 'c7aio_offline_queue',
+  isProcessing: false,
+  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+
+  getQueue() {
+    try {
+      return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+    } catch (e) {
+      return [];
+    }
+  },
+
+  enqueue(mutation) {
+    try {
+      const queue = this.getQueue();
+      queue.push({
+        id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        timestamp: new Date().toISOString(),
+        ...mutation
+      });
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(queue));
+      this.notifyStatus();
+    } catch (e) {
+      console.warn('Queue enqueue error:', e);
+    }
+  },
+
+  notifyStatus() {
+    const queue = this.getQueue();
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('c7:sync-status', {
+        detail: {
+          pendingCount: queue.length,
+          isOnline: this.isOnline
+        }
+      }));
+    }
+  },
+
+  async processQueue() {
+    if (this.isProcessing) return;
+    const db = getDb();
+    if (!db || !this.isOnline) return;
+
+    const queue = this.getQueue();
+    if (queue.length === 0) return;
+
+    this.isProcessing = true;
+    console.log(`🔄 [OfflineSyncQueue] Bắt đầu đồng bộ ${queue.length} tác vụ ngoại tuyến...`);
+
+    const remaining = [];
+    for (const item of queue) {
+      try {
+        const cleanData = sanitizeForFirebase(item.data);
+        if (item.type === 'set') {
+          await db.ref(item.path).set(cleanData);
+        } else if (item.type === 'update') {
+          await db.ref(item.path).update(cleanData);
+        } else if (item.type === 'remove') {
+          await db.ref(item.path).remove();
+        } else if (item.type === 'push') {
+          await db.ref(item.path).push(cleanData);
+        }
+      } catch (err) {
+        console.warn('⚠️ Lỗi đồng bộ mục ngoại tuyến:', item.path, err);
+        remaining.push(item);
+      }
+    }
+
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(remaining));
+    this.isProcessing = false;
+    this.notifyStatus();
+
+    if (queue.length > 0 && remaining.length === 0) {
+      console.log('✅ [OfflineSyncQueue] Đã đồng bộ hoàn tất mọi dữ liệu ngoại tuyến.');
+      if (typeof showToast === 'function') {
+        showToast('Đã đồng bộ dữ liệu ngoại tuyến thành công!', 'success');
+      }
+    }
+  },
+
+  init() {
+    if (typeof window === 'undefined') return;
+    if (typeof window.addEventListener === 'function') {
+      window.addEventListener('online', () => {
+        this.isOnline = true;
+        this.notifyStatus();
+        this.processQueue();
+      });
+      window.addEventListener('offline', () => {
+        this.isOnline = false;
+        this.notifyStatus();
+      });
+    }
+
+    let retries = 0;
+    const checkDb = () => {
+      const db = getDb();
+      if (db) {
+        db.ref('.info/connected').on('value', snap => {
+          const val = snap.val() === true;
+          this.isOnline = val;
+          this.notifyStatus();
+          if (val) this.processQueue();
+        });
+      } else if (retries++ < 10) {
+        setTimeout(checkDb, 1500);
+      }
+    };
+    checkDb();
+  }
+};
+window.OfflineSyncQueue = OfflineSyncQueue;
+if (typeof window !== 'undefined') {
+  setTimeout(() => OfflineSyncQueue.init(), 100);
+}
+
 // ============= SHARED DATA (SYNC REALTIME) =============
 
 // --- SHARED STUDENTS ---
@@ -157,38 +294,82 @@ function onSharedTasksChanged(callback) {
 }
 
 async function saveSharedTask(task) {
-  const db = getDb();
-  if (!db) return;
+  const taskId = String(task.id || Date.now());
+  task.id = taskId;
+  task.updatedAt = new Date().toISOString();
+  const cleanTask = sanitizeForFirebase(task);
+
+  // Optimistic Cache Update
   try {
-    const taskId = String(task.id || Date.now());
-    task.id = taskId;
-    task.updatedAt = new Date().toISOString();
-    await db.ref(`shared/tasks/${taskId}`).set(task);
-    console.log('✅ Đã lưu task lên Firebase:', task.name);
+    const cached = JSON.parse(localStorage.getItem('c7aio_tasks_cache') || '[]');
+    const idx = cached.findIndex(t => String(t.id) === taskId);
+    if (idx >= 0) cached[idx] = { ...cached[idx], ...cleanTask };
+    else cached.unshift(cleanTask);
+    localStorage.setItem('c7aio_tasks_cache', JSON.stringify(cached));
+  } catch (e) {}
+
+  const db = getDb();
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/tasks/${taskId}`, data: cleanTask });
+    console.log('📦 Task được lưu vào hàng đợi ngoại tuyến:', cleanTask.name);
+    return;
+  }
+
+  try {
+    await db.ref(`shared/tasks/${taskId}`).set(cleanTask);
+    console.log('✅ Đã lưu task lên Firebase:', cleanTask.name);
   } catch (error) {
-    console.error('❌ Lỗi lưu task:', error);
-    if (typeof showToast === 'function') showToast('Lỗi khi lưu nhiệm vụ!', 'error');
+    console.warn('⚠️ Lỗi lưu task, chuyển sang hàng đợi ngoại tuyến:', error);
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/tasks/${taskId}`, data: cleanTask });
   }
 }
 
 async function deleteSharedTask(taskId) {
-  const db = getDb();
-  if (!db) return;
+  const idStr = String(taskId);
   try {
-    await db.ref(`shared/tasks/${taskId}`).remove();
-    console.log('✅ Đã xóa task trên Firebase:', taskId);
+    const cached = JSON.parse(localStorage.getItem('c7aio_tasks_cache') || '[]');
+    const filtered = cached.filter(t => String(t.id) !== idStr);
+    localStorage.setItem('c7aio_tasks_cache', JSON.stringify(filtered));
+  } catch (e) {}
+
+  const db = getDb();
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'remove', path: `shared/tasks/${idStr}` });
+    return;
+  }
+
+  try {
+    await db.ref(`shared/tasks/${idStr}`).remove();
+    console.log('✅ Đã xóa task trên Firebase:', idStr);
   } catch (error) {
-    console.error('❌ Lỗi xóa task:', error);
+    console.warn('⚠️ Lỗi xóa task, đưa vào hàng đợi ngoại tuyến:', error);
+    OfflineSyncQueue.enqueue({ type: 'remove', path: `shared/tasks/${idStr}` });
   }
 }
 
 async function updateSharedTaskCompletion(taskId, completions) {
-  const db = getDb();
-  if (!db) return;
+  const idStr = String(taskId);
+  const cleanCompletions = sanitizeForFirebase(completions || {});
+
   try {
-    await db.ref(`shared/tasks/${taskId}/completions`).set(completions);
+    const cached = JSON.parse(localStorage.getItem('c7aio_tasks_cache') || '[]');
+    const target = cached.find(t => String(t.id) === idStr);
+    if (target) {
+      target.completions = cleanCompletions;
+      localStorage.setItem('c7aio_tasks_cache', JSON.stringify(cached));
+    }
+  } catch (e) {}
+
+  const db = getDb();
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/tasks/${idStr}/completions`, data: cleanCompletions });
+    return;
+  }
+
+  try {
+    await db.ref(`shared/tasks/${idStr}/completions`).set(cleanCompletions);
   } catch (error) {
-    console.error('❌ Lỗi cập nhật trạng thái task:', error);
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/tasks/${idStr}/completions`, data: cleanCompletions });
   }
 }
 
@@ -230,37 +411,77 @@ function onSharedNotificationsChanged(callback) {
 }
 
 async function saveSharedNotification(notification) {
-  const db = getDb();
-  if (!db) return;
+  const notifId = String(notification.id || Date.now());
+  notification.id = notifId;
+  notification.updatedAt = new Date().toISOString();
+  const cleanNotif = sanitizeForFirebase(notification);
+
   try {
-    const notifId = String(notification.id || Date.now());
-    notification.id = notifId;
-    notification.updatedAt = new Date().toISOString();
-    await db.ref(`shared/notifications/${notifId}`).set(notification);
+    const cached = JSON.parse(localStorage.getItem('c7aio_notifications_cache') || '[]');
+    const idx = cached.findIndex(n => String(n.id) === notifId);
+    if (idx >= 0) cached[idx] = { ...cached[idx], ...cleanNotif };
+    else cached.unshift(cleanNotif);
+    localStorage.setItem('c7aio_notifications_cache', JSON.stringify(cached));
+  } catch (e) {}
+
+  const db = getDb();
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/notifications/${notifId}`, data: cleanNotif });
+    return;
+  }
+
+  try {
+    await db.ref(`shared/notifications/${notifId}`).set(cleanNotif);
     console.log('✅ Đã lưu thông báo lên Firebase');
   } catch (error) {
-    console.error('❌ Lỗi lưu thông báo:', error);
-    if (typeof showToast === 'function') showToast('Lỗi lưu thông báo!', 'error');
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/notifications/${notifId}`, data: cleanNotif });
   }
 }
 
 async function deleteSharedNotification(notifId) {
-  const db = getDb();
-  if (!db) return;
+  const idStr = String(notifId);
   try {
-    await db.ref(`shared/notifications/${notifId}`).remove();
+    const cached = JSON.parse(localStorage.getItem('c7aio_notifications_cache') || '[]');
+    const filtered = cached.filter(n => String(n.id) !== idStr);
+    localStorage.setItem('c7aio_notifications_cache', JSON.stringify(filtered));
+  } catch (e) {}
+
+  const db = getDb();
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'remove', path: `shared/notifications/${idStr}` });
+    return;
+  }
+
+  try {
+    await db.ref(`shared/notifications/${idStr}`).remove();
   } catch (error) {
-    console.error('❌ Lỗi xóa thông báo:', error);
+    OfflineSyncQueue.enqueue({ type: 'remove', path: `shared/notifications/${idStr}` });
   }
 }
 
 async function updateSharedNotificationCompletion(notifId, completions) {
-  const db = getDb();
-  if (!db) return;
+  const idStr = String(notifId);
+  const cleanCompletions = sanitizeForFirebase(completions || {});
+
   try {
-    await db.ref(`shared/notifications/${notifId}/completions`).set(completions);
+    const cached = JSON.parse(localStorage.getItem('c7aio_notifications_cache') || '[]');
+    const target = cached.find(n => String(n.id) === idStr);
+    if (target) {
+      target.completions = cleanCompletions;
+      localStorage.setItem('c7aio_notifications_cache', JSON.stringify(cached));
+    }
+  } catch (e) {}
+
+  const db = getDb();
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/notifications/${idStr}/completions`, data: cleanCompletions });
+    return;
+  }
+
+  try {
+    await db.ref(`shared/notifications/${idStr}/completions`).set(cleanCompletions);
   } catch (error) {
-    console.error('❌ Lỗi cập nhật trạng thái thông báo:', error);
+    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/notifications/${idStr}/completions`, data: cleanCompletions });
   }
 }
 
@@ -286,20 +507,27 @@ function onSharedSchedulesChanged(callback) {
 }
 
 async function saveSharedSchedules(schedules) {
+  const cleanSchedules = sanitizeForFirebase(schedules || {});
+  localStorage.setItem('c7aio_schedules_cache', JSON.stringify(cleanSchedules));
+
   const db = getDb();
-  if (!db) return;
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'set', path: 'shared/schedules', data: cleanSchedules });
+    return;
+  }
+
   try {
     await db.ref('shared/schedules').transaction((currentData) => {
-      if (currentData && Object.keys(currentData).length > 0 && (!schedules || Object.keys(schedules).length === 0)) {
+      if (currentData && Object.keys(currentData).length > 0 && (!cleanSchedules || Object.keys(cleanSchedules).length === 0)) {
         console.warn('⛔ Transaction blocked: Ngăn chặn ghi đè lịch học bằng dữ liệu rỗng.');
         return;
       }
-      return schedules;
+      return cleanSchedules;
     });
-    localStorage.setItem('c7aio_schedules_cache', JSON.stringify(schedules));
     console.log('✅ Đã lưu lịch học (Safe Sync)');
   } catch (error) {
     console.error('❌ Lỗi lưu lịch học:', error);
+    OfflineSyncQueue.enqueue({ type: 'set', path: 'shared/schedules', data: cleanSchedules });
   }
 }
 
@@ -323,14 +551,21 @@ function onSharedWeekMetadataChanged(callback) {
 }
 
 async function saveSharedWeekMetadata(metadata) {
+  const cleanMetadata = sanitizeForFirebase(metadata || {});
+  localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(cleanMetadata));
+
   const db = getDb();
-  if (!db) return;
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'set', path: 'shared/weekMetadata', data: cleanMetadata });
+    return;
+  }
+
   try {
-    await db.ref('shared/weekMetadata').set(metadata);
-    localStorage.setItem('c7aio_weekMetadata_cache', JSON.stringify(metadata));
+    await db.ref('shared/weekMetadata').set(cleanMetadata);
     console.log('✅ Đã lưu thông tin tuần lên Firebase');
   } catch (error) {
     console.error('❌ Lỗi lưu thông tin tuần:', error);
+    OfflineSyncQueue.enqueue({ type: 'set', path: 'shared/weekMetadata', data: cleanMetadata });
   }
 }
 
@@ -354,15 +589,21 @@ function onSharedScheduleEventsChanged(callback) {
 }
 
 async function saveSharedScheduleEvents(events) {
+  const cleanEvents = sanitizeForFirebase(events || {});
+  localStorage.setItem('c7aio_schedule_events', JSON.stringify(cleanEvents));
+
   const db = getDb();
-  // Always update local cache immediately
-  localStorage.setItem('c7aio_schedule_events', JSON.stringify(events || {}));
-  if (!db) return;
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'set', path: 'shared/scheduleEvents', data: cleanEvents });
+    return;
+  }
+
   try {
-    await db.ref('shared/scheduleEvents').set(events || {});
+    await db.ref('shared/scheduleEvents').set(cleanEvents);
     console.log('✅ Đã đồng bộ thông báo đổi lịch lên Firebase');
   } catch (error) {
     console.error('❌ Lỗi lưu thông báo đổi lịch Firebase:', error);
+    OfflineSyncQueue.enqueue({ type: 'set', path: 'shared/scheduleEvents', data: cleanEvents });
   }
 }
 
@@ -426,14 +667,24 @@ function getPageName() {
   } catch (e) { return ''; }
 }
 
+let _lastLogFingerprint = '';
+let _lastLogTime = 0;
+
 async function logAction(action, detail, extra) {
+  const now = Date.now();
+  const fingerprint = `${action}_${detail || ''}`;
+  if (fingerprint === _lastLogFingerprint && now - _lastLogTime < 500) {
+    return; // Throttle duplicate rapid actions
+  }
+  _lastLogFingerprint = fingerprint;
+  _lastLogTime = now;
+
   const db = getDb();
-  if (!db) return;
   // Đọc user ngay (đồng bộ) để logout vẫn ghi đúng người
   const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
 
-  const logEntry = Object.assign({
-    id: Date.now(),
+  const logEntry = sanitizeForFirebase(Object.assign({
+    id: now,
     userKey: getUserKey(user),
     user: user ? user.name : 'Unknown',
     role: getRoleDisplay(user),
@@ -442,13 +693,18 @@ async function logAction(action, detail, extra) {
     page: getPageName(),
     device: getDeviceInfo(),
     timestamp: new Date().toISOString()
-  }, extra || {});
+  }, extra || {}));
+
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    OfflineSyncQueue.enqueue({ type: 'push', path: 'shared/logs', data: logEntry });
+    return;
+  }
 
   try {
     await db.ref('shared/logs').push(logEntry);
     console.log('📝 Logged:', action);
   } catch (error) {
-    console.error('❌ Lỗi ghi log:', error);
+    OfflineSyncQueue.enqueue({ type: 'push', path: 'shared/logs', data: logEntry });
   }
 }
 

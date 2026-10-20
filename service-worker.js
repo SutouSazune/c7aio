@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v3.5.3-cache-first';
+const CACHE_NAME = 'c7aio-v4.0.0-r1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const ASSETS_TO_CACHE = [
   './hoso/hs.html',
   './perm/pq.html',
   './logs/nk.html',
+  './sodo/sd.html',
   './style/hub.css',
   './style/lich.css',
   './style/nv.css',
@@ -18,9 +19,13 @@ const ASSETS_TO_CACHE = [
   './style/hs.css',
   './style/pq.css',
   './style/nk.css',
+  './style/sodo.css',
+  './style/console.css',
+  './style/students.css',
   './script/firebase-config.js',
   './script/firebase-utils.js',
   './script/students-list.js',
+  './script/students-manage.js',
   './script/hub.js',
   './script/console.js',
   './script/lich.js',
@@ -30,13 +35,14 @@ const ASSETS_TO_CACHE = [
   './script/hs.js',
   './script/pq.js',
   './script/nk.js',
+  './script/sodo.js',
   './manifest.json'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('✅ Caching C7AIO assets v3.0.0...');
+      console.log('✅ Caching C7AIO assets v4.0.0...');
       return cache.addAll(ASSETS_TO_CACHE).catch(err => {
         console.log('Lỗi khi cache một số assets:', err);
         return Promise.resolve();
