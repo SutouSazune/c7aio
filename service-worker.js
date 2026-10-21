@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v4.2.1';
+const CACHE_NAME = 'c7aio-v5.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -11,6 +11,8 @@ const ASSETS_TO_CACHE = [
   './perm/pq.html',
   './logs/nk.html',
   './sodo/sd.html',
+  './style/tokens.css',
+  './style/login.css',
   './style/hub.css',
   './style/lich.css',
   './style/nv.css',

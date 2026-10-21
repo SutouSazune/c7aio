@@ -1,15 +1,29 @@
 /**
- * C7AIO Schedule (Lịch Học) Stylesheet
- * High-end Figma aesthetics, Color-coded Subjects, Responsive Timetable
+ * C7AIO Schedule (Lịch Học) Stylesheet — Tech Premium Design System
  */
 
+:root {
+  --subject-toan: #6366f1;
+  --subject-van:  #f43f5e;
+  --subject-anh:  #0ea5e9;
+  --subject-ly:   #f59e0b;
+  --subject-hoa:  #10b981;
+  --subject-sinh: #22c55e;
+  --subject-su:   #a78bfa;
+  --subject-dia:  #fb923c;
+  --subject-gdcd: #ec4899;
+  --subject-the:  #14b8a6;
+  --subject-tin:  #8b5cf6;
+  --subject-nghe: #f97316;
+}
+
 .schedule-page-container {
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 0 var(--sp-6) var(--sp-8);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--sp-6);
 }
 /* ============= ACADEMIC YEAR & WEEK COUNTER CARD ============= */
 .academic-year-card {
