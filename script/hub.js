@@ -420,12 +420,36 @@ function updateDashboardWidgets() {
   }
 }
 
+let _clockInterval = null;
+
+function updateLiveClock() {
+  const clockEl = document.getElementById('liveClock');
+  const dateEl = document.getElementById('liveDate');
+  if (!clockEl && !dateEl) return;
+
+  const now = new Date();
+  if (clockEl) {
+    clockEl.textContent = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  if (dateEl) {
+    const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+    dateEl.textContent = `${days[now.getDay()]}, ${now.getDate()}/${now.getMonth() + 1}`;
+  }
+}
+
 function updateWelcomeMessage() {
   const user = getCurrentUser();
   if (user) {
     const firstName = user.name.split(' ').pop();
     const welcomeNameEl = document.getElementById('welcomeName');
     if (welcomeNameEl) welcomeNameEl.textContent = firstName;
+    
+    const roleTagEl = document.getElementById('welcomeRoleTag');
+    if (roleTagEl) {
+      const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
+      const primaryRole = roles[0] || 'student';
+      roleTagEl.textContent = (typeof ROLES !== 'undefined' && ROLES[primaryRole]) ? ROLES[primaryRole] : 'Thành viên 11C7';
+    }
     
     const hour = new Date().getHours();
     let greeting = 'Chúc bạn một ngày học tập hiệu quả và tràn đầy năng lượng!';
@@ -442,6 +466,11 @@ function updateWelcomeMessage() {
     
     const welcomeMsgEl = document.getElementById('welcomeMessage');
     if (welcomeMsgEl) welcomeMsgEl.textContent = greeting;
+
+    updateLiveClock();
+    if (!_clockInterval) {
+      _clockInterval = setInterval(updateLiveClock, 1000);
+    }
   }
 }
 

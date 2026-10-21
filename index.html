@@ -44,9 +44,28 @@
     
     <!-- Welcome Hero Section -->
     <section class="welcome-hero">
-      <div class="welcome-text">
-        <h2>👋 Xin chào, <span id="welcomeName" style="color: var(--primary);">bạn</span>!</h2>
-        <p id="welcomeMessage">Chúc bạn một ngày học tập nhiều hứng khởi và đạt kết quả tốt nhất!</p>
+      <div class="welcome-hero-content">
+        <div class="welcome-text">
+          <div class="welcome-badge-row">
+            <span class="welcome-role-tag" id="welcomeRoleTag">Thành viên 11C7</span>
+            <div class="welcome-clock-pill">
+              <span class="clock-dot"></span>
+              <span id="liveClock">--:--:--</span>
+              <span style="opacity: 0.4;">•</span>
+              <span id="liveDate">Hôm nay</span>
+            </div>
+          </div>
+          <h2>👋 Xin chào, <span id="welcomeName" style="color: var(--primary);">bạn</span>!</h2>
+          <p id="welcomeMessage">Chúc bạn một ngày học tập nhiều hứng khởi và đạt kết quả tốt nhất!</p>
+        </div>
+        <div class="welcome-actions">
+          <button class="quick-hero-btn" onclick="go('nhiemvu/nv.html')">
+            <span>⚡ Bài tập hôm nay</span>
+          </button>
+          <button class="quick-hero-btn secondary" onclick="go('lich/lich.html')">
+            <span>📅 Thời khóa biểu</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -74,6 +93,7 @@
             <span class="stat-label">Tổng Nhiệm Vụ</span>
             <span class="stat-value" id="totalTask">0</span>
           </div>
+          <div class="stat-accent-bar" style="background: linear-gradient(90deg, #6366f1, #818cf8);"></div>
         </div>
 
         <div class="stat-card" onclick="go('nhiemvu/nv.html')">
@@ -84,6 +104,7 @@
             <span class="stat-label">Đang Thực Hiện</span>
             <span class="stat-value" id="openTask">0</span>
           </div>
+          <div class="stat-accent-bar" style="background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
         </div>
 
         <div class="stat-card" onclick="go('thongke/tk.html')">
@@ -94,6 +115,7 @@
             <span class="stat-label">Đã Hoàn Thành</span>
             <span class="stat-value" id="doneTask">0</span>
           </div>
+          <div class="stat-accent-bar" style="background: linear-gradient(90deg, #10b981, #34d399);"></div>
         </div>
 
         <div class="stat-card" onclick="go('nhiemvu/nv.html')">
@@ -104,6 +126,7 @@
             <span class="stat-label">Sắp Hết Hạn / Gấp</span>
             <span class="stat-value" id="nearDeadline">0</span>
           </div>
+          <div class="stat-accent-bar" style="background: linear-gradient(90deg, #ef4444, #f87171);"></div>
         </div>
       </div>
     </section>
