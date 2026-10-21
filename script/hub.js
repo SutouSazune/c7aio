@@ -175,10 +175,23 @@ function updateUIStats() {
   }).length;
   const openTasks = Math.max(0, totalTasks - doneTasks);
 
+  function animateCounter(el, target, duration = 600) {
+    if (!el) return;
+    const targetNum = Number(target) || 0;
+    const start = performance.now();
+    const update = (time) => {
+      const progress = Math.min((time - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(ease * targetNum);
+      if (progress < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+  }
+
   const totalEl = document.getElementById("totalTask");
-  if (totalEl) totalEl.innerText = totalTasks;
-  if (document.getElementById("doneTask")) document.getElementById("doneTask").innerText = doneTasks;
-  if (document.getElementById("openTask")) document.getElementById("openTask").innerText = openTasks;
+  if (totalEl) animateCounter(totalEl, totalTasks);
+  if (document.getElementById("doneTask")) animateCounter(document.getElementById("doneTask"), doneTasks);
+  if (document.getElementById("openTask")) animateCounter(document.getElementById("openTask"), openTasks);
 
   const today = new Date();
   const nearDeadlineTasks = assignedTasks.filter(t => {
@@ -191,7 +204,7 @@ function updateUIStats() {
   });
 
   if (document.getElementById("nearDeadline")) {
-    document.getElementById("nearDeadline").innerText = nearDeadlineTasks.length;
+    animateCounter(document.getElementById("nearDeadline"), nearDeadlineTasks.length);
   }
 
   updateRecentTasks(nearDeadlineTasks);

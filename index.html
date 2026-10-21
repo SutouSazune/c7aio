@@ -10,8 +10,9 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='60' font-size='80' text-anchor='middle'>📚</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/hub.css?v=4.2.1">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/tokens.css?v=5.1.0">
+  <link rel="stylesheet" href="style/hub.css?v=5.1.0">
 </head>
 <body>
 
@@ -90,8 +91,8 @@
 
     <!-- Quick Stats Grid -->
     <section class="stats-overview-section">
-      <h2 class="section-title">📊 Tổng Quan Nhiệm Vụ</h2>
-      <div class="stats-grid">
+      <h2 class="section-title">Tổng quan nhiệm vụ</h2>
+      <div class="stats-grid c7-stagger-group">
         <div class="stat-card" onclick="go('nhiemvu/nv.html')">
           <div class="stat-icon-wrapper">
             <span>📋</span>
@@ -141,10 +142,10 @@
     <!-- Quick Navigation Bento Grid -->
     <section class="quick-nav-section">
       <div class="section-header-row">
-        <h2 class="section-title">Chức Năng</h2>
+        <h2 class="section-title">Chức năng</h2>
       </div>
-      <div class="nav-grid">
-        <button class="nav-btn bento-feature-card" onclick="go('nhiemvu/nv.html')">
+      <div class="nav-grid c7-stagger-group">
+        <button class="nav-btn bento-feature-card nav-card--featured c7-nav-card--featured" onclick="go('nhiemvu/nv.html')">
           <div class="bento-feature-card-top">
             <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.15)); color: #6366f1;">📌</div>
             <span class="nav-card-arrow">↗</span>

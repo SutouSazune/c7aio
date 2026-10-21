@@ -1,0 +1,179 @@
+/**
+ * C7AIO Design System Tokens — Phase 2 Taste Upgrade Architecture
+ * Dual-accent (Indigo + Teal) · 8pt Grid · Multi-Layer Elevation
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* ==================== 1. TYPOGRAPHY ==================== */
+  --font-sans: 'DM Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  --text-2xs: 0.625rem;  /* 10px */
+  --text-xs:  0.75rem;   /* 12px */
+  --text-sm:  0.875rem;  /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg:  1.125rem;  /* 18px */
+  --text-xl:  1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+
+  --fw-regular:   400;
+  --fw-medium:    500;
+  --fw-semibold:  600;
+  --fw-bold:      700;
+  --fw-extrabold: 800;
+
+  --lh-tight:   1.2;
+  --lh-snug:    1.35;
+  --lh-normal:  1.5;
+  --lh-relaxed: 1.65;
+
+  --ls-tight:  -0.04em;
+  --ls-normal:  0;
+  --ls-wide:    0.04em;
+  --ls-wider:   0.08em;
+
+  /* ==================== 2. SPACING GRID (8PT STRICT) ==================== */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+
+  /* ==================== 3. BORDER RADIUS ==================== */
+  --r-xs:   4px;
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   18px;
+  --r-xl:   24px;
+  --r-full: 9999px;
+
+  /* ==================== 4. COLOR SYSTEM ==================== */
+  /* Brand Primary (Desaturated Indigo) */
+  --brand:        #5b60e8;
+  --brand-hover:  #4852d6;
+  --brand-dim:    rgba(91, 96, 232, 0.12);
+  --brand-glow:   rgba(91, 96, 232, 0.25);
+
+  /* Secondary Accent (Deep Teal) */
+  --accent:       #0d9488;
+  --accent-light: #14b8a6;
+  --accent-dim:   rgba(13, 148, 136, 0.12);
+
+  /* Status Colors */
+  --success:      #10b981;
+  --warning:      #f59e0b;
+  --danger:       #e04343;
+  --info:         #3b82f6;
+
+  /* Semantic Stat Card Accents */
+  --stat-tasks-color:  #5b60e8;
+  --stat-done-color:   #0d9488;
+  --stat-urgent-color: #e04343;
+  --stat-rate-color:   #d97706;
+
+  /* Brand Gradients */
+  --c7-gradient-primary: linear-gradient(135deg, #5b60e8 0%, #0d9488 100%);
+  --c7-gradient-warm:    linear-gradient(135deg, #5b60e8 0%, #d97706 100%);
+  --c7-gradient-hero:    linear-gradient(160deg, #5b60e8 0%, #0d9488 60%, #14b8a6 100%);
+
+  /* Light Theme Semantics (Default) */
+  --layer-0:       #f0f2f8;
+  --layer-1:       #f8f9fc;
+  --layer-2:       #ffffff;
+  --layer-3:       #ffffff;
+  --layer-4:       #ffffff;
+
+  --bg-base:       var(--layer-0);
+  --bg-surface:    var(--layer-1);
+  --bg-elevated:   var(--layer-2);
+  --bg-card:       var(--layer-2);
+  --bg-overlay:    rgba(240, 242, 248, 0.88);
+
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --border-brand:  rgba(91, 96, 232, 0.35);
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-disabled:  #cbd5e1;
+
+  --card-bg:       var(--bg-elevated);
+  --card-border:   var(--border-subtle);
+  --input-bg:      var(--bg-surface);
+  --input-border:  var(--border-strong);
+  --header-bg:     var(--bg-overlay);
+
+  /* Shadows (Light) */
+  --sh-xs: 0 1px 2px rgba(15,23,42,0.05);
+  --sh-sm: 0 2px 8px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  --sh-md: 0 4px 16px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+  --sh-lg: 0 8px 32px rgba(15,23,42,0.12), 0 4px 8px rgba(15,23,42,0.06);
+  --sh-xl: 0 16px 48px rgba(15,23,42,0.16), 0 8px 16px rgba(15,23,42,0.08);
+  --sh-brand: 0 0 0 3px var(--brand-glow);
+  --sh-glow:  0 8px 32px var(--brand-glow), 0 0 64px rgba(91,96,232,0.1);
+
+  /* ==================== 5. MOTION SYSTEM ==================== */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:      cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.6, 1);
+
+  --dur-instant: 80ms;
+  --dur-fast:    150ms;
+  --dur-base:    250ms;
+  --dur-slow:    400ms;
+  --dur-glacial: 600ms;
+
+  /* ==================== 6. GLASS SYSTEM ==================== */
+  --glass-light: rgba(255, 255, 255, 0.85);
+  --glass-dark:  rgba(12, 21, 37, 0.88);
+  --glass-blur:  saturate(180%) blur(20px);
+}
+
+/* ==================== DARK THEME SEMANTICS (4 LAYERS) ==================== */
+[data-theme="dark"] {
+  --layer-0:  #070c1a;   /* page background — deepest navy */
+  --layer-1:  #0c1525;   /* cards level 1 */
+  --layer-2:  #111d35;   /* cards level 2 / elevated */
+  --layer-3:  #16243f;   /* modals / dropdowns / tooltips */
+  --layer-4:  #1c2d4e;   /* highest elevation */
+
+  --bg-base:       var(--layer-0);
+  --bg-surface:    var(--layer-1);
+  --bg-elevated:   var(--layer-2);
+  --bg-card:       var(--layer-1);
+  --bg-overlay:    rgba(7, 12, 26, 0.92);
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-brand:  rgba(91, 96, 232, 0.45);
+
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+  --text-disabled:  #334155;
+
+  --card-bg:       var(--layer-1);
+  --card-border:   var(--border-subtle);
+  --input-bg:      var(--layer-1);
+  --input-border:  var(--border-strong);
+  --header-bg:     var(--bg-overlay);
+
+  /* Shadows (Dark) */
+  --sh-xs: 0 1px 2px rgba(0,0,0,0.4);
+  --sh-sm: 0 2px 8px rgba(0,0,0,0.45);
+  --sh-md: 0 4px 16px rgba(0,0,0,0.55);
+  --sh-lg: 0 8px 32px rgba(0,0,0,0.65);
+  --sh-xl: 0 16px 48px rgba(0,0,0,0.75);
+  --sh-glow: 0 8px 32px rgba(91,96,232,0.35), 0 0 64px rgba(91,96,232,0.15);
+}
