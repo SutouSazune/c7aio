@@ -69,7 +69,8 @@ const ThemeEngine = {
   
   init() {
     const savedTheme = localStorage.getItem(this.STORAGE_KEY);
-    const initialTheme = savedTheme || 'dark';
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
     this.setTheme(initialTheme, false);
     
     window.addEventListener('DOMContentLoaded', () => {
