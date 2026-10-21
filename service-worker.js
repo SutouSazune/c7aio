@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v4.0.0-r1';
+const CACHE_NAME = 'c7aio-v4.3.0-live';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -72,10 +72,23 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+  // Navigation requests (HTML pages): Network-first with cache fallback
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(
+      fetch(request).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const toCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, toCache));
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(request).then(cached => cached || caches.match('./index.html'));
+      })
+    );
+    return;
+  }
+
   event.respondWith(
-    // Cache-first (stale-while-revalidate): serve the cached asset instantly so
-    // reloads do not block on a network round-trip + JS parse. Refresh in the
-    // background so a deployed update is picked up on the next visit.
     caches.open(CACHE_NAME).then(cache => cache.match(request)).then(cachedResponse => {
       const networkFetch = fetch(request).then(networkResponse => {
         if (networkResponse && networkResponse.status === 200) {
@@ -86,19 +99,12 @@ self.addEventListener('fetch', event => {
       });
 
       if (cachedResponse) {
-        // Serve cached copy immediately, update in background
         event.waitUntil(networkFetch);
         return cachedResponse;
       }
       return networkFetch;
     }).catch(() => {
-      return caches.match(request).then(cachedResponse => {
-        if (cachedResponse) return cachedResponse;
-        if (request.destination === 'document') {
-          return caches.match('./index.html');
-        }
-        return new Response('Offline', { status: 503, statusText: 'Offline' });
-      });
+      return caches.match(request);
     })
   );
 });

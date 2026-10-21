@@ -14,7 +14,7 @@
   --danger: #ef4444;
   --info: #3b82f6;
 
-  --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #eef2f6 50%, #fdf4ff 100%);
+  --bg-gradient: radial-gradient(circle at 20% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 40%), #f8fafc;
   --bg-surface: #ffffff;
   --card-bg: rgba(255, 255, 255, 0.85);
   --card-border: rgba(255, 255, 255, 0.9);
@@ -40,21 +40,23 @@
 }
 
 [data-theme="dark"] {
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #111827 100%);
-  --bg-surface: #1e293b;
-  --card-bg: rgba(30, 41, 59, 0.85);
-  --card-border: rgba(255, 255, 255, 0.1);
-  --glass-bg: rgba(30, 41, 59, 0.8);
+  --bg-gradient: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.2) 0%, transparent 40%),
+                 radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.16) 0%, transparent 45%),
+                 #080b11;
+  --bg-surface: #0f1523;
+  --card-bg: rgba(15, 21, 35, 0.72);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(15, 21, 35, 0.75);
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
   --text-main: #f8fafc;
   --text-sub: #94a3b8;
   --text-muted: #64748b;
-  --input-bg: #0f172a;
-  --input-border: #334155;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.5);
+  --input-bg: #090d16;
+  --input-border: #1e293b;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 12px 30px -5px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  --shadow-lg: 0 24px 50px -10px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  --shadow-glow: 0 0 35px rgba(99, 102, 241, 0.4);
 }
 
 * {
