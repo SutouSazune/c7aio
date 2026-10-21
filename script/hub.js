@@ -341,11 +341,30 @@ function updateDashboardScheduleWidget() {
     `;
   } else {
     html += `<div class="today-classes-list">`;
+    const nowMinutes = today.getHours() * 60 + today.getMinutes();
+
     todayClasses.forEach(cls => {
       const color = getSubjectColor(cls.name || cls.subject);
+      let isOngoing = false;
+      if (cls.time && cls.time.includes('-')) {
+        const [startStr, endStr] = cls.time.split('-').map(s => s.trim());
+        if (startStr && endStr) {
+          const [sh, sm] = startStr.split(':').map(Number);
+          const [eh, em] = endStr.split(':').map(Number);
+          const startMinutes = sh * 60 + sm;
+          const endMinutes = eh * 60 + em;
+          if (nowMinutes >= startMinutes && nowMinutes <= endMinutes) {
+            isOngoing = true;
+          }
+        }
+      }
+
       html += `
-        <div class="today-class-card" style="border-left-color: ${color}">
-          <div class="today-class-time">⏰ ${cls.time || 'Tiết'}</div>
+        <div class="today-class-card ${isOngoing ? 'class-active-now' : ''}" style="border-left-color: ${color}">
+          <div class="today-class-time">
+            <span>⏰ ${cls.time || 'Tiết'}</span>
+            ${isOngoing ? '<span class="period-live-indicator"><span class="period-live-dot"></span>ĐANG HỌC</span>' : ''}
+          </div>
           <div class="today-class-details">
             <span class="today-class-name">${escapeHtml(cls.name)}</span>
             ${cls.subject ? `<span class="today-class-sub">${escapeHtml(cls.subject)}</span>` : ''}

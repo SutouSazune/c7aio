@@ -90,26 +90,34 @@ body {
   background: rgba(99, 102, 241, 0.45);
 }
 
-/* ==================== HEADER ==================== */
+/* ==================== FLOATING ISLAND HEADER ==================== */
 .header {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: var(--glass-border);
   position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: var(--shadow-sm);
-  padding: 0.8rem 0;
+  top: 12px;
+  z-index: 1000;
+  padding: 0 1.2rem;
+  margin-bottom: 0.8rem;
 }
 
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0.65rem 1.4rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  transition: all 0.3s var(--ease-spring);
+}
+
+[data-theme="dark"] .header-content {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 .header-left {
@@ -908,6 +916,93 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   font-size: 0.82rem;
   color: var(--text-sub);
   font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+/* ==================== BENTO FEATURE CARDS ==================== */
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.section-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.bento-feature-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 150px;
+  padding: 1.3rem;
+  border: var(--glass-border);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+}
+
+.bento-feature-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  border-color: var(--primary);
+  box-shadow: 0 16px 36px -10px rgba(99, 102, 241, 0.25);
+}
+
+.nav-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.8rem;
+}
+
+.nav-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  transition: transform 0.25s var(--ease-spring);
+}
+
+.bento-feature-card:hover .nav-icon-badge {
+  transform: scale(1.12) rotate(6deg);
+}
+
+.nav-card-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.nav-card-arrow {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  opacity: 0.3;
+  transition: all 0.25s var(--ease-spring);
+}
+
+.bento-feature-card:hover .nav-card-arrow {
+  opacity: 1;
+  color: var(--primary);
+  transform: translateX(4px);
 }
 
 /* ==================== DASHBOARD CONTENT ==================== */
@@ -1036,12 +1131,47 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   background: var(--bg-surface);
   border: 1px solid var(--input-border);
   border-left: 4px solid var(--primary);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  transition: all 0.25s var(--ease-spring);
+}
+
+.today-class-card:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.today-class-card.class-active-now {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+  border-color: #10b981;
+  border-left-width: 5px;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.period-live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  margin-left: 6px;
+}
+
+.period-live-dot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulseDot 1.5s infinite;
 }
 
 .today-class-time {

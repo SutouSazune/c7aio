@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
@@ -17,24 +17,68 @@
       align-items: center;
       min-height: 100vh;
       padding: 1.5rem;
-      background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.25) 0%, transparent 40%),
-                  radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.2) 0%, transparent 40%),
-                  var(--bg-gradient);
+      background: var(--bg-gradient);
       background-attachment: fixed;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Aurora Orbs */
+    .aurora-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+      animation: floatAurora 12s ease-in-out infinite alternate;
+    }
+
+    .aurora-1 {
+      top: -10%;
+      left: 10%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, transparent 70%);
+    }
+
+    .aurora-2 {
+      bottom: -15%;
+      right: 5%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.35) 0%, transparent 70%);
+      animation-delay: -6s;
+    }
+
+    .aurora-3 {
+      top: 40%;
+      right: 35%;
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.3) 0%, transparent 70%);
+      animation-delay: -3s;
+    }
+
+    @keyframes floatAurora {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(30px, 40px) scale(1.08); }
+      100% { transform: translate(-30px, -20px) scale(0.95); }
     }
 
     .login-box {
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: var(--glass-border);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-lg);
-      padding: 2.5rem;
+      padding: 2.8rem 2.5rem;
       width: 100%;
-      max-width: 560px;
-      box-shadow: var(--shadow-lg);
+      max-width: 580px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
       animation: popIn 0.4s var(--ease-spring);
       position: relative;
+      z-index: 1;
     }
 
     .login-brand {
@@ -43,11 +87,11 @@
     }
 
     .login-brand-icon {
-      font-size: 3.2rem;
+      font-size: 3.4rem;
       margin-bottom: 0.5rem;
       display: inline-block;
-      filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.4));
-      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 8px 20px rgba(99, 102, 241, 0.45));
+      animation: float 3.5s ease-in-out infinite;
     }
 
     @keyframes float {
@@ -267,6 +311,10 @@
   </style>
 </head>
 <body>
+  <!-- Ambient Aurora Glow Orbs -->
+  <div class="aurora-orb aurora-1"></div>
+  <div class="aurora-orb aurora-2"></div>
+  <div class="aurora-orb aurora-3"></div>
 
   <div class="login-box">
     <!-- Header / Brand -->
@@ -330,10 +378,13 @@
       </div>
     </div>
 
-    <!-- Admin Panel Toggle -->
+    <!-- Admin Panel Toggle & Guest Mode -->
     <div class="admin-toggle-panel" id="adminTogglePanel">
       <button class="btn-admin-mode" onclick="openAdminLogin()">
         <span>👨‍💼 Đăng nhập với quyền Quản trị viên</span>
+      </button>
+      <button class="btn-guest-mode" onclick="guestLogin()" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.12)); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; padding: 10px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.25s var(--ease-spring);">
+        <span>🚀 Khám phá nhanh (Chế độ Trải nghiệm Khách)</span>
       </button>
     </div>
   </div>
@@ -477,6 +528,16 @@
         showToast('Mã bảo mật Admin không đúng!', 'error');
         document.getElementById('inputAdminCode').value = '';
       }
+    }
+
+    function guestLogin() {
+      const guest = { id: 999, name: 'Khách Tham Quan', role: 'student', class: '11C7' };
+      localStorage.setItem('c7aio_currentUser', JSON.stringify(guest));
+      localStorage.setItem('c7aio_loginTime', new Date().toISOString());
+      showToast('👋 Chào mừng bạn đến với C7AIO Hub!', 'info');
+      setTimeout(() => {
+        window.location.href = buildUrl('index.html');
+      }, 400);
     }
 
     // Keyboard support (Enter key)
