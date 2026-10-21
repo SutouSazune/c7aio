@@ -224,3 +224,71 @@
   from { opacity: 0; transform: translateY(4px) scale(1.005); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ==================== SPECULAR SPOTLIGHT & BORDER BEAM ==================== */
+.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card, .hs-student-card, .notif-card-item, .analytics-card, .pq-table-card, .nk-table-card {
+  --spotlight-color: rgba(99, 102, 241, 0.12);
+}
+
+[data-theme="dark"] .c7-card,
+[data-theme="dark"] .nav-btn,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .welcome-hero,
+[data-theme="dark"] .bento-card,
+[data-theme="dark"] .task-item-card,
+[data-theme="dark"] .hs-student-card,
+[data-theme="dark"] .notif-card-item,
+[data-theme="dark"] .analytics-card,
+[data-theme="dark"] .pq-table-card,
+[data-theme="dark"] .nk-table-card {
+  --spotlight-color: rgba(99, 102, 241, 0.22);
+}
+
+/* Card Cursor Spotlight Overlay */
+.nav-btn::after, .task-item-card::after, .hs-student-card::after, .notif-card-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--spotlight-color), transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.nav-btn:hover::after, .task-item-card:hover::after, .hs-student-card:hover::after, .notif-card-item:hover::after {
+  opacity: 1;
+}
+
+/* Tactile Elastic Click Spring Feedback */
+.nav-btn:active, .stat-card:active, .btn-task-check:active, .c7-btn:active, .quick-hero-btn:active, .c7-back-btn:active, .header-logout-btn:active {
+  transform: scale(0.965) translateY(1px) !important;
+  transition: transform 0.1s var(--spring-bounce) !important;
+}
+
+/* Border Beam Animation (Linear / MagicUI) */
+.nav-card--featured {
+  position: relative;
+}
+
+.nav-card--featured::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, var(--brand), var(--accent), var(--warning), var(--brand));
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderBeamRotate 6s linear infinite;
+  opacity: 0.85;
+}
+
+@keyframes borderBeamRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

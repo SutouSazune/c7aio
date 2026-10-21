@@ -29,11 +29,18 @@ function buildUrl(relativePath) {
   return BASE_PATH === '/' ? path : BASE_PATH + path;
 }
 
-// Global Cursor Spotlight Tracker
+// Global Cursor & Dynamic Card Spotlight Tracker
 if (typeof window !== 'undefined') {
   window.addEventListener('pointermove', (e) => {
     document.documentElement.style.setProperty('--cursor-x', `${e.clientX}px`);
     document.documentElement.style.setProperty('--cursor-y', `${e.clientY}px`);
+    
+    const card = e.target.closest('.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card, .hs-student-card, .notif-card-item, .analytics-card, .pq-table-card, .nk-table-card');
+    if (card) {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+      card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+    }
   }, { passive: true });
 }
 
