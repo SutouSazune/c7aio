@@ -287,7 +287,7 @@
   <script src="script/console.js"></script>
 
   <script>
-    window.addEventListener('load', () => {
+    window.addEventListener('DOMContentLoaded', () => {
       // Xác thực đăng nhập
       if (!isLoggedIn()) {
         window.location.href = buildUrl('login.html');

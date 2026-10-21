@@ -146,9 +146,26 @@ ThemeEngine.init();
 
 // ============= DATA LOADERS & REALTIME SYNC =============
 async function loadStats() {
+  // Stale-While-Revalidate: Instant offline hydrate from localStorage
+  try {
+    const cachedTasks = localStorage.getItem('c7aio_cached_tasks');
+    if (cachedTasks && (!hubTasks || hubTasks.length === 0)) {
+      hubTasks = JSON.parse(cachedTasks);
+      updateUIStats();
+      updateDashboardWidgets();
+    }
+    const cachedNotifs = localStorage.getItem('c7aio_cached_notifs');
+    if (cachedNotifs && (!hubNotifications || hubNotifications.length === 0)) {
+      hubNotifications = JSON.parse(cachedNotifs);
+      updateNotificationReminders(hubNotifications);
+      updateDashboardWidgets();
+    }
+  } catch (e) {}
+
   if (typeof onSharedTasksChanged === 'function') {
     onSharedTasksChanged((updatedTasks) => {
       hubTasks = updatedTasks || [];
+      try { localStorage.setItem('c7aio_cached_tasks', JSON.stringify(hubTasks)); } catch (e) {}
       updateUIStats();
       updateDashboardWidgets();
     });
@@ -157,6 +174,7 @@ async function loadStats() {
   if (typeof onSharedNotificationsChanged === 'function') {
     onSharedNotificationsChanged((notifs) => {
       hubNotifications = notifs || [];
+      try { localStorage.setItem('c7aio_cached_notifs', JSON.stringify(hubNotifications)); } catch (e) {}
       updateNotificationReminders(hubNotifications);
       updateDashboardWidgets();
     });
@@ -991,7 +1009,6 @@ function initHubPage() {
 }
 
 window.addEventListener('DOMContentLoaded', initHubPage);
-window.addEventListener('load', initHubPage);
 
 // Service Worker Registration
 if ('serviceWorker' in navigator) {
