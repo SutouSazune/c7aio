@@ -39,17 +39,24 @@
 }
 
 .analytics-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  border: var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: 1.8rem;
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-surface);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
+  padding: var(--sp-6);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, var(--sh-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  transition: transform var(--dur-fast) var(--spring-smooth), border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+
+.analytics-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-brand);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, var(--sh-md);
 }
 
 /* Progress Ring */

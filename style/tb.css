@@ -32,24 +32,35 @@
 }
 
 .notif-card-item {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  border: var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 1.2rem 1.5rem;
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-surface);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-5);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, var(--sh-sm);
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  transition: all 0.3s var(--ease-spring);
+  gap: var(--sp-4);
+  transition: transform var(--dur-fast) var(--spring-smooth), border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
   position: relative;
   cursor: pointer;
 }
 
 .notif-card-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary);
+  transform: translateY(-2px) scale(1.003);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, var(--sh-md);
+  border-color: var(--border-brand);
+}
+
+.notif-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--brand);
+  box-shadow: 0 0 8px var(--brand);
+  animation: pulseDot 2s infinite;
+  display: inline-block;
+  margin-right: 6px;
 }
 
 .notif-card-item.pinned {

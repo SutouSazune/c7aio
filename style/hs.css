@@ -705,21 +705,21 @@ html, body {
 }
 
 .hs-student-card {
-  background: var(--card-bg);
-  border: var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: clamp(12px, 2vw, 18px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, var(--sh-sm);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: all 0.2s ease;
+  gap: var(--sp-3);
+  transition: transform var(--dur-fast) var(--spring-smooth), border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 }
 
 .hs-student-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: var(--border-brand);
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, var(--sh-md);
 }
 
 .hs-card-top {

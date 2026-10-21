@@ -448,8 +448,9 @@
 }
 
 .day-timetable-col.is-today-col {
-  border-top: 4px solid var(--primary);
-  box-shadow: var(--shadow-md);
+  border: 1.5px solid var(--brand);
+  box-shadow: 0 0 16px var(--brand-glow), var(--sh-md);
+  position: relative;
 }
 
 .day-col-header {

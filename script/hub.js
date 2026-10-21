@@ -29,8 +29,23 @@ function buildUrl(relativePath) {
   return BASE_PATH === '/' ? path : BASE_PATH + path;
 }
 
+// Global Cursor Spotlight Tracker
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointermove', (e) => {
+    document.documentElement.style.setProperty('--cursor-x', `${e.clientX}px`);
+    document.documentElement.style.setProperty('--cursor-y', `${e.clientY}px`);
+  }, { passive: true });
+}
+
 function go(page) {
-  window.location.href = buildUrl(page);
+  const target = buildUrl(page);
+  if (!document.startViewTransition) {
+    window.location.href = target;
+    return;
+  }
+  document.startViewTransition(() => {
+    window.location.href = target;
+  });
 }
 
 // Hub State (Namespaced to avoid duplicate global let collision)
