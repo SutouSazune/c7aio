@@ -113,6 +113,20 @@
   --input-border:  var(--border-strong);
   --header-bg:     var(--bg-overlay);
 
+  /* Legacy Bridge & Compatibility Aliases */
+  --text-main:      var(--text-primary);
+  --text-sub:       var(--text-secondary);
+  --primary:        var(--brand);
+  --primary-hover:  var(--brand-hover);
+  --primary-light:  var(--brand-dim);
+  --secondary:      #8b5cf6;
+  --glass-bg:       var(--bg-elevated);
+  --glass-border:   1px solid var(--border-subtle);
+  --radius-sm:      var(--r-sm);
+  --radius-md:      var(--r-md);
+  --radius-lg:      var(--r-lg);
+  --radius-full:    var(--r-full);
+
   /* Shadows (Light) */
   --sh-xs: 0 1px 2px rgba(15,23,42,0.05);
   --sh-sm: 0 2px 8px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
@@ -142,23 +156,23 @@
 
 /* ==================== DARK THEME SEMANTICS (4 LAYERS) ==================== */
 [data-theme="dark"] {
-  --layer-0:  #070c1a;   /* page background — deepest navy */
-  --layer-1:  #0c1525;   /* cards level 1 */
-  --layer-2:  #111d35;   /* cards level 2 / elevated */
-  --layer-3:  #16243f;   /* modals / dropdowns / tooltips */
-  --layer-4:  #1c2d4e;   /* highest elevation */
+  --layer-0:  #040711;   /* true cyber obsidian */
+  --layer-1:  #0a0f1d;   /* cards base */
+  --layer-2:  #0f172a;   /* elevated panels */
+  --layer-3:  #182238;   /* modals / popovers */
+  --layer-4:  #202e4c;   /* prominent widgets */
 
   --bg-base:       var(--layer-0);
   --bg-surface:    var(--layer-1);
   --bg-elevated:   var(--layer-2);
   --bg-card:       var(--layer-1);
-  --bg-overlay:    rgba(7, 12, 26, 0.92);
+  --bg-overlay:    rgba(4, 7, 17, 0.92);
 
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --border-brand:  rgba(91, 96, 232, 0.45);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-brand:  rgba(99, 102, 241, 0.55);
 
-  --text-primary:   #e2e8f0;
+  --text-primary:   #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted:     #64748b;
   --text-disabled:  #334155;
@@ -169,11 +183,17 @@
   --input-border:  var(--border-strong);
   --header-bg:     var(--bg-overlay);
 
-  /* Shadows (Dark) */
-  --sh-xs: 0 1px 2px rgba(0,0,0,0.4);
-  --sh-sm: 0 2px 8px rgba(0,0,0,0.45);
-  --sh-md: 0 4px 16px rgba(0,0,0,0.55);
-  --sh-lg: 0 8px 32px rgba(0,0,0,0.65);
-  --sh-xl: 0 16px 48px rgba(0,0,0,0.75);
-  --sh-glow: 0 8px 32px rgba(91,96,232,0.35), 0 0 64px rgba(91,96,232,0.15);
+  /* Legacy Bridge Dark Mode */
+  --text-main:      var(--text-primary);
+  --text-sub:       var(--text-secondary);
+  --glass-bg:       rgba(10, 15, 29, 0.82);
+  --glass-border:   1px solid var(--border-subtle);
+
+  /* Shadows (Dark Specular) */
+  --sh-xs: 0 1px 2px rgba(0,0,0,0.5);
+  --sh-sm: 0 4px 12px rgba(0,0,0,0.55);
+  --sh-md: 0 8px 24px rgba(0,0,0,0.65);
+  --sh-lg: 0 16px 40px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.05);
+  --sh-xl: 0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.08);
+  --sh-glow: 0 0 35px rgba(99, 102, 241, 0.4), 0 0 70px rgba(13, 148, 136, 0.2);
 }
