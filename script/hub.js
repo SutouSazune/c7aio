@@ -268,7 +268,7 @@ function updateNotificationReminders(notifs) {
 
   if (ticker && tickerText) {
     const latest = notifs[0];
-    tickerText.textContent = `📢 ${latest.message}`;
+    tickerText.textContent = latest.title ? `${latest.title}: ${latest.message}` : latest.message;
     ticker.style.display = 'flex';
     ticker.onclick = () => go('thongbao/tb.html');
   }
@@ -400,19 +400,26 @@ function updateDashboardWidgets() {
       const rate = total > 0 ? Math.round((done / total) * 100) : 100;
 
       profileWidget.innerHTML = `
-        <div class="profile-card-inner">
-          <div class="profile-avatar" style="background: ${getAvatarGradient(user.name)}">
-            ${getInitials(user.name)}
-          </div>
-          <div class="profile-info">
-            <div class="profile-name">${escapeHtml(user.name)}</div>
-            <div class="profile-roles">${roleBadges}</div>
-            <div class="profile-progress-bar-wrap">
-              <div class="profile-progress-label">Tiến độ nhiệm vụ: <strong>${rate}%</strong> (${done}/${total})</div>
-              <div class="profile-progress-track">
-                <div class="profile-progress-fill" style="width: ${rate}%"></div>
-              </div>
+        <div class="bento-profile-card">
+          <div class="bento-profile-top">
+            <div class="bento-avatar-halo" style="background: ${getAvatarGradient(user.name)}" onclick="handleProfileClick()" title="Xem chi tiết hồ sơ">
+              <span>${getInitials(user.name)}</span>
+              <span class="avatar-online-dot"></span>
             </div>
+            <div class="bento-user-details">
+              <div class="bento-user-name">${escapeHtml(user.name)}</div>
+              <div class="bento-user-roles">${roleBadges}</div>
+            </div>
+          </div>
+          <div class="bento-profile-metric">
+            <div class="bento-metric-header">
+              <span class="bento-metric-title">Tiến độ nhiệm vụ</span>
+              <span class="bento-metric-val">${rate}%</span>
+            </div>
+            <div class="bento-track">
+              <div class="bento-bar" style="width: ${rate}%"></div>
+            </div>
+            <div class="bento-metric-sub">Đã hoàn thành ${done}/${total} nhiệm vụ</div>
           </div>
         </div>
       `;
