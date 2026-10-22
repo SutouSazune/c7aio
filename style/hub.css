@@ -2538,3 +2538,120 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   height: 1px;
   background: var(--border-subtle);
 }
+
+/* ==================== BESPOKE LUXURY BENTO UPGRADE ==================== */
+.main-container {
+  max-width: 1400px;
+  gap: 2.2rem;
+}
+
+/* Asymmetric Bento Architecture */
+@media (min-width: 1024px) {
+  .nav-grid {
+    display: grid !important;
+    grid-template-columns: repeat(12, 1fr) !important;
+    gap: 20px !important;
+  }
+  /* Primary Hero Card: Nhiem Vu (5 cols) */
+  .nav-btn:nth-child(1) {
+    grid-column: span 5 !important;
+    min-height: 175px !important;
+    background: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05), transparent 60%), var(--bg-card) !important;
+  }
+  /* Schedule Card (4 cols) */
+  .nav-btn:nth-child(2) {
+    grid-column: span 4 !important;
+    min-height: 175px !important;
+  }
+  /* Thong Bao Card (3 cols) */
+  .nav-btn:nth-child(3) {
+    grid-column: span 3 !important;
+    min-height: 175px !important;
+  }
+  /* Thong Ke (4 cols) */
+  .nav-btn:nth-child(4) {
+    grid-column: span 4 !important;
+    min-height: 160px !important;
+  }
+  /* So Do Lop (4 cols) */
+  .nav-btn:nth-child(5) {
+    grid-column: span 4 !important;
+    min-height: 160px !important;
+  }
+  /* Admin Cards (4 cols each) */
+  .nav-btn:nth-child(6), .nav-btn:nth-child(7), .nav-btn:nth-child(8) {
+    grid-column: span 4 !important;
+    min-height: 160px !important;
+  }
+}
+
+/* Card Visual Depth & Micro-details */
+.bento-feature-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  background: rgba(13, 20, 36, 0.65) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease !important;
+}
+
+.bento-feature-card:hover {
+  transform: translateY(-4px) scale(1.008) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+}
+
+.nav-card-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  transition: all 0.25s ease;
+}
+
+.bento-feature-card:hover .nav-card-arrow {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  transform: translate(2px, -2px);
+}
+
+.nav-text {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.nav-subtext {
+  font-size: 0.84rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 4px !important;
+}
+
+/* Stat Cards Elevation */
+.stats-grid {
+  gap: 16px !important;
+}
+.stat-card {
+  border-radius: 18px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  background: rgba(13, 20, 36, 0.5) !important;
+  backdrop-filter: blur(16px) !important;
+  padding: 1.25rem 1.4rem !important;
+  transition: all 0.25s ease !important;
+}
+.stat-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: rgba(13, 20, 36, 0.75) !important;
+}
+.stat-value {
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+}
