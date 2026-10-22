@@ -2539,158 +2539,279 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   background: var(--border-subtle);
 }
 
-/* ==================== BESPOKE LUXURY BENTO UPGRADE ==================== */
-.main-container {
-  max-width: 1400px;
-  gap: 2.2rem;
+
+/* ==================== LINEAR TITANIUM PRECISION SUITE ==================== */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif !important;
 }
 
-/* Asymmetric Bento Architecture */
-@media (min-width: 1024px) {
-  .nav-grid {
-    display: grid !important;
-    grid-template-columns: repeat(12, 1fr) !important;
-    gap: 20px !important;
-  }
-  /* Primary Hero Card: Nhiem Vu (5 cols) */
-  .nav-btn:nth-child(1) {
-    grid-column: span 5 !important;
-    min-height: 175px !important;
-    background: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05), transparent 60%), var(--bg-card) !important;
-  }
-  /* Schedule Card (4 cols) */
-  .nav-btn:nth-child(2) {
-    grid-column: span 4 !important;
-    min-height: 175px !important;
-  }
-  /* Thong Bao Card (3 cols) */
-  .nav-btn:nth-child(3) {
-    grid-column: span 3 !important;
-    min-height: 175px !important;
-  }
-  /* Thong Ke (4 cols) */
-  .nav-btn:nth-child(4) {
-    grid-column: span 4 !important;
-    min-height: 160px !important;
-  }
-  /* So Do Lop (4 cols) */
-  .nav-btn:nth-child(5) {
-    grid-column: span 4 !important;
-    min-height: 160px !important;
-  }
-  /* Admin Cards (4 cols each) */
-  .nav-btn:nth-child(6), .nav-btn:nth-child(7), .nav-btn:nth-child(8) {
-    grid-column: span 4 !important;
-    min-height: 160px !important;
-  }
+body {
+  background: #090a0f !important;
+  color: #ededed !important;
+  letter-spacing: -0.011em !important;
 }
 
-/* Card Visual Depth & Micro-details */
-.bento-feature-card {
-  border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.07) !important;
-  background: rgba(13, 20, 36, 0.65) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease !important;
+/* 1. Header Precision */
+.header {
+  position: sticky !important;
+  top: 0 !important;
+  padding: 0 !important;
+  margin-bottom: 2rem !important;
+  background: rgba(9, 10, 15, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  z-index: 100 !important;
 }
 
-.bento-feature-card:hover {
-  transform: translateY(-4px) scale(1.008) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+.c7-header__inner, .header-content {
+  max-width: 1200px !important;
+  height: 52px !important;
+  padding: 0 1.5rem !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
-.nav-card-arrow {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  transition: all 0.25s ease;
-}
-
-.bento-feature-card:hover .nav-card-arrow {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-primary);
-  transform: translate(2px, -2px);
-}
-
-.nav-text {
-  font-size: 1.15rem !important;
-  font-weight: 700 !important;
+.header-title-text {
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
   letter-spacing: -0.02em !important;
+  color: #fff !important;
 }
 
-.nav-subtext {
-  font-size: 0.84rem !important;
-  color: var(--text-muted) !important;
-  margin-top: 4px !important;
+.header-titles p {
+  display: none !important;
 }
 
-/* Stat Cards Elevation */
+.user-badge-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 0.82rem !important;
+  color: #d1d5db !important;
+}
+
+.user-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.btn-logout {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 0.82rem !important;
+  color: #9ca3af !important;
+}
+
+.btn-logout:hover {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 2. Container Constraints */
+.main-container {
+  max-width: 1200px !important;
+  padding: 0 1.5rem 3rem !important;
+  gap: 2rem !important;
+}
+
+/* 3. Welcome Hero Minimalist */
+.welcome-hero {
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #0f1117 !important;
+  padding: 1.5rem 1.8rem !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+.welcome-hero::before, .welcome-hero::after {
+  display: none !important;
+}
+
+.welcome-hero h2 {
+  font-size: 1.35rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.welcome-hero p {
+  color: #9ca3af !important;
+  font-size: 0.88rem !important;
+}
+
+.welcome-role-tag {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #9ca3af !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+}
+
+.welcome-clock-pill {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+  color: #9ca3af !important;
+  font-size: 0.75rem !important;
+}
+
+.quick-hero-btn {
+  background: #fff !important;
+  color: #000 !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+
+.quick-hero-btn.secondary {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+/* 4. Stat Grid Precision */
 .stats-grid {
-  gap: 16px !important;
+  gap: 12px !important;
 }
+
 .stat-card {
-  border-radius: 18px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
-  background: rgba(13, 20, 36, 0.5) !important;
-  backdrop-filter: blur(16px) !important;
-  padding: 1.25rem 1.4rem !important;
-  transition: all 0.25s ease !important;
+  background: #0f1117 !important;
+  padding: 1rem 1.2rem !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease !important;
 }
+
 .stat-card:hover {
-  transform: translateY(-3px) !important;
+  transform: none !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
-  background: rgba(13, 20, 36, 0.75) !important;
 }
+
+.stat-icon-wrapper {
+  display: none !important;
+}
+
+.stat-label {
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: #9ca3af !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
 .stat-value {
-  font-size: 2rem !important;
-  font-weight: 800 !important;
+  font-size: 1.6rem !important;
+  font-weight: 600 !important;
+  color: #fff !important;
   letter-spacing: -0.03em !important;
 }
 
-/* ==================== APPLE / LINEAR HEADER CENTER NAV ==================== */
-.header-center-nav {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 4px 6px;
-  border-radius: 99px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+/* 5. Nav Grid Clean Architecture */
+.section-title {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #9ca3af !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 0.8rem !important;
 }
 
-.nav-pill-link {
-  font-size: 0.84rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
-  padding: 6px 14px;
-  border-radius: 99px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  letter-spacing: -0.01em;
-}
-
-.nav-pill-link:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.nav-pill-link.active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-  font-weight: 600;
+.nav-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 12px !important;
 }
 
 @media (max-width: 900px) {
-  .header-center-nav {
-    display: none;
-  }
+  .nav-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+.bento-feature-card {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  background: #0f1117 !important;
+  padding: 1.1rem 1.2rem !important;
+  min-height: 110px !important;
+  box-shadow: none !important;
+  transition: border-color 0.15s ease, background 0.15s ease !important;
+}
+
+.bento-feature-card:hover {
+  transform: none !important;
+  background: #141720 !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: none !important;
+}
+
+.nav-icon-badge {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  font-size: 1rem !important;
+}
+
+.nav-card-arrow {
+  display: none !important;
+}
+
+.nav-text {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: #f3f4f6 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.nav-subtext {
+  font-size: 0.78rem !important;
+  color: #9ca3af !important;
+  margin-top: 2px !important;
+}
+
+/* 6. Dashboard Widget Precision */
+.bottom-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 16px !important;
+}
+
+.dashboard-panel {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  background: #0f1117 !important;
+  padding: 1.2rem !important;
+  box-shadow: none !important;
+}
+
+.widget-header h3 {
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  letter-spacing: -0.01em !important;
+}
+
+.widget-link {
+  font-size: 0.78rem !important;
+  color: #9ca3af !important;
+  text-decoration: none !important;
+}
+
+.widget-link:hover {
+  color: #fff !important;
+}
+
+/* Strip ambient glow orbs entirely */
+.ambient-glow {
+  display: none !important;
 }
