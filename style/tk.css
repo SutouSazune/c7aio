@@ -75,7 +75,7 @@
 }
 
 .progress-ring-bg {
-  stroke: rgba(99, 102, 241, 0.15);
+  stroke: rgba(14, 165, 160, 0.15);
 }
 
 .progress-ring-text {
@@ -179,5 +179,5 @@
 }
 
 .matrix-table tr:hover td {
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(14, 165, 160, 0.05);
 }

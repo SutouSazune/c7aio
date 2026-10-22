@@ -100,7 +100,7 @@ html, body {
   border-radius: 99px;
 }
 .hs-table-card::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.25);
+  background: rgba(14, 165, 160, 0.25);
   border-radius: 99px;
 }
 .hs-table-card::-webkit-scrollbar-thumb:hover {
@@ -112,7 +112,7 @@ html, body {
 }
 
 .hs-student-row:hover td {
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(14, 165, 160, 0.05);
 }
 
 .hs-avatar-cell {
@@ -233,7 +233,7 @@ html, body {
 
 .hs-mode-btn:hover {
   border-color: var(--primary);
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(14, 165, 160, 0.08);
   transform: translateY(-1px);
 }
 
@@ -241,7 +241,7 @@ html, body {
   background: var(--primary);
   color: #ffffff;
   border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(14, 165, 160, 0.3);
 }
 
 .hs-mode-btn.active .hs-btn-icon {
@@ -276,7 +276,7 @@ html, body {
 .hs-select-field:focus,
 .hs-select-field:hover {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 2px rgba(14, 165, 160, 0.15);
 }
 
 /* Quick Filter Pills */
@@ -302,11 +302,11 @@ html, body {
 .hs-filter-btn:hover {
   color: var(--primary);
   border-color: var(--primary);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(14, 165, 160, 0.05);
 }
 
 .hs-filter-btn.active {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(14, 165, 160, 0.15);
   color: var(--primary);
   border-color: var(--primary);
   font-weight: 700;
@@ -351,7 +351,7 @@ html, body {
 }
 
 .hs-badge-pill {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(14, 165, 160, 0.15);
   color: var(--primary);
   padding: 1px 7px;
   border-radius: 99px;
@@ -474,7 +474,7 @@ html, body {
 }
 
 .hs-col-checkbox-item:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(14, 165, 160, 0.08);
 }
 
 .hs-col-checkbox-item input[type="checkbox"] {
@@ -556,7 +556,7 @@ html, body {
 }
 
 .hs-col-count-badge {
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(14, 165, 160, 0.12);
   color: var(--primary);
   border-radius: 99px;
   padding: 3px 10px;
@@ -600,7 +600,7 @@ html, body {
 .hs-compact-row:hover {
   border-color: var(--primary);
   transform: translateX(2px);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 2px 8px rgba(14, 165, 160, 0.08);
 }
 
 .hs-compact-left {
@@ -615,7 +615,7 @@ html, body {
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(14, 165, 160, 0.08);
   color: var(--text-sub);
   display: flex;
   align-items: center;

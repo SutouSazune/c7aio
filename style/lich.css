@@ -3,7 +3,7 @@
  */
 
 :root {
-  --subject-toan: #6366f1;
+  --subject-toan: #0ea5a0;
   --subject-van:  #f43f5e;
   --subject-anh:  #0ea5e9;
   --subject-ly:   #f59e0b;
@@ -48,7 +48,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary) 0%, #a855f7 50%, #ec4899 100%);
+  background: linear-gradient(90deg, var(--primary) 0%, #14c8c2 50%, #ec4899 100%);
 }
 
 .academic-year-top-row {
@@ -82,16 +82,16 @@
 .academic-year-select:hover,
 .academic-year-select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 2px rgba(14, 165, 160, 0.2);
 }
 
 .academic-week-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(14, 165, 160, 0.12);
   color: var(--primary);
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  border: 1px solid rgba(14, 165, 160, 0.25);
   border-radius: var(--radius-full);
   padding: 4px 12px;
   font-size: 0.82rem;
@@ -99,8 +99,8 @@
 }
 
 [data-theme="dark"] .academic-week-badge {
-  background: rgba(99, 102, 241, 0.25);
-  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(14, 165, 160, 0.25);
+  border-color: rgba(14, 165, 160, 0.4);
 }
 
 .academic-year-dates-info {
@@ -138,7 +138,7 @@
 
 .academic-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary) 0%, #a855f7 100%);
+  background: linear-gradient(90deg, var(--primary) 0%, #14c8c2 100%);
   border-radius: var(--radius-full);
   transition: width 0.5s var(--ease-spring);
   position: relative;
@@ -172,7 +172,7 @@
 }
 
 [data-theme="dark"] .current-week-tag {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(14, 165, 160, 0.2);
 }
 
 .calendar-card {
@@ -315,7 +315,7 @@
 .btn-add-period-col {
   width: 100%;
   padding: 6px 10px;
-  background: rgba(99, 102, 241, 0.06);
+  background: rgba(14, 165, 160, 0.06);
   border: 1px dashed var(--primary);
   border-radius: var(--radius-sm);
   color: var(--primary);
@@ -329,7 +329,7 @@
   gap: 4px;
 }
 .btn-add-period-col:hover {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(14, 165, 160, 0.15);
   transform: translateY(-1px);
 }
 
@@ -540,7 +540,7 @@
 }
 
 [data-theme="dark"] .subject-tag-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(14, 165, 160, 0.2);
 }
 
 /* Period grid selector in modal */
@@ -613,7 +613,7 @@
 /* Selected Column Glow */
 .day-timetable-col.is-selected-col {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3), var(--shadow-md);
+  box-shadow: 0 0 0 2px rgba(14, 165, 160, 0.3), var(--shadow-md);
 }
 
 /* Dedicated Day Schedule View Card */
@@ -679,7 +679,7 @@
 
 .class-card-grade-badge {
   display: inline-block;
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(14, 165, 160, 0.12);
   color: var(--primary);
   border-radius: var(--radius-full);
   padding: 2px 8px;
@@ -866,7 +866,7 @@
 .view-mode-pill-btn.active {
   background: var(--primary);
   color: white;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+  box-shadow: 0 2px 8px rgba(14,165,160,0.4);
 }
 
 /* ============= MONTH VIEW GRID ============= */
@@ -957,7 +957,7 @@
 }
 
 .month-cell.selected {
-  background: rgba(99,102,241,0.08);
+  background: rgba(14,165,160,0.08);
   border-color: var(--primary);
 }
 
@@ -1080,7 +1080,7 @@
 
 .year-month-card.active-month {
   border-color: var(--primary);
-  background: rgba(99,102,241,0.06);
+  background: rgba(14,165,160,0.06);
 }
 
 .year-month-name {
@@ -1108,7 +1108,7 @@
   color: var(--text-muted);
 }
 
-.year-mini-day.has-class { background: rgba(99,102,241,0.2); color: var(--primary); font-weight: 700; }
+.year-mini-day.has-class { background: rgba(14,165,160,0.2); color: var(--primary); font-weight: 700; }
 .year-mini-day.has-event { background: rgba(249,115,22,0.25); color: #c2410c; }
 .year-mini-day.is-today { background: var(--primary); color: white; border-radius: 50%; }
 
@@ -1117,4 +1117,4 @@
   color: var(--text-sub);
   display: flex;
   justify-content: space-between;
-}
+}

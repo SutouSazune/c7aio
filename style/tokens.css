@@ -1,41 +1,49 @@
 /**
- * C7AIO Design System Tokens — Phase 2 Taste Upgrade Architecture
- * Dual-accent (Indigo + Teal) · 8pt Grid · Multi-Layer Elevation
+ * C7AIO Design System — Obsidian Crystalline Edition v6.0
+ * Palette: Obsidian-Platinum × Teal × Amber Gold
+ * Architecture: 3-layer token system + Specular depth + View Transitions
  */
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* ==================== 1. TYPOGRAPHY ==================== */
-  --font-sans: 'DM Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
-  --text-2xs: 0.625rem;  /* 10px */
-  --text-xs:  0.75rem;   /* 12px */
-  --text-sm:  0.875rem;  /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg:  1.125rem;  /* 18px */
-  --text-xl:  1.25rem;   /* 20px */
-  --text-2xl: 1.5rem;    /* 24px */
-  --text-3xl: 1.875rem;  /* 30px */
-  --text-4xl: 2.25rem;   /* 36px */
+  /* ====== TYPOGRAPHY ====== */
+  --font-sans:    'DM Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'Cascadia Code', Menlo, monospace;
 
+  --text-2xs: 0.625rem;
+  --text-xs:  0.75rem;
+  --text-sm:  0.875rem;
+  --text-base: 1rem;
+  --text-lg:  1.125rem;
+  --text-xl:  1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --fw-light:     300;
   --fw-regular:   400;
   --fw-medium:    500;
   --fw-semibold:  600;
   --fw-bold:      700;
   --fw-extrabold: 800;
+  --fw-black:     900;
 
   --lh-tight:   1.2;
   --lh-snug:    1.35;
   --lh-normal:  1.5;
   --lh-relaxed: 1.65;
 
-  --ls-tight:  -0.04em;
-  --ls-normal:  0;
-  --ls-wide:    0.04em;
-  --ls-wider:   0.08em;
+  --ls-tightest: -0.05em;
+  --ls-tight:    -0.03em;
+  --ls-normal:    0;
+  --ls-wide:      0.04em;
+  --ls-wider:     0.08em;
+  --ls-widest:    0.15em;
 
-  /* ==================== 2. SPACING GRID (8PT STRICT) ==================== */
+  /* ====== 8PT SPACING GRID ====== */
+  --sp-px: 1px;
   --sp-1:  4px;
   --sp-2:  8px;
   --sp-3:  12px;
@@ -47,204 +55,187 @@
   --sp-12: 48px;
   --sp-16: 64px;
   --sp-20: 80px;
+  --sp-24: 96px;
 
-  /* ==================== 3. BORDER RADIUS ==================== */
-  --r-xs:   4px;
-  --r-sm:   8px;
-  --r-md:   12px;
-  --r-lg:   18px;
-  --r-xl:   24px;
+  /* ====== BORDER RADIUS ====== */
+  --r-xs:   3px;
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   16px;
+  --r-xl:   22px;
+  --r-2xl:  32px;
   --r-full: 9999px;
 
-  /* ==================== 4. COLOR SYSTEM ==================== */
-  /* Brand Primary (Desaturated Indigo) */
-  --brand:        #5b60e8;
-  --brand-hover:  #4852d6;
-  --brand-dim:    rgba(91, 96, 232, 0.12);
-  --brand-glow:   rgba(91, 96, 232, 0.25);
+  /* ====== BRAND — OBSIDIAN TEAL (not indigo, not blue) ====== */
+  --brand:        #0ea5a0;
+  --brand-hover:  #0b8f8a;
+  --brand-dim:    rgba(14, 165, 160, 0.12);
+  --brand-glow:   rgba(14, 165, 160, 0.28);
+  --brand-strong: #14c8c2;
 
-  /* Secondary Accent (Deep Teal) */
-  --accent:       #0d9488;
-  --accent-light: #14b8a6;
-  --accent-dim:   rgba(13, 148, 136, 0.12);
+  /* ====== ACCENT — AMBER GOLD (max contrast against teal dark) ====== */
+  --accent:       #f59e0b;
+  --accent-light: #fbbf24;
+  --accent-dim:   rgba(245, 158, 11, 0.12);
 
-  /* Status Colors */
-  --success:      #10b981;
-  --warning:      #f59e0b;
-  --danger:       #e04343;
-  --info:         #3b82f6;
+  /* ====== STATUS COLORS ====== */
+  --success: #10d48a;
+  --warning: #f59e0b;
+  --danger:  #f43f5e;
+  --info:    #38bdf8;
 
-  /* Semantic Stat Card Accents */
-  --stat-tasks-color:  #5b60e8;
-  --stat-done-color:   #0d9488;
-  --stat-urgent-color: #e04343;
-  --stat-rate-color:   #d97706;
+  /* ====== BRAND GRADIENTS ====== */
+  --c7-gradient-primary: linear-gradient(135deg, #0ea5a0 0%, #0b8f8a 100%);
+  --c7-gradient-warm:    linear-gradient(135deg, #0ea5a0 0%, #f59e0b 100%);
+  --c7-gradient-hero:    linear-gradient(160deg, #0a7a76 0%, #0ea5a0 40%, #14c8c2 100%);
+  --c7-gradient-glass:   linear-gradient(135deg, rgba(14,165,160,0.08) 0%, rgba(245,158,11,0.04) 100%);
+  --c7-gradient-danger:  linear-gradient(135deg, #f43f5e, #fb7185);
 
-  /* Brand Gradients */
-  --c7-gradient-primary: linear-gradient(135deg, #5b60e8 0%, #0d9488 100%);
-  --c7-gradient-warm:    linear-gradient(135deg, #5b60e8 0%, #d97706 100%);
-  --c7-gradient-hero:    linear-gradient(160deg, #5b60e8 0%, #0d9488 60%, #14b8a6 100%);
+  /* ====== SEMANTIC LIGHT (DEFAULT) ====== */
+  --layer-0: #f3f6fa;
+  --layer-1: #f9fbfc;
+  --layer-2: #ffffff;
+  --layer-3: #ffffff;
+  --layer-4: #ffffff;
 
-  /* Light Theme Semantics (Default) */
-  --layer-0:       #f0f2f8;
-  --layer-1:       #f8f9fc;
-  --layer-2:       #ffffff;
-  --layer-3:       #ffffff;
-  --layer-4:       #ffffff;
+  --bg-base:     var(--layer-0);
+  --bg-surface:  var(--layer-1);
+  --bg-elevated: var(--layer-2);
+  --bg-card:     var(--layer-2);
+  --bg-overlay:  rgba(243, 246, 250, 0.88);
 
-  --bg-base:       var(--layer-0);
-  --bg-surface:    var(--layer-1);
-  --bg-elevated:   var(--layer-2);
-  --bg-card:       var(--layer-2);
-  --bg-overlay:    rgba(240, 242, 248, 0.88);
+  --border-subtle: rgba(0, 0, 0, 0.07);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --border-brand:  rgba(14, 165, 160, 0.4);
 
-  --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-strong: rgba(15, 23, 42, 0.16);
-  --border-brand:  rgba(91, 96, 232, 0.35);
+  --text-primary:   #0b1120;
+  --text-secondary: #3d4f6b;
+  --text-muted:     #7a8ba3;
+  --text-disabled:  #b5c2d1;
 
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #94a3b8;
-  --text-disabled:  #cbd5e1;
-
+  /* ====== LEGACY BRIDGE (JS-driven elements use these) ====== */
+  --primary:       var(--brand);
+  --primary-light: var(--brand-dim);
+  --text-main:     var(--text-primary);
+  --text-sub:      var(--text-secondary);
   --card-bg:       var(--bg-elevated);
   --card-border:   var(--border-subtle);
   --input-bg:      var(--bg-surface);
   --input-border:  var(--border-strong);
   --header-bg:     var(--bg-overlay);
+  --glass-border:  1px solid var(--border-subtle);
+  --radius-full:   var(--r-full);
+  --radius-lg:     var(--r-lg);
+  --radius-md:     var(--r-md);
+  --radius-sm:     var(--r-sm);
+  --shadow-sm:     var(--sh-sm);
+  --shadow-md:     var(--sh-md);
+  --shadow-lg:     var(--sh-lg);
 
-  /* Legacy Bridge & Compatibility Aliases */
-  --text-main:      var(--text-primary);
-  --text-sub:       var(--text-secondary);
-  --primary:        var(--brand);
-  --primary-hover:  var(--brand-hover);
-  --primary-light:  var(--brand-dim);
-  --secondary:      #8b5cf6;
-  --glass-bg:       var(--bg-elevated);
-  --glass-border:   1px solid var(--border-subtle);
-  --radius-sm:      var(--r-sm);
-  --radius-md:      var(--r-md);
-  --radius-lg:      var(--r-lg);
-  --radius-full:    var(--r-full);
-
-  /* Shadows (Light) */
-  --sh-xs: 0 1px 2px rgba(15,23,42,0.05);
-  --sh-sm: 0 2px 8px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
-  --sh-md: 0 4px 16px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
-  --sh-lg: 0 8px 32px rgba(15,23,42,0.12), 0 4px 8px rgba(15,23,42,0.06);
-  --sh-xl: 0 16px 48px rgba(15,23,42,0.16), 0 8px 16px rgba(15,23,42,0.08);
+  /* ====== SHADOWS LIGHT ====== */
+  --sh-xs: 0 1px 2px rgba(11,17,32,0.05);
+  --sh-sm: 0 2px 8px rgba(11,17,32,0.07), 0 1px 2px rgba(11,17,32,0.04);
+  --sh-md: 0 4px 18px rgba(11,17,32,0.09), 0 2px 4px rgba(11,17,32,0.05);
+  --sh-lg: 0 8px 32px rgba(11,17,32,0.12), 0 4px 8px rgba(11,17,32,0.06);
+  --sh-xl: 0 16px 52px rgba(11,17,32,0.15), 0 8px 16px rgba(11,17,32,0.08);
   --sh-brand: 0 0 0 3px var(--brand-glow);
-  --sh-glow:  0 8px 32px var(--brand-glow), 0 0 64px rgba(91,96,232,0.1);
+  --sh-glow:  0 8px 28px var(--brand-glow), 0 0 60px rgba(14,165,160,0.08);
 
-  /* ==================== 5. MOTION SYSTEM ==================== */
+  /* ====== MOTION SYSTEM ====== */
   --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth:   cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out:      cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out:   cubic-bezier(0.4, 0, 0.6, 1);
-
-  --dur-instant: 80ms;
-  --dur-fast:    150ms;
-  --dur-base:    250ms;
-  --dur-slow:    400ms;
-  --dur-glacial: 600ms;
-
-  /* ==================== 6. GLASS SYSTEM ==================== */
-  --glass-light: rgba(255, 255, 255, 0.85);
-  --glass-dark:  rgba(12, 21, 37, 0.88);
-  --glass-blur:  saturate(180%) blur(20px);
-}
-
-/* ==================== DARK THEME SEMANTICS (4 LAYERS) ==================== */
-[data-theme="dark"] {
-  --layer-0:  #040711;   /* true cyber obsidian */
-  --layer-1:  #0a0f1d;   /* cards base */
-  --layer-2:  #0f172a;   /* elevated panels */
-  --layer-3:  #182238;   /* modals / popovers */
-  --layer-4:  #202e4c;   /* prominent widgets */
-
-  --bg-base:       var(--layer-0);
-  --bg-surface:    var(--layer-1);
-  --bg-elevated:   var(--layer-2);
-  --bg-card:       var(--layer-1);
-  --bg-overlay:    rgba(4, 7, 17, 0.92);
-
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --border-brand:  rgba(99, 102, 241, 0.55);
-
-  --text-primary:   #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted:     #64748b;
-  --text-disabled:  #334155;
-
-  --card-bg:       var(--layer-1);
-  --card-border:   var(--border-subtle);
-  --input-bg:      var(--layer-1);
-  --input-border:  var(--border-strong);
-  --header-bg:     var(--bg-overlay);
-
-  /* Legacy Bridge Dark Mode */
-  --text-main:      var(--text-primary);
-  --text-sub:       var(--text-secondary);
-  --glass-bg:       rgba(10, 15, 29, 0.82);
-  --glass-border:   1px solid var(--border-subtle);
-
-  /* Shadows (Dark Specular) */
-  --sh-xs: 0 1px 2px rgba(0,0,0,0.5);
-  --sh-sm: 0 4px 12px rgba(0,0,0,0.55);
-  --sh-md: 0 8px 24px rgba(0,0,0,0.65);
-  --sh-lg: 0 16px 40px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.05);
-  --sh-xl: 0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.08);
-  /* Motion & Spotlight Engine */
   --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --dur-instant: 80ms;
+  --dur-fast:    140ms;
+  --dur-base:    220ms;
+  --dur-slow:    380ms;
+  --dur-glacial: 580ms;
+
+  /* ====== GLASS SYSTEM ====== */
+  --glass-light: rgba(255, 255, 255, 0.82);
+  --glass-dark:  rgba(4, 7, 15, 0.88);
+  --glass-blur:  saturate(200%) blur(20px);
+
+  /* ====== CURSOR & SPOTLIGHT ====== */
   --cursor-x: 50%;
   --cursor-y: 50%;
   --spotlight-radius: 400px;
+
+  /* ====== STAT CARD SEMANTICS ====== */
+  --stat-tasks-color:  #0ea5a0;
+  --stat-done-color:   #10d48a;
+  --stat-urgent-color: #f43f5e;
+  --stat-rate-color:   #f59e0b;
 }
 
-/* ==================== VIEW TRANSITIONS ENGINE ==================== */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.24s;
-  animation-timing-function: var(--spring-smooth);
+/* ====== DARK THEME — OBSIDIAN CRYSTALLINE ====== */
+[data-theme="dark"] {
+  /* Deep obsidian — oil-slick blue-black, not flat #000 */
+  --layer-0:  #040810;
+  --layer-1:  #080e1c;
+  --layer-2:  #0d1528;
+  --layer-3:  #151f38;
+  --layer-4:  #1e2d4a;
+
+  --bg-base:     var(--layer-0);
+  --bg-surface:  var(--layer-1);
+  --bg-elevated: var(--layer-2);
+  --bg-card:     var(--layer-1);
+  --bg-overlay:  rgba(4, 8, 16, 0.92);
+
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-brand:  rgba(14, 165, 160, 0.5);
+
+  --text-primary:   #eef2ff;
+  --text-secondary: #7a92b8;
+  --text-muted:     #4a5e7a;
+  --text-disabled:  #283548;
+
+  --card-bg:   var(--layer-1);
+  --input-bg:  var(--layer-1);
+  --glass-bg:  rgba(8, 14, 28, 0.88);
+
+  /* Teal-tinted dark shadows */
+  --sh-xs: 0 1px 2px rgba(0,0,0,0.6);
+  --sh-sm: 0 4px 14px rgba(0,0,0,0.65), 0 0 0 1px rgba(14,165,160,0.04);
+  --sh-md: 0 8px 28px rgba(0,0,0,0.72), 0 0 0 1px rgba(14,165,160,0.06);
+  --sh-lg: 0 16px 44px rgba(0,0,0,0.82), 0 0 0 1px rgba(255,255,255,0.04);
+  --sh-xl: 0 24px 64px rgba(0,0,0,0.88), 0 0 0 1px rgba(255,255,255,0.05);
+  --sh-glow: 0 0 35px rgba(14,165,160,0.45), 0 0 80px rgba(14,165,160,0.18);
 }
+
+/* ====== VIEW TRANSITIONS ENGINE ====== */
 ::view-transition-old(root) {
-  animation-name: c7FadeOut;
+  animation: c7FadeOut 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 ::view-transition-new(root) {
-  animation-name: c7FadeIn;
+  animation: c7FadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 @keyframes c7FadeOut {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(-4px) scale(0.99); }
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.984) translateY(-4px); }
 }
 @keyframes c7FadeIn {
-  from { opacity: 0; transform: translateY(4px) scale(1.005); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: scale(1.012) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* ==================== SPECULAR SPOTLIGHT & BORDER BEAM ==================== */
-.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card, .hs-student-card, .notif-card-item, .analytics-card, .pq-table-card, .nk-table-card {
-  --spotlight-color: rgba(99, 102, 241, 0.12);
+/* ====== SPECULAR CURSOR SPOTLIGHT ====== */
+.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card,
+.task-item-card, .hs-student-card, .notif-card-item, .analytics-card {
+  --spotlight-color: rgba(14, 165, 160, 0.10);
 }
+[data-theme="dark"] .c7-card, [data-theme="dark"] .nav-btn,
+[data-theme="dark"] .stat-card, [data-theme="dark"] .welcome-hero,
+[data-theme="dark"] .bento-card, [data-theme="dark"] .task-item-card,
+[data-theme="dark"] .hs-student-card, [data-theme="dark"] .notif-card-item,
+[data-theme="dark"] .analytics-card { --spotlight-color: rgba(14, 165, 160, 0.22); }
 
-[data-theme="dark"] .c7-card,
-[data-theme="dark"] .nav-btn,
-[data-theme="dark"] .stat-card,
-[data-theme="dark"] .welcome-hero,
-[data-theme="dark"] .bento-card,
-[data-theme="dark"] .task-item-card,
-[data-theme="dark"] .hs-student-card,
-[data-theme="dark"] .notif-card-item,
-[data-theme="dark"] .analytics-card,
-[data-theme="dark"] .pq-table-card,
-[data-theme="dark"] .nk-table-card {
-  --spotlight-color: rgba(99, 102, 241, 0.22);
-}
-
-/* Card Cursor Spotlight Overlay */
 .nav-btn::after, .task-item-card::after, .hs-student-card::after, .notif-card-item::after {
   content: '';
   position: absolute;
@@ -256,39 +247,48 @@
   transition: opacity 0.3s ease;
   z-index: 1;
 }
+.nav-btn:hover::after, .task-item-card:hover::after,
+.hs-student-card:hover::after, .notif-card-item:hover::after { opacity: 1; }
 
-.nav-btn:hover::after, .task-item-card:hover::after, .hs-student-card:hover::after, .notif-card-item:hover::after {
-  opacity: 1;
+/* ====== ELASTIC CLICK FEEDBACK ====== */
+.nav-btn:active, .stat-card:active, .c7-btn:active,
+.quick-hero-btn:active, .c7-back-btn:active {
+  transform: scale(0.962) translateY(1px) !important;
+  transition: transform 0.08s var(--spring-bounce) !important;
 }
 
-/* Tactile Elastic Click Spring Feedback */
-.nav-btn:active, .stat-card:active, .btn-task-check:active, .c7-btn:active, .quick-hero-btn:active, .c7-back-btn:active, .header-logout-btn:active {
-  transform: scale(0.965) translateY(1px) !important;
-  transition: transform 0.1s var(--spring-bounce) !important;
-}
-
-/* Border Beam Animation (Linear / MagicUI) */
-.nav-card--featured {
-  position: relative;
-}
-
+/* ====== BORDER BEAM — Featured Card ====== */
+.nav-card--featured { position: relative; }
 .nav-card--featured::before {
   content: '';
   position: absolute;
   inset: -1.5px;
   border-radius: inherit;
   padding: 1.5px;
-  background: linear-gradient(135deg, var(--brand), var(--accent), var(--warning), var(--brand));
+  background: linear-gradient(135deg, #0ea5a0, #f59e0b, #14c8c2, #0ea5a0);
   background-size: 300% 300%;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: borderBeamRotate 6s linear infinite;
-  opacity: 0.85;
+  animation: borderBeamRotate 5s linear infinite;
+  opacity: 0.9;
+  pointer-events: none;
 }
-
 @keyframes borderBeamRotate {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+
+/* ====== FILM GRAIN TEXTURE ====== */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px;
+}
+[data-theme="dark"] body::after { opacity: 0.042; }
