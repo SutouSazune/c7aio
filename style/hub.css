@@ -197,9 +197,9 @@ img, video {
 }
 
 /* Backward-compatibility aliases */
-.ambient-glow { position: fixed; border-radius: 50%; pointer-events: none; z-index: -1; filter: blur(120px); opacity: 0.45; }
-.glow-1 { width: 540px; height: 540px; top: -120px; left: 8%; background: radial-gradient(circle, rgba(14,165,160,0.3) 0%, transparent 70%); animation: orbFloat1 30s ease-in-out infinite alternate; }
-.glow-2 { width: 500px; height: 500px; bottom: -100px; right: -50px; background: radial-gradient(circle, rgba(245,158,11,0.2) 0%, transparent 70%); animation: orbFloat2 25s ease-in-out infinite alternate; }
+.ambient-glow { position: fixed; border-radius: 50%; pointer-events: none; z-index: -1; filter: blur(140px); opacity: 0.15; }
+.glow-1 { width: 540px; height: 540px; top: -120px; left: 8%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); animation: orbFloat1 30s ease-in-out infinite alternate; }
+.glow-2 { width: 500px; height: 500px; bottom: -100px; right: -50px; background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%); animation: orbFloat2 25s ease-in-out infinite alternate; }
 
 /* ==================== 5. SKELETON LOADER SYSTEM ==================== */
 .skeleton {
@@ -1034,21 +1034,8 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   transition: left 0.85s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stat-accent-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  opacity: 0.85;
-  transition: height 0.25s ease, opacity 0.25s ease;
-}
-
-.stat-card:hover .stat-accent-bar {
-  height: 5px;
-  opacity: 1;
-}
-
+.stat-accent-bar { display: none; }
+.stat-accent-bar { display: none; }
 .stat-icon-wrapper {
   width: 52px;
   height: 52px;
@@ -1306,16 +1293,19 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
 }
 
 .nav-icon-badge {
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.65rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.25s var(--ease-spring);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  box-shadow: none;
+  transition: transform 0.2s var(--ease-spring), border-color 0.2s ease;
 }
 
 .bento-feature-card:hover .nav-icon-badge {

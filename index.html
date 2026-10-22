@@ -108,40 +108,40 @@
             <span class="stat-label">Tổng Nhiệm Vụ</span>
             <span class="stat-value" id="totalTask">0</span>
           </div>
-          <div class="stat-accent-bar" style="background: linear-gradient(90deg, var(--brand), var(--brand-strong));"></div>
+          <div class="stat-accent-bar"></div>
         </div>
 
         <div class="stat-card" onclick="go('nhiemvu/nv.html')">
-          <div class="stat-icon-wrapper" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+          <div class="stat-icon-wrapper">
             <span>⏳</span>
           </div>
           <div class="stat-content">
             <span class="stat-label">Đang Thực Hiện</span>
             <span class="stat-value" id="openTask">0</span>
           </div>
-          <div class="stat-accent-bar" style="background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+          <div class="stat-accent-bar"></div>
         </div>
 
         <div class="stat-card" onclick="go('thongke/tk.html')">
-          <div class="stat-icon-wrapper" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+          <div class="stat-icon-wrapper">
             <span>✅</span>
           </div>
           <div class="stat-content">
             <span class="stat-label">Đã Hoàn Thành</span>
             <span class="stat-value" id="doneTask">0</span>
           </div>
-          <div class="stat-accent-bar" style="background: linear-gradient(90deg, #10b981, #34d399);"></div>
+          <div class="stat-accent-bar"></div>
         </div>
 
         <div class="stat-card" onclick="go('nhiemvu/nv.html')">
-          <div class="stat-icon-wrapper" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+          <div class="stat-icon-wrapper">
             <span>⏰</span>
           </div>
           <div class="stat-content">
             <span class="stat-label">Sắp Hết Hạn / Gấp</span>
             <span class="stat-value" id="nearDeadline">0</span>
           </div>
-          <div class="stat-accent-bar" style="background: linear-gradient(90deg, #ef4444, #f87171);"></div>
+          <div class="stat-accent-bar"></div>
         </div>
       </div>
     </section>
@@ -154,7 +154,7 @@
       <div class="nav-grid c7-stagger-group">
         <button class="nav-btn bento-feature-card nav-card--featured c7-nav-card--featured" onclick="go('nhiemvu/nv.html')">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(14, 165, 160, 0.2), rgba(20, 200, 194, 0.15)); color: var(--brand);">📌</div>
+            <div class="nav-icon-badge">📌</div>
             <span class="nav-card-arrow">↗</span>
           </div>
           <div class="nav-card-info">
@@ -165,7 +165,7 @@
 
         <button class="nav-btn bento-feature-card" onclick="go('lich/lich.html')">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.15)); color: #06b6d4;">📅</div>
+            <div class="nav-icon-badge">📅</div>
             <span class="nav-card-arrow">↗</span>
           </div>
           <div class="nav-card-info">
@@ -176,7 +176,7 @@
 
         <button class="nav-btn bento-feature-card" onclick="go('thongbao/tb.html')" style="position: relative;">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.15)); color: #f59e0b;">🔔</div>
+            <div class="nav-icon-badge">🔔</div>
             <div id="notifBadge" class="notif-badge" style="background: #ef4444; color: white; border-radius: 99px; padding: 2px 7px; font-size: 0.72rem; font-weight: 800; display: none;">0</div>
             <span class="nav-card-arrow">↗</span>
           </div>
@@ -188,7 +188,7 @@
 
         <button class="nav-btn bento-feature-card" onclick="go('thongke/tk.html')">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.15)); color: #10b981;">📊</div>
+            <div class="nav-icon-badge">📊</div>
             <span class="nav-card-arrow">↗</span>
           </div>
           <div class="nav-card-info">
@@ -199,7 +199,7 @@
 
         <button class="nav-btn bento-feature-card" onclick="go('sodo/sd.html')">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(217, 70, 239, 0.15)); color: #a855f7;">🪑</div>
+            <div class="nav-icon-badge">🪑</div>
             <span class="nav-card-arrow">↗</span>
           </div>
           <div class="nav-card-info">
@@ -211,7 +211,7 @@
         <!-- Admin & Management Navigation -->
         <button class="nav-btn bento-feature-card admin-feature" id="btnNavStudents" onclick="go('hoso/hs.html')" style="display: none;">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(14, 165, 160, 0.2), rgba(245, 158, 11, 0.15)); color: var(--brand);">👨‍🎓</div>
+            <div class="nav-icon-badge">👨‍🎓</div>
             <span class="nav-card-arrow">↗</span>
           </div>
           <div class="nav-card-info">
@@ -222,7 +222,7 @@
 
         <button class="nav-btn bento-feature-card admin-feature" id="btnNavRoles" onclick="go('perm/pq.html')" style="display: none;">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(244, 63, 94, 0.15)); color: #ec4899;">⚙️</div>
+            <div class="nav-icon-badge">⚙️</div>
             <span class="nav-card-arrow">↗</span>
           </div>
           <div class="nav-card-info">
@@ -233,7 +233,7 @@
 
         <button class="nav-btn bento-feature-card admin-feature" id="btnNavLogs" onclick="go('logs/nk.html')" style="display: none;">
           <div class="bento-feature-card-top">
-            <div class="nav-icon-badge" style="background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(225, 29, 72, 0.15)); color: #f43f5e;">📜</div>
+            <div class="nav-icon-badge">📜</div>
             <span class="nav-card-arrow">↗</span>
           </div>
           <div class="nav-card-info">
