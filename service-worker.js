@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v6.0.0';
+const CACHE_NAME = 'c7aio-v6.1.0-hypervault';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -24,6 +24,7 @@ const ASSETS_TO_CACHE = [
   './style/sodo.css',
   './style/console.css',
   './style/students.css',
+  './script/offline-engine.js',
   './script/firebase-config.js',
   './script/firebase-utils.js',
   './script/students-list.js',
@@ -103,4 +104,17 @@ self.addEventListener('fetch', event => {
       });
     })
   );
+});
+
+// Periodic & Event-driven Background Sync
+self.addEventListener('sync', event => {
+  if (event.tag === 'c7-sync-vault') {
+    event.waitUntil(
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'C7_TRIGGER_VAULT_SYNC' });
+        });
+      })
+    );
+  }
 });

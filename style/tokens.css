@@ -4,12 +4,12 @@
  * Architecture: 3-layer token system + Specular depth + View Transitions
  */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* ====== TYPOGRAPHY ====== */
+  /* ====== TYPOGRAPHY — BESPOKE ARTISANAL EDITORIAL ====== */
   --font-sans:    'DM Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Cinzel', 'DM Sans', serif;
   --font-mono:    ui-monospace, 'Cascadia Code', Menlo, monospace;
 
   --text-2xs: 0.625rem;
@@ -278,6 +278,40 @@
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+/* ====== LIVING CANVAS OPTICAL PRISMATIC ENGINE ====== */
+.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.c7-card:hover, .nav-btn:hover, .stat-card:hover, .bento-card:hover {
+  border-color: rgba(14, 165, 160, 0.45);
+  box-shadow: 0 16px 40px -12px rgba(14, 165, 160, 0.22),
+              0 0 0 1px rgba(245, 158, 11, 0.15);
+}
+
+/* Chromatic Edge Refraction on Hover */
+.nav-btn::before, .bento-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(125deg, transparent 20%, rgba(14, 165, 160, 0.35) 45%, rgba(245, 158, 11, 0.3) 55%, transparent 80%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.nav-btn:hover::before, .bento-card:hover::before {
+  opacity: 1;
 }
 
 /* ====== FILM GRAIN TEXTURE ====== */

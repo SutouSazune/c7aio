@@ -54,6 +54,9 @@ const OfflineSyncQueue = {
 
   enqueue(mutation) {
     try {
+      if (typeof C7Vault !== 'undefined' && typeof C7Vault.queueMutation === 'function') {
+        C7Vault.queueMutation(mutation);
+      }
       const queue = this.getQueue();
       queue.push({
         id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
