@@ -2655,3 +2655,42 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
 }
+
+/* ==================== APPLE / LINEAR HEADER CENTER NAV ==================== */
+.header-center-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 6px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nav-pill-link {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 99px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: -0.01em;
+}
+
+.nav-pill-link:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-pill-link.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .header-center-nav {
+    display: none;
+  }
+}
