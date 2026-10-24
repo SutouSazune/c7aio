@@ -120,6 +120,13 @@ const ThemeEngine = {
     if (toggleIcon) {
       toggleIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
     }
+    const dockThemeIcon = document.getElementById('c7DockThemeIcon');
+    if (dockThemeIcon) {
+      dockThemeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('c7:theme-changed', { detail: { theme } }));
+    } catch (e) {}
   },
 
   toggle() {
@@ -259,6 +266,7 @@ function updateUIStats() {
   }
 
   updateRecentTasks(nearDeadlineTasks);
+  if (typeof BottomDockEngine !== 'undefined') BottomDockEngine.updateBadges();
 }
 
 function updateRecentTasks(nearDeadlineTasks) {
@@ -336,6 +344,7 @@ function updateNotificationReminders(notifs) {
     ticker.style.display = 'flex';
     ticker.onclick = () => go('thongbao/tb.html');
   }
+  if (typeof BottomDockEngine !== 'undefined') BottomDockEngine.updateBadges();
 }
 
 // Widget thời khóa biểu hôm nay trên Dashboard
@@ -811,13 +820,9 @@ const CommandPalette = {
     if (!container) return;
 
     const all = this.getAvailableItems();
-    const q = (query || '').toLowerCase().trim();
+    const q = (query || '').trim();
 
-    this.items = q ? all.filter(item => 
-      item.title.toLowerCase().includes(q) || 
-      item.desc.toLowerCase().includes(q) ||
-      (item.category && item.category.toLowerCase().includes(q))
-    ) : all.slice(0, 10);
+    this.items = q ? window.c7FuzzySearch(all, q, ['title', 'desc', 'category']).slice(0, 12) : all.slice(0, 10);
 
     this.selectedIndex = 0;
 
@@ -1010,6 +1015,208 @@ function checkAdminButtons() {
   if (btnLogs) btnLogs.style.display = canViewLogs ? 'flex' : 'none';
 }
 
+// ============= GITHUB ECOSYSTEM LIBRARIES & MOTION/FUZZY ENGINE =============
+window.c7NormalizeVi = function(str) {
+  if (!str) return '';
+  return String(str)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
+};
+
+window.c7FuzzySearch = function(list, query, keys = ['title', 'name', 'desc']) {
+  if (!Array.isArray(list)) return [];
+  const qRaw = (query || '').trim();
+  if (!qRaw) return list;
+  const qNorm = window.c7NormalizeVi(qRaw);
+
+  // Use Fuse.js when loaded from GitHub CDN
+  if (typeof window.Fuse === 'function') {
+    try {
+      const enriched = list.map(item => {
+        const normBag = keys.map(k => window.c7NormalizeVi(item && item[k] ? item[k] : '')).join(' ');
+        return { _raw: item, _norm: normBag };
+      });
+      const fuse = new window.Fuse(enriched, {
+        keys: ['_norm'],
+        threshold: 0.36,
+        ignoreLocation: true
+      });
+      const res = fuse.search(qNorm);
+      if (res.length > 0) return res.map(r => r.item._raw);
+    } catch (e) {}
+  }
+
+  // Built-in Vietnamese Diacritic-Insensitive Fuzzy Scorer fallback
+  const tokens = qNorm.split(/\s+/).filter(Boolean);
+  return list
+    .map(item => {
+      const hay = keys.map(k => window.c7NormalizeVi(item && item[k] ? item[k] : '')).join(' ');
+      let score = 0;
+      if (hay.includes(qNorm)) score += 100;
+      tokens.forEach(tok => {
+        if (hay.includes(tok)) score += 25;
+      });
+      return { item, score };
+    })
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(x => x.item);
+};
+
+window.c7Celebrate = function() {
+  if (typeof window.confetti === 'function') {
+    window.confetti({
+      particleCount: 65,
+      spread: 70,
+      origin: { y: 0.72 },
+      colors: ['#0ea5a0', '#14c8c2', '#f59e0b', '#10d48a', '#6366f1']
+    });
+  }
+};
+
+const C7GitHubLibsEngine = {
+  loaded: false,
+  init() {
+    if (this.loaded) return;
+    this.loaded = true;
+    const libs = [
+      { id: 'c7-lib-gsap', src: 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js', onLoad: () => this.runEntranceMotion() },
+      { id: 'c7-lib-fuse', src: 'https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js' },
+      { id: 'c7-lib-confetti', src: 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js' }
+    ];
+    libs.forEach(lib => {
+      if (document.getElementById(lib.id)) return;
+      const s = document.createElement('script');
+      s.id = lib.id;
+      s.src = lib.src;
+      s.async = true;
+      if (lib.onLoad) s.onload = lib.onLoad;
+      document.head.appendChild(s);
+    });
+  },
+  runEntranceMotion() {
+    if (typeof window.gsap === 'undefined') return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    try {
+      const targets = document.querySelectorAll('.welcome-hero, .profile-card-widget, .stat-card, .bento-feature-card, .dashboard-panel, .analytics-card, .pq-table-card, .nk-table-card');
+      if (targets.length > 0) {
+        window.gsap.fromTo(
+          targets,
+          { opacity: 0, y: 18, scale: 0.985 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.55, stagger: 0.045, ease: 'power3.out', clearProps: 'transform,opacity' }
+        );
+      }
+    } catch (e) {}
+  }
+};
+
+// ============= FLOATING SPATIAL GLASS BOTTOM DOCK =============
+const BottomDockEngine = {
+  init() {
+    const path = window.location.pathname;
+    if (path.endsWith('login.html') || path.endsWith('/login')) return;
+    if (document.getElementById('c7BottomDockWrap')) {
+      this.updateBadges();
+      return;
+    }
+
+    const isInsideSubdir = path.includes('/hoso/') || path.includes('/lich/') ||
+                           path.includes('/nhiemvu/') || path.includes('/logs/') ||
+                           path.includes('/perm/') || path.includes('/sodo/') ||
+                           path.includes('/thongbao/') || path.includes('/thongke/');
+    const prefix = isInsideSubdir ? '../' : '';
+
+    const canManageStudents = typeof checkPermission === 'function' && checkPermission('manage_students');
+
+    const navItems = [
+      { id: 'dock-home', label: 'Hub', url: prefix + 'index.html', match: (p) => p.endsWith('index.html') || p.endsWith('/') || p.endsWith('/c7aio'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5L12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Z"/><path d="M9 21V13h6v8"/></svg>' },
+      { id: 'dock-nv', label: 'Nhiệm vụ', url: prefix + 'nhiemvu/nv.html', match: (p) => p.includes('/nhiemvu/'), badgeId: 'c7DockTaskBadge', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M9 12l2 2 4-4"/><path d="M8 2v4M16 2v4"/></svg>' },
+      { id: 'dock-lich', label: 'Lịch học', url: prefix + 'lich/lich.html', match: (p) => p.includes('/lich/'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>' },
+      { id: 'dock-tb', label: 'Thông báo', url: prefix + 'thongbao/tb.html', match: (p) => p.includes('/thongbao/'), badgeId: 'c7DockNotifBadge', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' },
+      { id: 'dock-sodo', label: 'Sơ đồ', url: prefix + 'sodo/sd.html', match: (p) => p.includes('/sodo/'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>' },
+      { id: 'dock-tk', label: 'Thống kê', url: prefix + 'thongke/tk.html', match: (p) => p.includes('/thongke/'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>' }
+    ];
+
+    if (canManageStudents) {
+      navItems.push({
+        id: 'dock-hs', label: 'Hồ sơ', url: prefix + 'hoso/hs.html', match: (p) => p.includes('/hoso/'),
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+      });
+    }
+
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const wrap = document.createElement('div');
+    wrap.id = 'c7BottomDockWrap';
+    wrap.className = 'c7-bottom-dock-wrap';
+
+    wrap.innerHTML = `
+      <nav class="c7-bottom-dock" aria-label="Điều hướng nhanh C7AIO">
+        ${navItems.map(item => {
+          const isActive = item.match(path);
+          return `
+            <a href="${item.url}" class="c7-dock-item ${isActive ? 'active' : ''}" id="${item.id}" title="${item.label}">
+              ${item.icon}
+              <span class="c7-dock-label">${item.label}</span>
+              ${item.badgeId ? `<span class="c7-dock-badge" id="${item.badgeId}" style="display:none;">0</span>` : ''}
+            </a>
+          `;
+        }).join('')}
+        <div class="c7-dock-divider"></div>
+        <button type="button" class="c7-dock-item" onclick="CommandPalette.open()" title="Tìm kiếm nhanh (Ctrl + K)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+          <span class="c7-dock-label">Tìm nhanh</span>
+        </button>
+        <button type="button" class="c7-dock-item" onclick="ThemeEngine.toggle()" title="Đổi giao diện Sáng / Tối">
+          <span id="c7DockThemeIcon" style="font-size:1rem;line-height:1;">${currentTheme === 'dark' ? '☀️' : '🌙'}</span>
+        </button>
+      </nav>
+    `;
+
+    document.body.appendChild(wrap);
+    this.updateBadges();
+  },
+
+  updateBadges() {
+    try {
+      const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+      const tasks = (hubTasks && hubTasks.length > 0) ? hubTasks : JSON.parse(localStorage.getItem('c7aio_cached_tasks') || '[]');
+      const notifs = (hubNotifications && hubNotifications.length > 0) ? hubNotifications : JSON.parse(localStorage.getItem('c7aio_cached_notifs') || '[]');
+
+      const taskBadge = document.getElementById('c7DockTaskBadge');
+      if (taskBadge && user && Array.isArray(tasks)) {
+        const openCount = tasks.filter(t => {
+          const assigned = !t.assignedStudents || t.assignedStudents.length === 0 || t.assignedStudents.includes(user.id);
+          if (!assigned) return false;
+          const done = t.isGlobalCompleted || (t.completions && t.completions[user.id]) || t.done;
+          return !done;
+        }).length;
+        if (openCount > 0) {
+          taskBadge.textContent = openCount > 9 ? '9+' : openCount;
+          taskBadge.style.display = 'inline-flex';
+        } else {
+          taskBadge.style.display = 'none';
+        }
+      }
+
+      const notifBadge = document.getElementById('c7DockNotifBadge');
+      if (notifBadge && user && Array.isArray(notifs)) {
+        const unread = notifs.filter(n => !(n.completions && n.completions[user.id])).length;
+        if (unread > 0) {
+          notifBadge.textContent = unread > 9 ? '9+' : unread;
+          notifBadge.style.display = 'inline-flex';
+        } else {
+          notifBadge.style.display = 'none';
+        }
+      }
+    } catch (e) {}
+  }
+};
+window.BottomDockEngine = BottomDockEngine;
+
 // Main Page Initializer
 function initHubPage() {
   const user = getCurrentUser();
@@ -1029,6 +1236,9 @@ function initHubPage() {
   if (typeof CommandPalette !== 'undefined' && CommandPalette.init) {
     CommandPalette.init();
   }
+
+  C7GitHubLibsEngine.init();
+  BottomDockEngine.init();
 
   if (user) {
     let avatarMini = document.getElementById('userAvatarMini');

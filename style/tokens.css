@@ -155,10 +155,28 @@
   --dur-slow:    380ms;
   --dur-glacial: 580ms;
 
-  /* ====== GLASS SYSTEM ====== */
-  --glass-light: rgba(255, 255, 255, 0.82);
+  /* ====== GLASS SYSTEM (DUAL-THEME SPATIAL ENGINE) ====== */
+  --glass-light: rgba(255, 255, 255, 0.85);
   --glass-dark:  rgba(4, 7, 15, 0.88);
-  --glass-blur:  saturate(200%) blur(20px);
+  --glass-blur:  saturate(200%) blur(24px);
+
+  --spatial-body-bg:
+    radial-gradient(circle at 12% 8%, rgba(14, 165, 160, 0.11) 0%, transparent 42%),
+    radial-gradient(circle at 88% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 92%, rgba(245, 158, 11, 0.07) 0%, transparent 50%),
+    #f1f5f9;
+  --spatial-header-bg: rgba(255, 255, 255, 0.82);
+  --spatial-card-bg:   rgba(255, 255, 255, 0.86);
+  --spatial-hero-bg:   linear-gradient(135deg, rgba(14, 165, 160, 0.10) 0%, rgba(255, 255, 255, 0.94) 65%);
+  --spatial-pill-bg:   rgba(15, 23, 42, 0.05);
+  --spatial-pill-hover:rgba(14, 165, 160, 0.12);
+  --spatial-border:    rgba(15, 23, 42, 0.085);
+  --spatial-inset-top: rgba(255, 255, 255, 0.95);
+  --spatial-shadow:    0 16px 38px -12px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  --spatial-shadow-hover: 0 22px 46px -12px rgba(14, 165, 160, 0.22), 0 4px 14px -2px rgba(15, 23, 42, 0.06);
+  --dock-bg:           rgba(255, 255, 255, 0.84);
+  --dock-border:       rgba(15, 23, 42, 0.10);
+  --dock-shadow:       0 20px 50px -10px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
 
   /* ====== CURSOR & SPOTLIGHT ====== */
   --cursor-x: 50%;
@@ -187,18 +205,36 @@
   --bg-card:     var(--layer-1);
   --bg-overlay:  rgba(4, 8, 16, 0.92);
 
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
   --border-brand:  rgba(14, 165, 160, 0.5);
 
-  --text-primary:   #eef2ff;
-  --text-secondary: #7a92b8;
-  --text-muted:     #4a5e7a;
-  --text-disabled:  #283548;
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+  --text-disabled:  #334155;
 
   --card-bg:   var(--layer-1);
   --input-bg:  var(--layer-1);
   --glass-bg:  rgba(8, 14, 28, 0.88);
+
+  --spatial-body-bg:
+    radial-gradient(circle at 15% 10%, rgba(14, 165, 160, 0.14) 0%, transparent 42%),
+    radial-gradient(circle at 85% 25%, rgba(99, 102, 241, 0.10) 0%, transparent 46%),
+    radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.07) 0%, transparent 50%),
+    #050811;
+  --spatial-header-bg: rgba(11, 18, 33, 0.76);
+  --spatial-card-bg:   rgba(12, 19, 35, 0.74);
+  --spatial-hero-bg:   linear-gradient(135deg, rgba(14, 165, 160, 0.13) 0%, rgba(11, 18, 34, 0.88) 62%);
+  --spatial-pill-bg:   rgba(255, 255, 255, 0.06);
+  --spatial-pill-hover:rgba(255, 255, 255, 0.12);
+  --spatial-border:    rgba(255, 255, 255, 0.10);
+  --spatial-inset-top: rgba(255, 255, 255, 0.14);
+  --spatial-shadow:    0 18px 40px -12px rgba(0, 0, 0, 0.65);
+  --spatial-shadow-hover: 0 24px 52px -12px rgba(14, 165, 160, 0.28);
+  --dock-bg:           rgba(10, 16, 30, 0.82);
+  --dock-border:       rgba(255, 255, 255, 0.14);
+  --dock-shadow:       0 24px 60px -10px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.16) inset;
 
   /* Teal-tinted dark shadows */
   --sh-xs: 0 1px 2px rgba(0,0,0,0.6);

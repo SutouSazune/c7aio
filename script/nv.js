@@ -217,6 +217,9 @@ async function toggleTaskCheck(taskId) {
   task.completions[currentUser.id] = nextStatus;
 
   renderTasks();
+  if (nextStatus && typeof window.c7Celebrate === 'function') {
+    window.c7Celebrate();
+  }
   if (typeof updateSharedTaskCompletion === 'function') {
     await updateSharedTaskCompletion(task.id, task.completions, currentUser.id, nextStatus);
   }

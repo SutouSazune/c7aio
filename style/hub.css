@@ -2542,34 +2542,35 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
 
 
 
-/* ==================== AESTHETIC V8: AURORA SPATIAL GLASS ==================== */
+/* ==================== AESTHETIC V9: DUAL-THEME SPATIAL GLASS & FLOATING DOCK ==================== */
 :root {
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  --font-sans: 'Plus Jakarta Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
 }
 
-[data-theme="dark"] body {
-  background: radial-gradient(circle at 15% 10%, rgba(14, 165, 160, 0.12) 0%, transparent 40%),
-              radial-gradient(circle at 85% 25%, rgba(99, 102, 241, 0.09) 0%, transparent 45%),
-              radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
-              #070a13 !important;
-  color: #f1f5f9 !important;
+body {
+  background: var(--spatial-body-bg) !important;
+  color: var(--text-primary) !important;
   min-height: 100vh;
+  padding-bottom: 112px !important;
 }
 
 /* Ambient canvas mesh */
 .ambient-glow {
   display: block !important;
   filter: blur(140px) !important;
-  opacity: 0.28 !important;
+  opacity: 0.22 !important;
+}
+[data-theme="dark"] .ambient-glow {
+  opacity: 0.30 !important;
 }
 .glow-1 {
-  background: radial-gradient(circle, rgba(14, 165, 160, 0.4) 0%, transparent 70%) !important;
+  background: radial-gradient(circle, rgba(14, 165, 160, 0.38) 0%, transparent 70%) !important;
 }
 .glow-2 {
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%) !important;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.28) 0%, transparent 70%) !important;
 }
 
-/* Header: Floating Spatial Frosted Glass */
+/* Header: Floating Spatial Frosted Glass (Dual-Theme) */
 .header {
   position: sticky !important;
   top: 14px !important;
@@ -2580,48 +2581,68 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
 .c7-header__inner, .header-content {
   max-width: 1320px !important;
   margin: 0 auto !important;
-  height: 64px !important;
-  padding: 0 1.5rem !important;
+  min-height: 64px !important;
+  padding: 0.5rem 1.5rem !important;
   border-radius: 20px !important;
-  background: rgba(13, 20, 36, 0.72) !important;
+  background: var(--spatial-header-bg) !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.15) inset !important;
+  border: 1px solid var(--spatial-border) !important;
+  box-shadow: var(--spatial-shadow), 0 1px 0 var(--spatial-inset-top) inset !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
+  gap: 12px !important;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
 }
 .header-title-text {
   font-size: 1.05rem !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   letter-spacing: -0.02em !important;
-  color: #fff !important;
+  color: var(--text-primary) !important;
 }
 .header-titles p {
   display: block !important;
   font-size: 0.78rem !important;
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
   margin: 0 !important;
 }
 .header-logo-badge {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 10px !important;
-  background: linear-gradient(135deg, rgba(14, 165, 160, 0.25), rgba(99, 102, 241, 0.2)) !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 11px !important;
+  background: linear-gradient(135deg, rgba(14, 165, 160, 0.22), rgba(99, 102, 241, 0.16)) !important;
   border: 1px solid rgba(14, 165, 160, 0.35) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(14, 165, 160, 0.18) !important;
 }
 
-/* User & Logout buttons */
+/* Header Controls: Theme Toggle, Search Trigger, User & Logout */
+.theme-toggle-btn, .quick-search-trigger-btn {
+  background: var(--spatial-pill-bg) !important;
+  border: 1px solid var(--spatial-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 99px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.theme-toggle-btn:hover, .quick-search-trigger-btn:hover {
+  background: var(--spatial-pill-hover) !important;
+  border-color: rgba(14, 165, 160, 0.45) !important;
+  transform: translateY(-1px) !important;
+}
+.quick-search-trigger-btn kbd {
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--spatial-border) !important;
+}
 .user-badge-btn {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--spatial-pill-bg) !important;
+  border: 1px solid var(--spatial-border) !important;
   border-radius: 99px !important;
   padding: 5px 12px 5px 6px !important;
-  color: #f1f5f9 !important;
+  color: var(--text-primary) !important;
   font-weight: 600 !important;
   font-size: 0.82rem !important;
   display: flex !important;
@@ -2630,8 +2651,8 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   transition: all 0.2s ease !important;
 }
 .user-badge-btn:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(14, 165, 160, 0.4) !important;
+  background: var(--spatial-pill-hover) !important;
+  border-color: rgba(14, 165, 160, 0.45) !important;
   transform: translateY(-1px) !important;
 }
 .user-avatar-mini {
@@ -2646,36 +2667,40 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   color: #fff !important;
 }
 .btn-logout {
-  background: rgba(239, 68, 68, 0.08) !important;
-  border: 1px solid rgba(239, 68, 68, 0.2) !important;
-  color: #f87171 !important;
+  background: rgba(244, 63, 94, 0.10) !important;
+  border: 1px solid rgba(244, 63, 94, 0.25) !important;
+  color: #e11d48 !important;
   border-radius: 99px !important;
   padding: 6px 14px !important;
   font-size: 0.8rem !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   transition: all 0.2s ease !important;
 }
+[data-theme="dark"] .btn-logout {
+  color: #fb7185 !important;
+}
 .btn-logout:hover {
-  background: rgba(239, 68, 68, 0.18) !important;
+  background: #f43f5e !important;
+  border-color: #f43f5e !important;
   color: #fff !important;
 }
 
 /* Layout Container */
 .main-container {
   max-width: 1320px !important;
-  padding: 0 1.5rem 3rem !important;
-  gap: 2rem !important;
+  padding: 0 1.5rem 2.5rem !important;
+  gap: 1.8rem !important;
 }
 
-/* Welcome Hero: Spatial Accent Card */
+/* Welcome Hero: Dual-Theme Spatial Accent Card */
 .welcome-hero {
   border-radius: 24px !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  background: linear-gradient(135deg, rgba(14, 165, 160, 0.09) 0%, rgba(13, 20, 36, 0.85) 60%) !important;
-  backdrop-filter: blur(28px) !important;
-  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid var(--spatial-border) !important;
+  background: var(--spatial-hero-bg) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   padding: 2rem 2.2rem !important;
-  box-shadow: 0 24px 50px -15px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.15) inset !important;
+  box-shadow: var(--spatial-shadow), 0 1px 0 var(--spatial-inset-top) inset !important;
   position: relative !important;
   overflow: hidden !important;
 }
@@ -2685,40 +2710,43 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   position: absolute !important;
   top: -60px !important;
   right: -60px !important;
-  width: 260px !important;
-  height: 260px !important;
-  background: radial-gradient(circle, rgba(14, 165, 160, 0.25) 0%, transparent 70%) !important;
+  width: 280px !important;
+  height: 280px !important;
+  background: radial-gradient(circle, rgba(14, 165, 160, 0.22) 0%, transparent 70%) !important;
   pointer-events: none !important;
 }
 .welcome-hero h2 {
-  font-size: 1.65rem !important;
+  font-size: 1.7rem !important;
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
-  color: #fff !important;
+  color: var(--text-primary) !important;
   margin: 0.5rem 0 !important;
 }
 .welcome-hero p {
-  color: #94a3b8 !important;
-  font-size: 0.92rem !important;
+  color: var(--text-secondary) !important;
+  font-size: 0.94rem !important;
   line-height: 1.55 !important;
 }
 .welcome-role-tag {
-  background: rgba(14, 165, 160, 0.15) !important;
-  color: #14c8c2 !important;
-  border: 1px solid rgba(14, 165, 160, 0.3) !important;
+  background: rgba(14, 165, 160, 0.14) !important;
+  color: var(--brand) !important;
+  border: 1px solid rgba(14, 165, 160, 0.32) !important;
   border-radius: 99px !important;
   padding: 4px 12px !important;
   font-size: 0.72rem !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   letter-spacing: 0.04em !important;
   text-transform: uppercase !important;
 }
+[data-theme="dark"] .welcome-role-tag {
+  color: #14c8c2 !important;
+}
 .welcome-clock-pill {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: var(--spatial-pill-bg) !important;
+  border: 1px solid var(--spatial-border) !important;
   border-radius: 99px !important;
   padding: 4px 12px !important;
-  color: #cbd5e1 !important;
+  color: var(--text-secondary) !important;
   font-size: 0.78rem !important;
   font-weight: 600 !important;
   font-variant-numeric: tabular-nums !important;
@@ -2728,26 +2756,42 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   color: #fff !important;
   border: none !important;
   border-radius: 12px !important;
-  padding: 9px 18px !important;
+  padding: 10px 18px !important;
   font-size: 0.86rem !important;
   font-weight: 700 !important;
-  box-shadow: 0 10px 24px -6px rgba(14, 165, 160, 0.45) !important;
+  box-shadow: 0 10px 24px -6px rgba(14, 165, 160, 0.42) !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .quick-hero-btn:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 14px 30px -4px rgba(14, 165, 160, 0.6) !important;
+  box-shadow: 0 14px 30px -4px rgba(14, 165, 160, 0.58) !important;
 }
 .quick-hero-btn.secondary {
-  background: rgba(255, 255, 255, 0.07) !important;
-  color: #f1f5f9 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: var(--spatial-pill-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--spatial-border) !important;
   box-shadow: none !important;
 }
 .quick-hero-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: var(--spatial-pill-hover) !important;
+  border-color: rgba(14, 165, 160, 0.4) !important;
+}
+
+/* Profile Card Widget (Right Bento Card) */
+.profile-card-widget {
+  border-radius: 24px !important;
+  border: 1px solid var(--spatial-border) !important;
+  background: var(--spatial-card-bg) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  box-shadow: var(--spatial-shadow), 0 1px 0 var(--spatial-inset-top) inset !important;
+}
+.bento-user-name {
+  color: var(--text-primary) !important;
+}
+.bento-metric-title, .bento-metric-sub {
+  color: var(--text-secondary) !important;
 }
 
 /* Stat Cards: Glass Pillars */
@@ -2761,11 +2805,12 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
 }
 .stat-card {
   border-radius: 18px !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  background: rgba(13, 20, 36, 0.68) !important;
-  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--spatial-border) !important;
+  background: var(--spatial-card-bg) !important;
+  backdrop-filter: blur(22px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(180%) !important;
   padding: 1.3rem 1.4rem !important;
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.08) inset !important;
+  box-shadow: var(--spatial-shadow), 0 1px 0 var(--spatial-inset-top) inset !important;
   display: flex !important;
   align-items: center !important;
   gap: 14px !important;
@@ -2773,17 +2818,17 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .stat-card:hover {
-  transform: translateY(-3px) scale(1.015) !important;
-  border-color: rgba(14, 165, 160, 0.35) !important;
-  box-shadow: 0 18px 36px -8px rgba(14, 165, 160, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset !important;
+  transform: translateY(-4px) scale(1.012) !important;
+  border-color: rgba(14, 165, 160, 0.45) !important;
+  box-shadow: var(--spatial-shadow-hover), 0 1px 0 var(--spatial-inset-top) inset !important;
 }
 .stat-icon-wrapper {
   display: flex !important;
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 12px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 13px !important;
+  background: var(--spatial-pill-bg) !important;
+  border: 1px solid var(--spatial-border) !important;
   align-items: center !important;
   justify-content: center !important;
   font-size: 1.35rem !important;
@@ -2792,7 +2837,7 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
 .stat-label {
   font-size: 0.78rem !important;
   font-weight: 600 !important;
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
   letter-spacing: 0.01em !important;
   margin-bottom: 2px !important;
 }
@@ -2800,15 +2845,15 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   font-size: 1.85rem !important;
   font-weight: 800 !important;
   letter-spacing: -0.03em !important;
-  color: #fff !important;
+  color: var(--text-primary) !important;
   font-variant-numeric: tabular-nums !important;
 }
 
 /* Nav Cards: Dynamic Spatial Grid */
 .section-title {
-  font-size: 1.1rem !important;
-  font-weight: 700 !important;
-  color: #f1f5f9 !important;
+  font-size: 1.12rem !important;
+  font-weight: 800 !important;
+  color: var(--text-primary) !important;
   letter-spacing: -0.02em !important;
   text-transform: none !important;
   margin-bottom: 1rem !important;
@@ -2829,12 +2874,13 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
 }
 .bento-feature-card {
   border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  background: rgba(13, 20, 36, 0.68) !important;
-  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--spatial-border) !important;
+  background: var(--spatial-card-bg) !important;
+  backdrop-filter: blur(22px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(180%) !important;
   padding: 1.5rem !important;
-  min-height: 140px !important;
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.08) inset !important;
+  min-height: 142px !important;
+  box-shadow: var(--spatial-shadow), 0 1px 0 var(--spatial-inset-top) inset !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
@@ -2844,9 +2890,9 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   overflow: hidden !important;
 }
 .bento-feature-card:hover {
-  transform: translateY(-4px) scale(1.01) !important;
-  border-color: rgba(14, 165, 160, 0.45) !important;
-  box-shadow: 0 24px 48px -12px rgba(14, 165, 160, 0.22), 0 1px 0 rgba(255, 255, 255, 0.2) inset !important;
+  transform: translateY(-4px) scale(1.012) !important;
+  border-color: rgba(14, 165, 160, 0.5) !important;
+  box-shadow: var(--spatial-shadow-hover), 0 1px 0 var(--spatial-inset-top) inset !important;
 }
 .bento-feature-card-top {
   display: flex !important;
@@ -2858,18 +2904,18 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   width: 48px !important;
   height: 48px !important;
   border-radius: 14px !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--spatial-pill-bg) !important;
+  border: 1px solid var(--spatial-border) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   font-size: 1.45rem !important;
-  color: #fff !important;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  color: var(--text-primary) !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease !important;
 }
 .bento-feature-card:hover .nav-icon-badge {
   transform: scale(1.1) rotate(4deg) !important;
-  background: rgba(14, 165, 160, 0.18) !important;
+  background: rgba(14, 165, 160, 0.16) !important;
   border-color: rgba(14, 165, 160, 0.4) !important;
 }
 .nav-card-arrow {
@@ -2877,16 +2923,17 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   width: 32px !important;
   height: 32px !important;
   border-radius: 50% !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: var(--spatial-pill-bg) !important;
+  border: 1px solid var(--spatial-border) !important;
   align-items: center !important;
   justify-content: center !important;
   font-size: 0.88rem !important;
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
   transition: all 0.2s ease !important;
 }
 .bento-feature-card:hover .nav-card-arrow {
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: var(--brand) !important;
+  border-color: var(--brand) !important;
   color: #fff !important;
   transform: translate(2px, -2px) !important;
 }
@@ -2897,33 +2944,34 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
 .nav-text {
   display: block !important;
   font-size: 1.08rem !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   letter-spacing: -0.02em !important;
-  color: #fff !important;
+  color: var(--text-primary) !important;
 }
 .nav-subtext {
   display: block !important;
   font-size: 0.8rem !important;
-  color: #94a3b8 !important;
+  color: var(--text-secondary) !important;
   margin-top: 3px !important;
 }
 
 /* Dashboard Panels: Bottom Grid */
-.bottom-grid {
+.bottom-grid, .dashboard-content-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   gap: 20px !important;
 }
 @media (max-width: 900px) {
-  .bottom-grid { grid-template-columns: 1fr !important; }
+  .bottom-grid, .dashboard-content-grid { grid-template-columns: 1fr !important; }
 }
 .dashboard-panel {
   border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  background: rgba(13, 20, 36, 0.68) !important;
-  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--spatial-border) !important;
+  background: var(--spatial-card-bg) !important;
+  backdrop-filter: blur(22px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(180%) !important;
   padding: 1.6rem !important;
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.08) inset !important;
+  box-shadow: var(--spatial-shadow), 0 1px 0 var(--spatial-inset-top) inset !important;
 }
 .widget-header {
   display: flex !important;
@@ -2932,19 +2980,179 @@ main, .main-container, .tasks-container, .schedule-container, .tb-container, .so
   margin-bottom: 1.2rem !important;
 }
 .widget-header h3 {
-  font-size: 1.02rem !important;
-  font-weight: 700 !important;
+  font-size: 1.04rem !important;
+  font-weight: 800 !important;
   letter-spacing: -0.02em !important;
-  color: #fff !important;
+  color: var(--text-primary) !important;
   margin: 0 !important;
 }
 .widget-link {
   font-size: 0.82rem !important;
-  font-weight: 600 !important;
-  color: #14c8c2 !important;
+  font-weight: 700 !important;
+  color: var(--brand) !important;
   text-decoration: none !important;
-  transition: opacity 0.2s ease !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
 }
 .widget-link:hover {
-  opacity: 0.8 !important;
+  opacity: 0.85 !important;
+  transform: translateX(2px) !important;
+}
+
+/* ==================== 17. DOUBLE-BEZEL FOOTER & STATUS BAR ==================== */
+.footer {
+  max-width: 1320px;
+  margin: 2rem auto 0;
+  padding: 1rem 1.5rem;
+  border-radius: 18px;
+  background: var(--spatial-card-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--spatial-border);
+  box-shadow: var(--spatial-shadow), 0 1px 0 var(--spatial-inset-top) inset;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  width: calc(100% - 3rem);
+}
+.footer p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.footer #onlineStatus {
+  margin-top: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--spatial-pill-bg);
+  border: 1px solid var(--spatial-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  .footer {
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+    width: calc(100% - 2rem);
+  }
+}
+
+/* ==================== 18. FLOATING SPATIAL GLASS BOTTOM DOCK ==================== */
+.c7-bottom-dock-wrap {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 950;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  width: auto;
+  max-width: calc(100vw - 20px);
+}
+.c7-bottom-dock {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 24px;
+  background: var(--dock-bg);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid var(--dock-border);
+  box-shadow: var(--dock-shadow);
+  overflow-x: auto;
+  scrollbar-width: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease;
+}
+.c7-bottom-dock::-webkit-scrollbar {
+  display: none;
+}
+.c7-dock-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 42px;
+  padding: 0 13px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+}
+.c7-dock-item svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2;
+  flex-shrink: 0;
+  transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.c7-dock-item:hover {
+  color: var(--text-primary);
+  background: var(--spatial-pill-hover);
+  border-color: rgba(14, 165, 160, 0.28);
+  transform: translateY(-4px) scale(1.05);
+}
+.c7-dock-item:hover svg {
+  transform: scale(1.12);
+  color: var(--brand);
+}
+.c7-dock-item.active {
+  color: #fff !important;
+  background: linear-gradient(135deg, #0ea5a0 0%, #0b8f8a 100%) !important;
+  border-color: rgba(20, 200, 194, 0.45) !important;
+  box-shadow: 0 8px 20px -4px rgba(14, 165, 160, 0.5) !important;
+}
+.c7-dock-item.active svg {
+  color: #fff !important;
+}
+.c7-dock-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--spatial-border);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+.c7-dock-badge {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: #f43f5e;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(244, 63, 94, 0.45);
+}
+@media (max-width: 768px) {
+  .c7-dock-label {
+    display: none;
+  }
+  .c7-dock-item {
+    padding: 0 11px;
+    height: 40px;
+  }
 }
