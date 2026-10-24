@@ -184,7 +184,7 @@ function renderTasks() {
           ${t.description && t.description !== '<p><br></p>' ? `
             <div style="font-size: 0.85rem; color: var(--text-sub); margin-top: 4px;" class="ql-snow">
               <div class="ql-editor" style="padding: 0; max-height: 80px; overflow-y: auto;">
-                ${t.description}
+                ${typeof sanitizeHtml === 'function' ? sanitizeHtml(t.description) : t.description}
               </div>
             </div>
           ` : ''}
@@ -213,14 +213,14 @@ async function toggleTaskCheck(taskId) {
   if (!task) return;
 
   if (!task.completions) task.completions = {};
-  const currentStatus = !!task.completions[currentUser.id];
-  task.completions[currentUser.id] = !currentStatus;
+  const nextStatus = !task.completions[currentUser.id];
+  task.completions[currentUser.id] = nextStatus;
 
   renderTasks();
   if (typeof updateSharedTaskCompletion === 'function') {
-    await updateSharedTaskCompletion(task.id, task.completions);
+    await updateSharedTaskCompletion(task.id, task.completions, currentUser.id, nextStatus);
   }
-  showToast(task.completions[currentUser.id] ? '🎉 Đã hoàn thành nhiệm vụ!' : 'Đã chuyển nhiệm vụ về đang làm', 'info');
+  showToast(nextStatus ? '🎉 Đã hoàn thành nhiệm vụ!' : 'Đã chuyển nhiệm vụ về đang làm', 'info');
 }
 
 async function toggleGlobalCompletion(taskId) {

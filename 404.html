@@ -1,34 +1,34 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#6366f1">
+  <meta name="theme-color" content="#0ea5a0">
   <title>11C7 AIO - Lỗi 404</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='60' font-size='80' text-anchor='middle'>❌</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/hub.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/tokens.css?v=6.2.0">
+  <link rel="stylesheet" href="style/hub.css?v=6.2.0">
   <style>
     body {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      min-height: 100dvh;
       padding: 1.5rem;
     }
     .error-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      border: var(--glass-border);
-      border-radius: var(--radius-lg);
+      background: var(--bg-elevated);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-xl);
       padding: 3rem 2rem;
       max-width: 520px;
       width: 100%;
-      box-shadow: var(--shadow-lg);
+      box-shadow: var(--sh-xl);
       text-align: center;
-      animation: popIn 0.4s var(--ease-spring);
     }
     .error-icon {
       font-size: 4.5rem;
@@ -37,7 +37,7 @@
     .error-code {
       font-size: 3.5rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+      background: var(--c7-gradient-warm);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       line-height: 1;

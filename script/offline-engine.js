@@ -234,14 +234,17 @@ const C7Vault = (function() {
       for (const item of queue) {
         try {
           const targetRef = db.ref(item.path);
+          const cleanPayload = (typeof window.sanitizeForFirebase === 'function')
+            ? window.sanitizeForFirebase(item.data)
+            : item.data;
           if (item.type === 'set') {
-            await targetRef.set(item.data);
+            await targetRef.set(cleanPayload);
           } else if (item.type === 'update') {
-            await targetRef.update(item.data);
+            await targetRef.update(cleanPayload);
           } else if (item.type === 'remove') {
             await targetRef.remove();
           } else if (item.type === 'push') {
-            await targetRef.push(item.data);
+            await targetRef.push(cleanPayload);
           }
           await idbDelete(STORE_MUTATIONS, item.id);
         } catch (err) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v6.1.0-hypervault';
+const CACHE_NAME = 'c7aio-v6.2.0-obsidian';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -23,12 +23,10 @@ const ASSETS_TO_CACHE = [
   './style/nk.css',
   './style/sodo.css',
   './style/console.css',
-  './style/students.css',
   './script/offline-engine.js',
   './script/firebase-config.js',
   './script/firebase-utils.js',
   './script/students-list.js',
-  './script/students-manage.js',
   './script/hub.js',
   './script/console.js',
   './script/lich.js',
@@ -45,7 +43,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('✅ Caching C7AIO assets v4.0.0...');
+      console.log('✅ Caching C7AIO assets v6.2.0...');
       return cache.addAll(ASSETS_TO_CACHE).catch(err => {
         console.log('Lỗi khi cache một số assets:', err);
         return Promise.resolve();

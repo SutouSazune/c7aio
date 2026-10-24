@@ -38,6 +38,18 @@ function sanitizeForFirebase(data) {
 }
 window.sanitizeForFirebase = sanitizeForFirebase;
 
+// XSS Sanitizer: Strip dangerous tags/attributes while keeping safe rich text formatting
+function sanitizeHtml(dirtyHtml) {
+  if (!dirtyHtml) return '';
+  let str = String(dirtyHtml);
+  str = str.replace(/<\s*(script|iframe|object|embed|form|meta|link|style|base)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '');
+  str = str.replace(/<\s*(script|iframe|object|embed|form|meta|link|style|base)[^>]*\/?>/gi, '');
+  str = str.replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  str = str.replace(/(href|src|action)\s*=\s*(?:"\s*javascript:[^"]*"|'\s*javascript:[^']*'|javascript:[^\s>]+)/gi, '$1="#"');
+  return str;
+}
+window.sanitizeHtml = sanitizeHtml;
+
 // Offline Sync Queue & Network Resilience Engine
 const OfflineSyncQueue = {
   STORAGE_KEY: 'c7aio_offline_queue',
@@ -54,14 +66,19 @@ const OfflineSyncQueue = {
 
   enqueue(mutation) {
     try {
+      const cleanMutation = {
+        ...mutation,
+        data: mutation.data !== undefined ? sanitizeForFirebase(mutation.data) : undefined
+      };
       if (typeof C7Vault !== 'undefined' && typeof C7Vault.queueMutation === 'function') {
-        C7Vault.queueMutation(mutation);
+        C7Vault.queueMutation(cleanMutation);
+        return;
       }
       const queue = this.getQueue();
       queue.push({
         id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
         timestamp: new Date().toISOString(),
-        ...mutation
+        ...cleanMutation
       });
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(queue));
       this.notifyStatus();
@@ -70,12 +87,15 @@ const OfflineSyncQueue = {
     }
   },
 
-  notifyStatus() {
-    const queue = this.getQueue();
+  async notifyStatus() {
+    let count = this.getQueue().length;
+    if (typeof C7Vault !== 'undefined' && typeof C7Vault.getQueueLength === 'function') {
+      try { count += await C7Vault.getQueueLength(); } catch (e) {}
+    }
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent !== 'undefined') {
       window.dispatchEvent(new CustomEvent('c7:sync-status', {
         detail: {
-          pendingCount: queue.length,
+          pendingCount: count,
           isOnline: this.isOnline
         }
       }));
@@ -83,6 +103,9 @@ const OfflineSyncQueue = {
   },
 
   async processQueue() {
+    if (typeof C7Vault !== 'undefined' && typeof C7Vault.processQueue === 'function') {
+      C7Vault.processQueue().catch(() => {});
+    }
     if (this.isProcessing) return;
     const db = getDb();
     if (!db || !this.isOnline) return;
@@ -350,7 +373,7 @@ async function deleteSharedTask(taskId) {
   }
 }
 
-async function updateSharedTaskCompletion(taskId, completions) {
+async function updateSharedTaskCompletion(taskId, completions, userId, isDone) {
   const idStr = String(taskId);
   const cleanCompletions = sanitizeForFirebase(completions || {});
 
@@ -364,15 +387,26 @@ async function updateSharedTaskCompletion(taskId, completions) {
   } catch (e) {}
 
   const db = getDb();
+  const hasAtomicUser = userId !== undefined && userId !== null;
+  const targetPath = hasAtomicUser
+    ? `shared/tasks/${idStr}/completions/${userId}`
+    : `shared/tasks/${idStr}/completions`;
+  const payload = hasAtomicUser ? Boolean(isDone) : cleanCompletions;
+  const opType = hasAtomicUser ? 'set' : 'update';
+
   if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
-    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/tasks/${idStr}/completions`, data: cleanCompletions });
+    OfflineSyncQueue.enqueue({ type: opType, path: targetPath, data: payload });
     return;
   }
 
   try {
-    await db.ref(`shared/tasks/${idStr}/completions`).set(cleanCompletions);
+    if (hasAtomicUser) {
+      await db.ref(targetPath).set(payload);
+    } else {
+      await db.ref(targetPath).update(payload);
+    }
   } catch (error) {
-    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/tasks/${idStr}/completions`, data: cleanCompletions });
+    OfflineSyncQueue.enqueue({ type: opType, path: targetPath, data: payload });
   }
 }
 
@@ -462,7 +496,7 @@ async function deleteSharedNotification(notifId) {
   }
 }
 
-async function updateSharedNotificationCompletion(notifId, completions) {
+async function updateSharedNotificationCompletion(notifId, completions, userId, isRead) {
   const idStr = String(notifId);
   const cleanCompletions = sanitizeForFirebase(completions || {});
 
@@ -476,15 +510,26 @@ async function updateSharedNotificationCompletion(notifId, completions) {
   } catch (e) {}
 
   const db = getDb();
+  const hasAtomicUser = userId !== undefined && userId !== null;
+  const targetPath = hasAtomicUser
+    ? `shared/notifications/${idStr}/completions/${userId}`
+    : `shared/notifications/${idStr}/completions`;
+  const payload = hasAtomicUser ? Boolean(isRead) : cleanCompletions;
+  const opType = hasAtomicUser ? 'set' : 'update';
+
   if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
-    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/notifications/${idStr}/completions`, data: cleanCompletions });
+    OfflineSyncQueue.enqueue({ type: opType, path: targetPath, data: payload });
     return;
   }
 
   try {
-    await db.ref(`shared/notifications/${idStr}/completions`).set(cleanCompletions);
+    if (hasAtomicUser) {
+      await db.ref(targetPath).set(payload);
+    } else {
+      await db.ref(targetPath).update(payload);
+    }
   } catch (error) {
-    OfflineSyncQueue.enqueue({ type: 'set', path: `shared/notifications/${idStr}/completions`, data: cleanCompletions });
+    OfflineSyncQueue.enqueue({ type: opType, path: targetPath, data: payload });
   }
 }
 

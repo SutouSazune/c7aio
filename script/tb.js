@@ -170,11 +170,12 @@ async function toggleNotifRead(notifId) {
   if (!n) return;
 
   if (!n.completions) n.completions = {};
-  n.completions[currentUser.id] = !n.completions[currentUser.id];
+  const nextRead = !n.completions[currentUser.id];
+  n.completions[currentUser.id] = nextRead;
 
   renderNotifications();
   if (typeof updateSharedNotificationCompletion === 'function') {
-    await updateSharedNotificationCompletion(n.id, n.completions);
+    await updateSharedNotificationCompletion(n.id, n.completions, currentUser.id, nextRead);
   }
 }
 
@@ -186,13 +187,14 @@ function viewNotifDetail(notifId) {
   if (!n.completions[currentUser.id]) {
     n.completions[currentUser.id] = true;
     if (typeof updateSharedNotificationCompletion === 'function') {
-      updateSharedNotificationCompletion(n.id, n.completions);
+      updateSharedNotificationCompletion(n.id, n.completions, currentUser.id, true);
     }
   }
 
   document.getElementById('viewNotifModalTitle').textContent = n.message;
   document.getElementById('viewNotifModalMeta').textContent = `🕒 ${new Date(n.createdAt).toLocaleString('vi-VN')}`;
-  document.getElementById('viewNotifModalBody').innerHTML = n.content || '<p style="color: var(--text-muted); font-style: italic;">Không có nội dung mở rộng.</p>';
+  const rawContent = n.content || '<p style="color: var(--text-muted); font-style: italic;">Không có nội dung mở rộng.</p>';
+  document.getElementById('viewNotifModalBody').innerHTML = typeof sanitizeHtml === 'function' ? sanitizeHtml(rawContent) : rawContent;
   document.getElementById('notifDetailOverlay').style.display = 'flex';
   renderNotifications();
 }

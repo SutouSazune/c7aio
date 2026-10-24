@@ -120,17 +120,42 @@ function sodoLoadFromCache() {
 
 async function sodoSave(path, data) {
   localStorage.setItem('c7aio_seating_cache', JSON.stringify(sodoData));
+  const cleanData = (typeof sanitizeForFirebase === 'function') ? sanitizeForFirebase(data) : data;
   const db = getDb();
-  if (!db) { showToast('⚠️ Offline — Đã lưu cục bộ', 'warning'); return; }
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    if (typeof OfflineSyncQueue !== 'undefined') {
+      OfflineSyncQueue.enqueue({ type: 'set', path: `shared/seating/${path}`, data: cleanData });
+    }
+    showToast('⚠️ Đang ngoại tuyến — Đã lưu sơ đồ vào hàng đợi đồng bộ', 'warning');
+    return;
+  }
   try {
-    await db.ref(`shared/seating/${path}`).set(data);
+    await db.ref(`shared/seating/${path}`).set(cleanData);
     showToast('✅ Đã lưu sơ đồ', 'success');
-  } catch (e) { showToast('❌ Lỗi lưu: ' + e.message, 'error'); }
+  } catch (e) {
+    if (typeof OfflineSyncQueue !== 'undefined') {
+      OfflineSyncQueue.enqueue({ type: 'set', path: `shared/seating/${path}`, data: cleanData });
+    }
+    showToast('⚠️ Đã lưu cục bộ (chờ đồng bộ): ' + e.message, 'warning');
+  }
 }
 
 async function sodoRemove(path) {
+  localStorage.setItem('c7aio_seating_cache', JSON.stringify(sodoData));
   const db = getDb();
-  if (db) await db.ref(`shared/seating/${path}`).remove();
+  if (!db || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    if (typeof OfflineSyncQueue !== 'undefined') {
+      OfflineSyncQueue.enqueue({ type: 'remove', path: `shared/seating/${path}` });
+    }
+    return;
+  }
+  try {
+    await db.ref(`shared/seating/${path}`).remove();
+  } catch (e) {
+    if (typeof OfflineSyncQueue !== 'undefined') {
+      OfflineSyncQueue.enqueue({ type: 'remove', path: `shared/seating/${path}` });
+    }
+  }
 }
 
 // ============= TAB SWITCHING =============

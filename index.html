@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/tokens.css?v=6.1.0">
-  <link rel="stylesheet" href="style/hub.css?v=6.1.0">
+  <link rel="stylesheet" href="style/tokens.css?v=6.2.0">
+  <link rel="stylesheet" href="style/hub.css?v=6.2.0">
 </head>
 <body>
 
@@ -287,57 +287,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="script/offline-engine.js"></script>
-  <script src="script/firebase-config.js"></script>
-  <script src="script/firebase-utils.js"></script>
-  <script src="script/students-list.js"></script>
-  <script src="script/hub.js"></script>
-  <script src="script/console.js"></script>
-
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      // Xác thực đăng nhập
-      if (!isLoggedIn()) {
-        window.location.href = buildUrl('login.html');
-        return;
-      }
-
-      const user = getCurrentUser();
-      const displayName = user ? user.name : 'Học sinh';
-      const nameEl = document.getElementById('userNameDisplay');
-      if (nameEl) nameEl.textContent = displayName;
-
-      const avatarMini = document.getElementById('userAvatarMini');
-      if (avatarMini) {
-        avatarMini.textContent = getInitials(displayName);
-        avatarMini.style.background = getAvatarGradient(displayName);
-      }
-
-      updateWelcomeMessage();
-      checkAdminButtons();
-      loadStats();
-      updateOnlineStatus();
-
-      // Refresh stats periodically
-      setInterval(() => {
-        loadStats();
-      }, 30000);
-    });
-
-    function handleLogout() {
-      showConfirm('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?', () => {
-        logoutUser();
-        window.location.href = buildUrl('login.html');
-      });
-    }
-
-    function handleProfileClick() {
-      const user = getCurrentUser();
-      if (!user) return;
-      const roles = Array.isArray(user.role) ? user.role : [user.role || 'student'];
-      const roleText = roles.map(r => ROLES[r] || r).join(', ');
-      showDialog('Hồ sơ học sinh', `👤 Họ và tên: ${user.name}<br>⭐️ Chức vụ: ${roleText}<br>📅 Ngày sinh: ${user.dob || 'Chưa cập nhật'}`, '👤');
-    }
-  </script>
+  <script src="script/offline-engine.js?v=6.2.0"></script>
+  <script src="script/firebase-config.js?v=6.2.0"></script>
+  <script src="script/firebase-utils.js?v=6.2.0"></script>
+  <script src="script/students-list.js?v=6.2.0"></script>
+  <script src="script/hub.js?v=6.2.0"></script>
+  <script src="script/console.js?v=6.2.0"></script>
 </body>
 </html>

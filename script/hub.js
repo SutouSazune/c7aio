@@ -29,18 +29,30 @@ function buildUrl(relativePath) {
   return BASE_PATH === '/' ? path : BASE_PATH + path;
 }
 
-// Global Cursor & Dynamic Card Spotlight Tracker
+// Global Cursor & Dynamic Card Spotlight Tracker (60fps rAF throttled)
 if (typeof window !== 'undefined') {
+  let _rafPending = false;
+  let _lastPointerEvent = null;
   window.addEventListener('pointermove', (e) => {
-    document.documentElement.style.setProperty('--cursor-x', `${e.clientX}px`);
-    document.documentElement.style.setProperty('--cursor-y', `${e.clientY}px`);
-    
-    const card = e.target.closest('.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card, .hs-student-card, .notif-card-item, .analytics-card, .pq-table-card, .nk-table-card');
-    if (card) {
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-      card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
-    }
+    _lastPointerEvent = e;
+    if (_rafPending) return;
+    _rafPending = true;
+    requestAnimationFrame(() => {
+      _rafPending = false;
+      const ev = _lastPointerEvent;
+      if (!ev) return;
+      document.documentElement.style.setProperty('--cursor-x', `${ev.clientX}px`);
+      document.documentElement.style.setProperty('--cursor-y', `${ev.clientY}px`);
+
+      const card = ev.target && ev.target.closest
+        ? ev.target.closest('.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card, .hs-student-card, .notif-card-item, .analytics-card, .pq-table-card, .nk-table-card')
+        : null;
+      if (card) {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', `${ev.clientX - rect.left}px`);
+        card.style.setProperty('--mouse-y', `${ev.clientY - rect.top}px`);
+      }
+    });
   }, { passive: true });
 }
 
@@ -630,8 +642,8 @@ const CommandPalette = {
       { id: 'nk', title: 'Nhật ký hoạt động', desc: 'Lịch sử thao tác và sự kiện hệ thống', icon: '📜', url: prefix + 'logs/nk.html', category: 'Quản lý' }
     ];
 
-    const stds = (typeof DEFAULT_STUDENTS !== 'undefined' && Array.isArray(DEFAULT_STUDENTS)) 
-      ? DEFAULT_STUDENTS 
+    const stds = (typeof STUDENTS !== 'undefined' && Array.isArray(STUDENTS) && STUDENTS.length > 0)
+      ? STUDENTS
       : JSON.parse(localStorage.getItem('c7aio_students_cache') || '[]');
     
     stds.forEach(s => {
@@ -639,13 +651,45 @@ const CommandPalette = {
         list.push({
           id: 'std_' + (s.id || s.name),
           title: s.name,
-          desc: `Học sinh 11C7 ${s.previousClass ? '(' + s.previousClass + ')' : ''}`,
+          desc: `Học sinh 11C7 • Tổ ${s.group || 1} ${s.previousClass ? '(' + s.previousClass + ')' : ''}`,
           icon: '🎓',
           url: prefix + 'hoso/hs.html?search=' + encodeURIComponent(s.name),
           category: 'Thành viên'
         });
       }
     });
+
+    try {
+      const cachedTasks = JSON.parse(localStorage.getItem('c7aio_tasks_cache') || '[]');
+      cachedTasks.slice(0, 20).forEach(t => {
+        if (t && t.name) {
+          list.push({
+            id: 'task_' + t.id,
+            title: t.name,
+            desc: `Nhiệm vụ ${t.category || 'Bài tập'} ${t.priority === 'Khẩn cấp' ? '• 🔥 Khẩn cấp' : ''}`,
+            icon: '📋',
+            url: prefix + 'nhiemvu/nv.html',
+            category: 'Nhiệm vụ'
+          });
+        }
+      });
+    } catch (e) {}
+
+    try {
+      const cachedNotifs = JSON.parse(localStorage.getItem('c7aio_notifications_cache') || '[]');
+      cachedNotifs.slice(0, 15).forEach(n => {
+        if (n && n.message) {
+          list.push({
+            id: 'notif_' + n.id,
+            title: n.message,
+            desc: `Thông báo lớp ${n.pinned ? '• 📌 Đã ghim' : ''}`,
+            icon: '📢',
+            url: prefix + 'thongbao/tb.html',
+            category: 'Thông báo'
+          });
+        }
+      });
+    } catch (e) {}
 
     return list;
   },
@@ -987,13 +1031,20 @@ function initHubPage() {
   }
 
   if (user) {
-    const avatarMini = document.getElementById('userAvatarMini');
+    let avatarMini = document.getElementById('userAvatarMini');
+    const nameDisplay = document.getElementById('userNameDisplay');
+    const badgeBtn = nameDisplay ? nameDisplay.closest('.user-badge-btn') : null;
+    if (!avatarMini && badgeBtn && nameDisplay) {
+      avatarMini = document.createElement('div');
+      avatarMini.id = 'userAvatarMini';
+      avatarMini.className = 'user-avatar-mini';
+      badgeBtn.insertBefore(avatarMini, nameDisplay);
+    }
     if (avatarMini) {
       avatarMini.textContent = getInitials(user.name);
       avatarMini.style.background = getAvatarGradient(user.name);
     }
 
-    const nameDisplay = document.getElementById('userNameDisplay');
     if (nameDisplay) {
       nameDisplay.textContent = user.name;
     }

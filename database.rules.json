@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "shared": {
+      ".read": true,
+      ".write": true,
+      "students": {
+        ".validate": "newData.hasChildren()"
+      },
+      "tasks": {
+        ".indexOn": ["createdAt", "updatedAt", "deadline", "category"]
+      },
+      "notifications": {
+        ".indexOn": ["createdAt", "pinned", "type"]
+      },
+      "logs": {
+        ".indexOn": ["timestamp", "type", "user"]
+      },
+      "presence": {
+        ".indexOn": ["lastSeen"]
+      },
+      "userStats": {
+        ".indexOn": ["lastSeen", "lastLogin"]
+      },
+      "schedules": {
+        ".indexOn": [".key"]
+      },
+      "weekMetadata": {
+        ".indexOn": ["startDate", "endDate"]
+      }
+    }
+  }
+}

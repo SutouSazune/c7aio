@@ -1,23 +1,23 @@
 {
-  "name": "10C7 All In One - Cổng Học Tập Thông Minh",
-  "short_name": "10C7 AIO",
-  "description": "Nền tảng quản lý học tập, thời khóa biểu và nhiệm vụ lớp 10C7",
+  "name": "11C7 All In One - Cổng Học Tập & Quản Lý Lớp Học",
+  "short_name": "11C7 AIO",
+  "description": "Nền tảng quản lý học tập, thời khóa biểu, sơ đồ lớp và nhiệm vụ lớp 11C7",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#6366f1",
-  "background_color": "#0f172a",
+  "theme_color": "#0ea5a0",
+  "background_color": "#040810",
   "categories": ["education", "productivity"],
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%236366f1' width='192' height='192'/><text x='50%' y='50%' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central'>📚</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230ea5a0' rx='36' width='192' height='192'/><text x='50%' y='50%' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central'>📚</text></svg>",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%236366f1' width='512' height='512'/><text x='50%' y='50%' font-size='280' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central'>📚</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%230ea5a0' rx='96' width='512' height='512'/><text x='50%' y='50%' font-size='280' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='central'>📚</text></svg>",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
