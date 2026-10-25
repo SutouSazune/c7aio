@@ -142,17 +142,12 @@
 
 .task-item-card[data-priority="urgent"], .task-card[data-priority="urgent"],
 .task-item-card.urgent {
-  border-left: 4px solid var(--danger);
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, var(--bg-surface) 35%);
+  border-left: 4px solid var(--danger) !important;
 }
 
 .task-item-card.completed {
-  opacity: 0.75;
-  background: rgba(240, 253, 244, 0.6);
-}
-
-[data-theme="dark"] .task-item-card.completed {
-  background: rgba(6, 78, 59, 0.2);
+  border-left: 4px solid var(--success) !important;
+  opacity: 0.88;
 }
 
 /* Checkbox Button */

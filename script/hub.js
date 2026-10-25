@@ -45,12 +45,20 @@ if (typeof window !== 'undefined') {
       document.documentElement.style.setProperty('--cursor-y', `${ev.clientY}px`);
 
       const card = ev.target && ev.target.closest
-        ? ev.target.closest('.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card, .hs-student-card, .notif-card-item, .analytics-card, .pq-table-card, .nk-table-card')
+        ? ev.target.closest('.c7-card, .nav-btn, .stat-card, .welcome-hero, .bento-card, .task-item-card, .hs-student-card, .notif-card-item, .analytics-card, .pq-table-card, .nk-table-card, .sodo-cell-filled')
         : null;
       if (card) {
         const rect = card.getBoundingClientRect();
-        card.style.setProperty('--mouse-x', `${ev.clientX - rect.left}px`);
-        card.style.setProperty('--mouse-y', `${ev.clientY - rect.top}px`);
+        const mx = ev.clientX - rect.left;
+        const my = ev.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${mx}px`);
+        card.style.setProperty('--mouse-y', `${my}px`);
+        if (card.classList.contains('bento-feature-card') || card.classList.contains('stat-card')) {
+          const rx = ((my / Math.max(1, rect.height)) - 0.5) * -7;
+          const ry = ((mx / Math.max(1, rect.width)) - 0.5) * 7;
+          card.style.setProperty('--rx', `${rx.toFixed(2)}deg`);
+          card.style.setProperty('--ry', `${ry.toFixed(2)}deg`);
+        }
       }
     });
   }, { passive: true });
@@ -1102,15 +1110,39 @@ const C7GitHubLibsEngine = {
     if (typeof window.gsap === 'undefined') return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     try {
-      const targets = document.querySelectorAll('.welcome-hero, .profile-card-widget, .stat-card, .bento-feature-card, .dashboard-panel, .analytics-card, .pq-table-card, .nk-table-card');
+      const targets = document.querySelectorAll('.welcome-hero, .profile-card-widget, .stat-card, .bento-feature-card, .dashboard-panel, .analytics-card, .pq-table-card, .nk-table-card, .task-controls-bar, .notif-top-bar, .hs-top-bar, .hs-view-hub, .sodo-tabs');
       if (targets.length > 0) {
         window.gsap.fromTo(
           targets,
           { opacity: 0, y: 18, scale: 0.985 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.55, stagger: 0.045, ease: 'power3.out', clearProps: 'transform,opacity' }
+          { opacity: 1, y: 0, scale: 1, duration: 0.52, stagger: 0.04, ease: 'power3.out', clearProps: 'transform,opacity' }
         );
       }
+      this.bindDynamicContainerMotion();
     } catch (e) {}
+  },
+  bindDynamicContainerMotion() {
+    if (this._obsBound || typeof MutationObserver === 'undefined') return;
+    this._obsBound = true;
+    const containers = document.querySelectorAll('#taskListContainer, #notifListContainer, .sodo-panels, #recentTasks');
+    containers.forEach(container => {
+      let debounceTimer = null;
+      const obs = new MutationObserver(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          if (typeof window.gsap === 'undefined') return;
+          const items = container.querySelectorAll('.task-item-card, .notif-card-item, .sodo-cell, .recent-item');
+          if (items.length > 0 && items.length <= 60) {
+            window.gsap.fromTo(
+              items,
+              { opacity: 0, y: 12, scale: 0.98 },
+              { opacity: 1, y: 0, scale: 1, duration: 0.36, stagger: 0.022, ease: 'power2.out', clearProps: 'transform,opacity' }
+            );
+          }
+        }, 30);
+      });
+      obs.observe(container, { childList: true, subtree: true });
+    });
   }
 };
 

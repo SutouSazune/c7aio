@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v6.2.0-obsidian';
+const CACHE_NAME = 'c7aio-v9.0.0-prismatic';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -74,24 +74,13 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
 
   event.respondWith(
-    // Cache-first (stale-while-revalidate): serve the cached asset instantly so
-    // reloads do not block on a network round-trip + JS parse. Refresh in the
-    // background so a deployed update is picked up on the next visit.
-    caches.open(CACHE_NAME).then(cache => cache.match(request)).then(cachedResponse => {
-      const networkFetch = fetch(request).then(networkResponse => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
-        }
-        return networkResponse;
-      });
-
-      if (cachedResponse) {
-        // Serve cached copy immediately, update in background
-        event.waitUntil(networkFetch);
-        return cachedResponse;
+    // Network-first with fast Cache fallback so UI/CSS/JS updates apply immediately on reload
+    fetch(request).then(networkResponse => {
+      if (networkResponse && networkResponse.status === 200) {
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
       }
-      return networkFetch;
+      return networkResponse;
     }).catch(() => {
       return caches.match(request).then(cachedResponse => {
         if (cachedResponse) return cachedResponse;

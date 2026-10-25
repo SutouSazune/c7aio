@@ -64,16 +64,12 @@
 }
 
 .notif-card-item.pinned {
-  border-left: 5px solid var(--accent);
-  background: var(--accent-dim);
-}
-
-[data-theme="dark"] .notif-card-item.pinned {
-  background: rgba(245, 158, 11, 0.14);
+  border-left: 4px solid var(--accent) !important;
+  box-shadow: 0 12px 32px -10px rgba(245, 158, 11, 0.18), 0 1px 0 var(--spatial-inset-top) inset !important;
 }
 
 .notif-card-item.read {
-  opacity: 0.75;
+  opacity: 0.92;
 }
 
 .notif-icon-bubble {
