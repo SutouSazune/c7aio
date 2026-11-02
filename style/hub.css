@@ -3376,9 +3376,11 @@ body {
   font-style: normal !important;
 }
 
-/* Bottom Dock Safe Clearance */
-.footer {
-  padding-bottom: 92px !important;
+/* Bottom Dock Safe Clearance (Only for mobile floating dock) */
+@media (max-width: 1023px) {
+  body:not(.c7-os-shell-active) .footer {
+    padding-bottom: 84px !important;
+  }
 }
 
 /* ==================== 21. SCIENTIFIC LAYOUT & PROPORTION ENGINE (ALL PAGES) ==================== */
@@ -4394,25 +4396,28 @@ body {
 
 .c7-os-footer-actions {
   display: grid;
-  grid-template-columns: 1fr 40px;
-  gap: 6px;
+  grid-template-columns: 1fr 1fr 36px;
+  gap: 5px;
 }
 
 .c7-os-footer-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 6px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-soft);
   color: var(--text);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .c7-os-footer-btn:hover {
@@ -4980,4 +4985,75 @@ html[data-time-phase="night"] .ambient-glow.glow-2 {
   flex: 1;
   height: 1px;
   background: var(--border-subtle);
+}
+
+/* ==========================================================================
+   29. FOOTER & BOTTOM CLEARANCE ARCHITECTURE (SỬA LỖI ĐÈ GÓC & RỖNG ĐÁY)
+   ========================================================================== */
+
+main,
+.schedule-page-container,
+.home-dashboard-container,
+.hs-page-container,
+.tb-container,
+.nv-container,
+.tk-container {
+  margin-bottom: 2.2rem !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.footer {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 2rem 0 1.25rem 0 !important;
+  padding: 0.85rem 1.4rem !important;
+  border-radius: 16px !important;
+  background: var(--spatial-card-bg) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid var(--spatial-border) !important;
+  box-shadow: var(--spatial-shadow) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  position: relative !important;
+  z-index: 10 !important;
+  clear: both !important;
+  box-sizing: border-box !important;
+}
+
+body.c7-os-shell-active .footer {
+  margin-top: 2rem !important;
+  padding-bottom: 0.85rem !important;
+}
+
+/* Sidebar Footer Actions: 3 balanced buttons */
+.c7-os-footer-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+}
+
+.c7-os-footer-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  padding: 0 5px !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.c7-os-footer-icon-btn {
+  flex: 0 0 34px !important;
+  width: 34px !important;
+  padding: 0 !important;
 }

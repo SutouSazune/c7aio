@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v15.0.0-chrono-polish';
+const CACHE_NAME = 'c7aio-v17.0.0-final-refresh';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

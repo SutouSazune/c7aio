@@ -299,60 +299,180 @@ html[data-skin="ocean"] {
 }
 
 /* ====== DYNAMIC VIETNAM TIME-PHASE ENGINE (UTC+7 CHRONO ENGINE) ====== */
-/* 1. Morning (05:00 - 11:29) — Azure Dawn Clarity */
+/* 1. Morning (05:00 - 11:30) — Azure Dawn & Emerald Breeze */
 html[data-time-phase="morning"] {
-  --time-ambient-1: rgba(6, 182, 212, 0.16);
-  --time-ambient-2: rgba(59, 130, 246, 0.12);
-  --time-glow: rgba(14, 165, 233, 0.28);
+  --brand: #0284c7;
+  --brand-hover: #0369a1;
+  --brand-strong: #0284c7;
+  --brand-dim: rgba(2, 132, 199, 0.12);
+  --brand-glow: rgba(56, 189, 248, 0.35);
+  --accent: #10b981;
   --time-accent: #0284c7;
+  --time-ambient-1: rgba(6, 182, 212, 0.20);
+  --time-ambient-2: rgba(16, 185, 129, 0.16);
+  --c7-gradient-primary: linear-gradient(135deg, #0284c7 0%, #06b6d4 50%, #10b981 100%);
+  --c7-gradient-hero: linear-gradient(145deg, #075985 0%, #0284c7 45%, #06b6d4 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 12% 8%, rgba(6, 182, 212, 0.20) 0%, transparent 45%),
+    radial-gradient(circle at 88% 18%, rgba(16, 185, 129, 0.16) 0%, transparent 48%),
+    radial-gradient(circle at 50% 92%, rgba(2, 132, 199, 0.12) 0%, transparent 52%),
+    #f0f9ff;
+  --spatial-card-bg: rgba(255, 255, 255, 0.94);
+  --spatial-header-bg: rgba(255, 255, 255, 0.90);
+  --spatial-border: rgba(2, 132, 199, 0.16);
+  --spatial-shadow: 0 16px 40px -12px rgba(2, 132, 199, 0.15), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
 }
 html[data-theme="dark"][data-time-phase="morning"] {
-  --time-ambient-1: rgba(6, 182, 212, 0.20);
-  --time-ambient-2: rgba(99, 102, 241, 0.18);
-  --time-glow: rgba(56, 189, 248, 0.32);
+  --brand: #38bdf8;
+  --brand-hover: #7dd3fc;
+  --brand-strong: #38bdf8;
+  --brand-dim: rgba(56, 189, 248, 0.16);
+  --brand-glow: rgba(56, 189, 248, 0.40);
+  --accent: #34d399;
   --time-accent: #38bdf8;
+  --time-ambient-1: rgba(6, 182, 212, 0.24);
+  --time-ambient-2: rgba(16, 185, 129, 0.18);
+  --c7-gradient-primary: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #34d399 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 12% 8%, rgba(6, 182, 212, 0.24) 0%, transparent 45%),
+    radial-gradient(circle at 88% 18%, rgba(16, 185, 129, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 50% 92%, rgba(2, 132, 199, 0.16) 0%, transparent 52%),
+    #030c1a;
+  --spatial-card-bg: rgba(10, 24, 46, 0.82);
+  --spatial-header-bg: rgba(8, 20, 38, 0.86);
+  --spatial-border: rgba(56, 189, 248, 0.22);
 }
 
-/* 2. Afternoon (11:30 - 16:59) — High Focus Warm Indigo & Amber */
+/* 2. Afternoon (11:30 - 17:00) — Royal Indigo & Golden Focus */
 html[data-time-phase="afternoon"] {
-  --time-ambient-1: rgba(79, 70, 229, 0.14);
-  --time-ambient-2: rgba(245, 158, 11, 0.12);
-  --time-glow: rgba(99, 102, 241, 0.30);
-  --time-accent: #6366f1;
+  --brand: #4f46e5;
+  --brand-hover: #4338ca;
+  --brand-strong: #6366f1;
+  --brand-dim: rgba(79, 70, 229, 0.12);
+  --brand-glow: rgba(99, 102, 241, 0.35);
+  --accent: #f59e0b;
+  --time-accent: #4f46e5;
+  --time-ambient-1: rgba(79, 70, 229, 0.18);
+  --time-ambient-2: rgba(245, 158, 11, 0.15);
+  --c7-gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #f59e0b 100%);
+  --c7-gradient-hero: linear-gradient(145deg, #3730a3 0%, #4f46e5 45%, #f59e0b 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 10% 6%, rgba(79, 70, 229, 0.18) 0%, transparent 44%),
+    radial-gradient(circle at 90% 16%, rgba(245, 158, 11, 0.15) 0%, transparent 46%),
+    radial-gradient(circle at 50% 94%, rgba(99, 102, 241, 0.10) 0%, transparent 50%),
+    #f5f6fc;
+  --spatial-card-bg: rgba(255, 255, 255, 0.94);
+  --spatial-header-bg: rgba(255, 255, 255, 0.90);
+  --spatial-border: rgba(79, 70, 229, 0.16);
+  --spatial-shadow: 0 16px 40px -12px rgba(79, 70, 229, 0.15), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
 }
 html[data-theme="dark"][data-time-phase="afternoon"] {
-  --time-ambient-1: rgba(99, 102, 241, 0.22);
-  --time-ambient-2: rgba(245, 158, 11, 0.16);
-  --time-glow: rgba(129, 140, 248, 0.35);
+  --brand: #818cf8;
+  --brand-hover: #a5b4fc;
+  --brand-strong: #818cf8;
+  --brand-dim: rgba(129, 140, 248, 0.16);
+  --brand-glow: rgba(129, 140, 248, 0.40);
+  --accent: #fbbf24;
   --time-accent: #818cf8;
+  --time-ambient-1: rgba(99, 102, 241, 0.26);
+  --time-ambient-2: rgba(245, 158, 11, 0.18);
+  --c7-gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #fbbf24 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 12% 8%, rgba(99, 102, 241, 0.26) 0%, transparent 45%),
+    radial-gradient(circle at 88% 22%, rgba(245, 158, 11, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 50% 92%, rgba(124, 58, 237, 0.16) 0%, transparent 52%),
+    #060818;
+  --spatial-card-bg: rgba(16, 20, 42, 0.84);
+  --spatial-header-bg: rgba(12, 16, 36, 0.88);
+  --spatial-border: rgba(129, 140, 248, 0.22);
 }
 
-/* 3. Sunset (17:00 - 18:59) — Warm Twilight Coral & Rose */
+/* 3. Sunset (17:00 - 19:00) — Warm Twilight Rose & Coral Amber */
 html[data-time-phase="sunset"] {
-  --time-ambient-1: rgba(244, 63, 94, 0.16);
-  --time-ambient-2: rgba(249, 115, 22, 0.14);
-  --time-glow: rgba(251, 113, 133, 0.32);
-  --time-accent: #f43f5e;
+  --brand: #e11d48;
+  --brand-hover: #be123c;
+  --brand-strong: #f43f5e;
+  --brand-dim: rgba(225, 29, 72, 0.14);
+  --brand-glow: rgba(244, 63, 94, 0.38);
+  --accent: #f97316;
+  --time-accent: #e11d48;
+  --time-ambient-1: rgba(225, 29, 72, 0.20);
+  --time-ambient-2: rgba(249, 115, 22, 0.18);
+  --c7-gradient-primary: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #f97316 100%);
+  --c7-gradient-hero: linear-gradient(145deg, #9f1239 0%, #e11d48 45%, #f97316 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 10% 6%, rgba(225, 29, 72, 0.20) 0%, transparent 44%),
+    radial-gradient(circle at 90% 16%, rgba(249, 115, 22, 0.18) 0%, transparent 46%),
+    radial-gradient(circle at 50% 94%, rgba(244, 63, 94, 0.14) 0%, transparent 50%),
+    #fff1f2;
+  --spatial-card-bg: rgba(255, 255, 255, 0.95);
+  --spatial-header-bg: rgba(255, 255, 255, 0.90);
+  --spatial-border: rgba(225, 29, 72, 0.18);
+  --spatial-shadow: 0 16px 40px -12px rgba(225, 29, 72, 0.16), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
 }
 html[data-theme="dark"][data-time-phase="sunset"] {
-  --time-ambient-1: rgba(244, 63, 94, 0.22);
-  --time-ambient-2: rgba(168, 85, 247, 0.18);
-  --time-glow: rgba(244, 63, 94, 0.36);
+  --brand: #fb7185;
+  --brand-hover: #fda4af;
+  --brand-strong: #fb7185;
+  --brand-dim: rgba(251, 113, 133, 0.18);
+  --brand-glow: rgba(244, 63, 94, 0.42);
+  --accent: #fb923c;
   --time-accent: #fb7185;
+  --time-ambient-1: rgba(225, 29, 72, 0.28);
+  --time-ambient-2: rgba(249, 115, 22, 0.22);
+  --c7-gradient-primary: linear-gradient(135deg, #e11d48 0%, #fb7185 50%, #fb923c 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 12% 8%, rgba(225, 29, 72, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at 88% 22%, rgba(249, 115, 22, 0.22) 0%, transparent 48%),
+    radial-gradient(circle at 50% 92%, rgba(159, 18, 57, 0.20) 0%, transparent 52%),
+    #140810;
+  --spatial-card-bg: rgba(36, 16, 26, 0.84);
+  --spatial-header-bg: rgba(28, 12, 20, 0.88);
+  --spatial-border: rgba(251, 113, 133, 0.24);
 }
 
-/* 4. Night (19:00 - 04:59) — Midnight Obsidian & Deep Violet */
+/* 4. Night (19:00 - 05:00) — Midnight Cosmic Obsidian & Cyber Violet */
 html[data-time-phase="night"] {
-  --time-ambient-1: rgba(99, 102, 241, 0.14);
-  --time-ambient-2: rgba(139, 92, 246, 0.12);
-  --time-glow: rgba(129, 140, 248, 0.30);
-  --time-accent: #8b5cf6;
+  --brand: #7c3aed;
+  --brand-hover: #6d28d9;
+  --brand-strong: #8b5cf6;
+  --brand-dim: rgba(124, 58, 237, 0.14);
+  --brand-glow: rgba(139, 92, 246, 0.38);
+  --accent: #06b6d4;
+  --time-accent: #7c3aed;
+  --time-ambient-1: rgba(124, 58, 237, 0.18);
+  --time-ambient-2: rgba(6, 182, 212, 0.14);
+  --c7-gradient-primary: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #06b6d4 100%);
+  --c7-gradient-hero: linear-gradient(145deg, #5b21b6 0%, #7c3aed 45%, #06b6d4 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 10% 6%, rgba(124, 58, 237, 0.18) 0%, transparent 44%),
+    radial-gradient(circle at 90% 16%, rgba(6, 182, 212, 0.14) 0%, transparent 46%),
+    radial-gradient(circle at 50% 94%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+    #f5f3ff;
+  --spatial-card-bg: rgba(255, 255, 255, 0.95);
+  --spatial-header-bg: rgba(255, 255, 255, 0.90);
+  --spatial-border: rgba(124, 58, 237, 0.18);
+  --spatial-shadow: 0 16px 40px -12px rgba(124, 58, 237, 0.16), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
 }
 html[data-theme="dark"][data-time-phase="night"] {
-  --time-ambient-1: rgba(124, 58, 237, 0.24);
-  --time-ambient-2: rgba(59, 130, 246, 0.18);
-  --time-glow: rgba(139, 92, 246, 0.38);
+  --brand: #a78bfa;
+  --brand-hover: #c4b5fd;
+  --brand-strong: #a78bfa;
+  --brand-dim: rgba(167, 139, 250, 0.18);
+  --brand-glow: rgba(139, 92, 246, 0.44);
+  --accent: #38bdf8;
   --time-accent: #a78bfa;
+  --time-ambient-1: rgba(124, 58, 237, 0.30);
+  --time-ambient-2: rgba(56, 189, 248, 0.22);
+  --c7-gradient-primary: linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #38bdf8 100%);
+  --spatial-body-bg:
+    radial-gradient(circle at 12% 8%, rgba(124, 58, 237, 0.30) 0%, transparent 45%),
+    radial-gradient(circle at 88% 22%, rgba(56, 189, 248, 0.22) 0%, transparent 48%),
+    radial-gradient(circle at 50% 92%, rgba(76, 29, 149, 0.24) 0%, transparent 52%),
+    #050612;
+  --spatial-card-bg: rgba(18, 16, 40, 0.85);
+  --spatial-header-bg: rgba(14, 12, 32, 0.88);
+  --spatial-border: rgba(167, 139, 250, 0.24);
 }
 
 /* ====== VIEW TRANSITIONS ENGINE ====== */

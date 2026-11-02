@@ -1325,6 +1325,29 @@ const C7ExecutiveSuite = {
     localStorage.setItem('c7aio_sidebar_collapsed', collapsed ? '1' : '0');
   },
 
+  timePhases: [
+    { key: 'auto', label: 'Tự động (Giờ VN)', icon: '⏱️' },
+    { key: 'morning', label: 'Sáng tươi mới', icon: '🌅' },
+    { key: 'afternoon', label: 'Chiều tập trung', icon: '☀️' },
+    { key: 'sunset', label: 'Hoàng hôn ấm', icon: '🌆' },
+    { key: 'night', label: 'Đêm sâu lắng', icon: '🌙' }
+  ],
+
+  cycleTimePhase() {
+    const cur = localStorage.getItem('c7aio_time_phase_override') || 'auto';
+    const idx = this.timePhases.findIndex(p => p.key === cur);
+    const next = this.timePhases[(idx + 1) % this.timePhases.length];
+    if (next.key === 'auto') {
+      localStorage.removeItem('c7aio_time_phase_override');
+      this.applyTimePhase();
+      if (typeof showToast === 'function') showToast(`⏱️ Đã chuyển sang: Tự động theo giờ Việt Nam`, 'info');
+    } else {
+      localStorage.setItem('c7aio_time_phase_override', next.key);
+      this.applyTimePhase();
+      if (typeof showToast === 'function') showToast(`🎨 Đã chuyển sang giao diện: ${next.icon} ${next.label}`, 'info');
+    }
+  },
+
   getTimePhase() {
     // Vietnam Timezone UTC+7
     const now = new Date();
@@ -1347,10 +1370,24 @@ const C7ExecutiveSuite = {
   },
 
   applyTimePhase() {
-    const tp = this.getTimePhase();
-    document.documentElement.setAttribute('data-time-phase', tp.phase);
+    const override = localStorage.getItem('c7aio_time_phase_override');
+    let phaseKey, phaseLabel, phaseIcon;
+    if (override && override !== 'auto') {
+      const found = this.timePhases.find(p => p.key === override);
+      phaseKey = override;
+      phaseLabel = found ? `${found.icon} ${found.label}` : override;
+      phaseIcon = found ? found.icon : '⏱️';
+    } else {
+      const tp = this.getTimePhase();
+      phaseKey = tp.phase;
+      phaseLabel = tp.label;
+      phaseIcon = tp.label.split(' ')[0];
+    }
+    document.documentElement.setAttribute('data-time-phase', phaseKey);
     const badge = document.getElementById('c7TimePhaseBadge');
-    if (badge) badge.textContent = tp.label;
+    if (badge) badge.textContent = phaseLabel;
+    const footerBtn = document.getElementById('c7SidebarTimePhaseBtn');
+    if (footerBtn) footerBtn.innerHTML = `<span>${phaseIcon}</span><span>${override && override !== 'auto' ? phaseLabel : 'Giờ VN'}</span>`;
   },
 
   getPeriodStatus() {
@@ -1520,9 +1557,13 @@ const C7ExecutiveSuite = {
             </div>
           </div>
           <div class="c7-os-footer-actions">
-            <button type="button" class="c7-os-footer-btn" onclick="C7ExecutiveSuite.cycleSkin()" title="Đổi giao diện màu sắc">
+            <button type="button" class="c7-os-footer-btn" onclick="C7ExecutiveSuite.cycleSkin()" title="Đổi bảng màu giao diện (Aurora / Sunset / Emerald / Ocean)">
               <span>🎨</span>
               <span id="c7SidebarSkinLabel">${curSkinObj.label}</span>
+            </button>
+            <button type="button" class="c7-os-footer-btn" id="c7SidebarTimePhaseBtn" onclick="C7ExecutiveSuite.cycleTimePhase()" title="Đổi phong cách thời gian (Tự động giờ VN / Sáng / Chiều / Hoàng hôn / Đêm)">
+              <span>⏱️</span>
+              <span>Giờ VN</span>
             </button>
             <button type="button" class="c7-os-footer-btn c7-os-footer-icon-btn" onclick="if(window.ThemeEngine) ThemeEngine.toggle()" title="Đổi chế độ Sáng / Tối">
               🌗
@@ -1769,6 +1810,7 @@ const C7ExecutiveSuite = {
   }
 };
 window.C7ExecutiveSuite = C7ExecutiveSuite;
+try { C7ExecutiveSuite.applyTimePhase(); } catch(e) {}
 
 // Main Page Initializer
 function initHubPage() {
