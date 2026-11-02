@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -10,9 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style/tokens.css?v=9.0.0">
-  <link rel="stylesheet" href="../style/hub.css?v=9.0.0">
-  <link rel="stylesheet" href="../style/sodo.css?v=9.0.0">
+  <link rel="stylesheet" href="../style/tokens.css?v=12.0.0">
+  <link rel="stylesheet" href="../style/hub.css?v=12.0.0">
+  <link rel="stylesheet" href="../style/sodo.css?v=12.0.0">
 </head>
 <body>
 
@@ -27,26 +27,21 @@
   <header class="header">
     <div class="header-content">
       <div class="header-left">
-        <a href="../index.html" class="header-back-link" title="Về trang chủ"
-          style="display:flex;align-items:center;text-decoration:none;color:inherit;margin-right:8px;padding:6px 12px;border-radius:8px;transition:background 0.15s ease;font-weight:600;font-size:.875rem;"
-          onmouseover="this.style.background='rgba(99,102,241,0.1)'"
-          onmouseout="this.style.background='transparent'">
-          ← Trang Chủ
-        </a>
-        <span class="header-logo-badge">🪑</span>
+        <a href="../index.html" class="back-btn" title="Về trang chủ">←</a>
         <div class="header-titles">
           <div class="header-title-row">
+            <span class="header-icon">🪑</span>
             <span class="header-title-text">Sơ Đồ Lớp 11C7</span>
           </div>
-          <p>Vị trí ngồi trong lớp, ngoài sân & mọi hoạt động</p>
+          <p>Vị trí ngồi trong lớp, ngoài sân &amp; mọi hoạt động</p>
         </div>
       </div>
       <div class="header-right">
         <button class="user-badge-btn" onclick="handleProfileClick()" title="Thông tin cá nhân">
-          <div class="user-avatar-mini" id="userAvatarMini" style="background:linear-gradient(135deg,#6366f1,#a855f7)">HS</div>
+          <div class="user-avatar-mini" id="userAvatarMini" style="background: linear-gradient(135deg, var(--brand), var(--brand-strong));">HS</div>
           <span id="userNameDisplay">Học sinh</span>
         </button>
-        <button class="btn-logout" onclick="handleLogout()" title="Đăng xuất">Đăng xuất</button>
+        <button class="btn-logout" onclick="handleLogout()" title="Đăng xuất"><span>Đăng xuất</span></button>
       </div>
     </div>
   </header>
@@ -103,12 +98,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <script src="../script/offline-engine.js?v=9.0.0"></script>
-  <script src="../script/firebase-config.js?v=9.0.0"></script>
-  <script src="../script/firebase-utils.js?v=9.0.0"></script>
-  <script src="../script/students-list.js?v=9.0.0"></script>
-  <script src="../script/hub.js?v=9.0.0"></script>
-  <script src="../script/console.js?v=9.0.0"></script>
-  <script src="../script/sodo.js?v=9.0.0"></script>
+  <script src="../script/offline-engine.js?v=12.0.0"></script>
+  <script src="../script/firebase-config.js?v=12.0.0"></script>
+  <script src="../script/firebase-utils.js?v=12.0.0"></script>
+  <script src="../script/students-list.js?v=12.0.0"></script>
+  <script src="../script/hub.js?v=12.0.0"></script>
+  <script src="../script/console.js?v=12.0.0"></script>
+  <script src="../script/sodo.js?v=12.0.0"></script>
 </body>
 </html>

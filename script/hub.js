@@ -1249,6 +1249,487 @@ const BottomDockEngine = {
 };
 window.BottomDockEngine = BottomDockEngine;
 
+// ==================== C7 EXECUTIVE FRONTEND SUITE (ALL PAGES) ====================
+const C7ExecutiveSuite = {
+  pomoSeconds: 25 * 60,
+  pomoTotal: 25 * 60,
+  pomoTimer: null,
+  pomoRunning: false,
+
+  skins: [
+    { key: 'aurora', label: '🌌 Aurora' },
+    { key: 'sunset', label: '🌅 Sunset' },
+    { key: 'emerald', label: '🌿 Emerald' },
+    { key: 'ocean', label: '🌊 Ocean' }
+  ],
+
+  init() {
+    const savedSkin = localStorage.getItem('c7aio_skin') || 'aurora';
+    document.documentElement.setAttribute('data-skin', savedSkin);
+    this.injectExecutiveHeader();
+    this.upgradeIconsToVectors();
+    this.initHomeSuite();
+    this.initScheduleEnhancements();
+    this.initTasksEnhancements();
+    this.initSeatingEnhancements();
+    this.initNotifEnhancements();
+  },
+
+  upgradeIconsToVectors() {
+    const svgMap = {
+      '📋': '<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2"/><path d="M9 10h6"/><path d="M9 14h6"/><path d="M9 18h4"/></svg>',
+      '⏳': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+      '✅': '<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>',
+      '⏰': '<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg>',
+      '📌': '<svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1 1 1 0 0 1 1 1z"/></svg>',
+      '📅': '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/></svg>',
+      '🔔': '<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+      '📊': '<svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>',
+      '🪑': '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
+      '👨‍🎓': '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      '⚙️': '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+      '📜': '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+      '📈': '<svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>'
+    };
+    document.querySelectorAll('.stat-icon-wrapper, .nav-icon-badge').forEach(el => {
+      const txt = el.textContent.trim();
+      if (svgMap[txt]) {
+        el.innerHTML = svgMap[txt];
+      }
+    });
+  },
+
+  cycleSkin() {
+    const cur = document.documentElement.getAttribute('data-skin') || 'aurora';
+    const idx = this.skins.findIndex(s => s.key === cur);
+    const next = this.skins[(idx + 1) % this.skins.length];
+    document.documentElement.setAttribute('data-skin', next.key);
+    localStorage.setItem('c7aio_skin', next.key);
+    const btn = document.getElementById('c7SkinSwitcherBtn');
+    if (btn) btn.innerHTML = `<span>🎨</span><span>${next.label}</span>`;
+    const sbSkin = document.getElementById('c7SidebarSkinLabel');
+    if (sbSkin) sbSkin.textContent = next.label;
+    if (typeof showToast === 'function') showToast(`🎨 Đã chuyển sang giao diện: ${next.label}`, 'info');
+  },
+
+  toggleSidebar() {
+    const collapsed = document.body.classList.toggle('c7-sidebar-collapsed');
+    localStorage.setItem('c7aio_sidebar_collapsed', collapsed ? '1' : '0');
+  },
+
+  getPeriodStatus() {
+    const now = new Date();
+    const day = now.getDay();
+    if (day === 0) return { icon: '🌴', text: 'Chủ nhật nghỉ ngơi', live: false };
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const periods = [
+      { name: 'Tiết 1', start: 420, end: 465 },
+      { name: 'Tiết 2', start: 470, end: 515 },
+      { name: 'Tiết 3', start: 530, end: 575 },
+      { name: 'Tiết 4', start: 580, end: 625 },
+      { name: 'Tiết 5', start: 630, end: 675 },
+      { name: 'Chiều T1', start: 780, end: 825 },
+      { name: 'Chiều T2', start: 830, end: 875 },
+      { name: 'Chiều T3', start: 890, end: 935 }
+    ];
+    for (const p of periods) {
+      if (mins >= p.start && mins <= p.end) {
+        return { icon: '🟢', text: `Đang học ${p.name} (còn ${p.end - mins}p)`, live: true };
+      }
+    }
+    if (mins >= 420 && mins <= 675) return { icon: '☕', text: 'Giờ giải lao sáng', live: true };
+    if (mins >= 780 && mins <= 940) return { icon: '☕', text: 'Giờ giải lao chiều', live: true };
+    return { icon: '🌙', text: 'Ngoài giờ lên lớp', live: false };
+  },
+
+  injectExecutiveHeader() {
+    const headerContent = document.querySelector('.header-content');
+    const headerRight = document.querySelector('.header-right');
+    if (!headerContent || document.getElementById('c7ExecTopNav')) return;
+
+    const path = window.location.pathname.toLowerCase();
+    const navItems = [
+      { label: 'Trang chủ', url: 'index.html', match: p => p.endsWith('index.html') || p.endsWith('/c7aio/') || p.endsWith('/') },
+      { label: 'Nhiệm vụ', url: 'nhiemvu/nv.html', match: p => p.includes('/nhiemvu/') },
+      { label: 'Lịch học', url: 'lich/lich.html', match: p => p.includes('/lich/') },
+      { label: 'Thông báo', url: 'thongbao/tb.html', match: p => p.includes('/thongbao/') },
+      { label: 'Sơ đồ', url: 'sodo/sd.html', match: p => p.includes('/sodo/') },
+      { label: 'Thống kê', url: 'thongke/tk.html', match: p => p.includes('/thongke/') },
+      { label: 'Hồ sơ', url: 'hoso/hs.html', match: p => p.includes('/hoso/') }
+    ];
+
+    const navEl = document.createElement('nav');
+    navEl.id = 'c7ExecTopNav';
+    navEl.className = 'c7-exec-topnav';
+    navEl.setAttribute('aria-label', 'Điều hướng nhanh');
+    navEl.innerHTML = navItems.map(item => {
+      const active = item.match(path) ? 'active' : '';
+      return `<button type="button" class="c7-topnav-pill ${active}" onclick="go('${item.url}')">${item.label}</button>`;
+    }).join('');
+
+    headerContent.insertBefore(navEl, headerRight);
+
+    if (headerRight && !document.getElementById('c7LiveRadarPill')) {
+      const status = this.getPeriodStatus();
+      const radarBtn = document.createElement('button');
+      radarBtn.type = 'button';
+      radarBtn.id = 'c7LiveRadarPill';
+      radarBtn.className = `c7-live-radar-pill ${status.live ? 'is-live' : ''}`;
+      radarBtn.title = 'Trạng thái tiết học thời gian thực (Click mở Lịch học)';
+      radarBtn.onclick = () => go('lich/lich.html');
+      radarBtn.innerHTML = `<span class="c7-radar-dot">${status.icon}</span><span class="c7-radar-text">${status.text}</span>`;
+
+      const curSkinKey = document.documentElement.getAttribute('data-skin') || 'aurora';
+      const curSkinObj = this.skins.find(s => s.key === curSkinKey) || this.skins[0];
+      const skinBtn = document.createElement('button');
+      skinBtn.type = 'button';
+      skinBtn.id = 'c7SkinSwitcherBtn';
+      skinBtn.className = 'c7-cmd-trigger-pill';
+      skinBtn.title = 'Đổi bảng màu chủ đề toàn hệ thống (Aurora / Sunset / Emerald / Ocean)';
+      skinBtn.onclick = () => this.cycleSkin();
+      skinBtn.innerHTML = `<span>🎨</span><span>${curSkinObj.label}</span>`;
+
+      headerRight.insertBefore(skinBtn, headerRight.firstChild);
+      headerRight.insertBefore(radarBtn, headerRight.firstChild);
+    }
+
+    if (!path.endsWith('login.html') && !document.getElementById('c7AppSidebar')) {
+      document.body.classList.add('c7-os-shell-active');
+      if (localStorage.getItem('c7aio_sidebar_collapsed') === '1') {
+        document.body.classList.add('c7-sidebar-collapsed');
+      }
+      const status = this.getPeriodStatus();
+      const curSkinKey = document.documentElement.getAttribute('data-skin') || 'aurora';
+      const curSkinObj = this.skins.find(s => s.key === curSkinKey) || this.skins[0];
+
+      const sidebarGroups = [
+        {
+          title: 'KHÔNG GIAN CHÍNH',
+          items: [
+            { label: 'Tổng quan', url: 'index.html', icon: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>`, match: p => p.endsWith('index.html') || p.endsWith('/c7aio/') || p.endsWith('/') },
+            { label: 'Nhiệm vụ', url: 'nhiemvu/nv.html', icon: `<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`, match: p => p.includes('/nhiemvu/') },
+            { label: 'Thời khóa biểu', url: 'lich/lich.html', icon: `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`, match: p => p.includes('/lich/') },
+            { label: 'Bảng tin lớp', url: 'thongbao/tb.html', icon: `<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`, match: p => p.includes('/thongbao/') }
+          ]
+        },
+        {
+          title: 'DỮ LIỆU & TỔ CHỨC',
+          items: [
+            { label: 'Sơ đồ lớp', url: 'sodo/sd.html', icon: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`, match: p => p.includes('/sodo/') },
+            { label: 'Thống kê', url: 'thongke/tk.html', icon: `<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`, match: p => p.includes('/thongke/') },
+            { label: 'Hồ sơ học sinh', url: 'hoso/hs.html', icon: `<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`, match: p => p.includes('/hoso/') }
+          ]
+        },
+        {
+          title: 'QUẢN TRỊ HỆ THỐNG',
+          items: [
+            { label: 'Phân quyền', url: 'perm/pq.html', icon: `<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, match: p => p.includes('/perm/') },
+            { label: 'Nhật ký hoạt động', url: 'logs/nk.html', icon: `<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`, match: p => p.includes('/logs/') }
+          ]
+        }
+      ];
+
+      const sidebar = document.createElement('aside');
+      sidebar.id = 'c7AppSidebar';
+      sidebar.className = 'c7-os-sidebar';
+      sidebar.setAttribute('aria-label', 'Thanh điều hướng không gian 11C7 OS');
+      sidebar.innerHTML = `
+        <div class="c7-os-sidebar-top">
+          <div class="c7-os-brand-row">
+            <div class="c7-os-brand-left" onclick="go('index.html')" role="button" tabindex="0">
+              <div class="c7-os-brand-glyph">11C7</div>
+              <div class="c7-os-brand-meta">
+                <span class="c7-os-brand-title">C7AIO Workspace</span>
+                <span class="c7-os-brand-sub">Spatial OS v13.0</span>
+              </div>
+            </div>
+            <button type="button" class="c7-os-collapse-btn" onclick="C7ExecutiveSuite.toggleSidebar()" title="Thu gọn / Mở rộng thanh bên">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </button>
+          </div>
+
+          <button type="button" class="c7-os-search-bar" onclick="if(window.CommandPalette) CommandPalette.open()">
+            <span class="c7-os-search-left">🔍 <span>Tìm nhanh...</span></span>
+            <kbd>Ctrl K</kbd>
+          </button>
+
+          <div class="c7-os-nav-scroll">
+            ${sidebarGroups.map(group => `
+              <div class="c7-os-nav-group">
+                <div class="c7-os-nav-group-label">${group.title}</div>
+                ${group.items.map(item => {
+                  const isActive = item.match(path) ? 'active' : '';
+                  return `
+                    <button type="button" class="c7-os-nav-item ${isActive}" onclick="go('${item.url}')" title="${item.label}">
+                      <span class="c7-os-nav-icon">${item.icon}</span>
+                      <span class="c7-os-nav-text">${item.label}</span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="c7-os-sidebar-footer">
+          <div class="c7-os-status-card ${status.live ? 'is-live' : ''}" onclick="go('lich/lich.html')" role="button" tabindex="0">
+            <span class="c7-os-status-dot">${status.icon}</span>
+            <div class="c7-os-status-info">
+              <span class="c7-os-status-eyebrow">TRẠNG THÁI LỚP HỌC</span>
+              <span class="c7-os-status-val">${status.text}</span>
+            </div>
+          </div>
+          <div class="c7-os-footer-actions">
+            <button type="button" class="c7-os-footer-btn" onclick="C7ExecutiveSuite.cycleSkin()" title="Đổi giao diện màu sắc">
+              <span>🎨</span>
+              <span id="c7SidebarSkinLabel">${curSkinObj.label}</span>
+            </button>
+            <button type="button" class="c7-os-footer-btn c7-os-footer-icon-btn" onclick="if(window.ThemeEngine) ThemeEngine.toggle()" title="Đổi chế độ Sáng / Tối">
+              🌗
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.prepend(sidebar);
+    }
+  },
+
+  initHomeSuite() {
+    const pad = document.getElementById('c7QuickScratchpad');
+    if (pad) {
+      pad.value = localStorage.getItem('c7aio_scratchpad_text') || '';
+    }
+    const countEl = document.getElementById('c7PomoCount');
+    if (countEl) {
+      countEl.textContent = localStorage.getItem('c7aio_pomo_sessions') || '0';
+    }
+
+    // Enhance KPI Stat Cards with mini progress tracks
+    setTimeout(() => {
+      const total = parseInt(document.getElementById('totalTask')?.textContent || '0', 10) || 1;
+      const ids = ['totalTask', 'openTask', 'doneTask', 'nearDeadline'];
+      ids.forEach((id, idx) => {
+        const valEl = document.getElementById(id);
+        const card = valEl?.closest('.stat-card');
+        if (card && !card.querySelector('.c7-stat-mini-progress')) {
+          const val = parseInt(valEl.textContent || '0', 10) || 0;
+          const pct = idx === 0 ? 100 : Math.min(100, Math.round((val / total) * 100));
+          const bar = document.createElement('div');
+          bar.className = 'c7-stat-mini-progress';
+          bar.innerHTML = `<div class="c7-stat-mini-fill" style="width:${pct}%"></div>`;
+          card.querySelector('.stat-content')?.appendChild(bar);
+        }
+      });
+    }, 600);
+  },
+
+  setPomoMode(mins, btnEl) {
+    if (this.pomoTimer) clearInterval(this.pomoTimer);
+    this.pomoRunning = false;
+    this.pomoTotal = mins * 60;
+    this.pomoSeconds = mins * 60;
+    document.querySelectorAll('.c7-pomo-mode-btn').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    this.updatePomoUI();
+    const startBtn = document.getElementById('c7PomoStartBtn');
+    if (startBtn) startBtn.textContent = '▶ Bắt đầu';
+    const st = document.getElementById('c7PomoStatusText');
+    if (st) st.textContent = mins === 5 ? 'Chế độ nghỉ giải lao 5 phút' : `Chế độ tập trung ${mins} phút`;
+  },
+
+  togglePomo() {
+    const startBtn = document.getElementById('c7PomoStartBtn');
+    const st = document.getElementById('c7PomoStatusText');
+    if (this.pomoRunning) {
+      clearInterval(this.pomoTimer);
+      this.pomoRunning = false;
+      if (startBtn) startBtn.textContent = '▶ Tiếp tục';
+      if (st) st.textContent = '⏸ Đang tạm dừng';
+    } else {
+      this.pomoRunning = true;
+      if (startBtn) startBtn.textContent = '⏸ Tạm dừng';
+      if (st) st.textContent = '🔥 Đang trong phiên tập trung cao độ...';
+      this.pomoTimer = setInterval(() => {
+        if (this.pomoSeconds > 0) {
+          this.pomoSeconds--;
+          this.updatePomoUI();
+        } else {
+          clearInterval(this.pomoTimer);
+          this.pomoRunning = false;
+          const prev = parseInt(localStorage.getItem('c7aio_pomo_sessions') || '0', 10) + 1;
+          localStorage.setItem('c7aio_pomo_sessions', String(prev));
+          const countEl = document.getElementById('c7PomoCount');
+          if (countEl) countEl.textContent = String(prev);
+          if (startBtn) startBtn.textContent = '▶ Bắt đầu';
+          if (st) st.textContent = '🎉 Hoàn thành phiên tập trung xuất sắc!';
+          if (typeof showToast === 'function') showToast('🍅 Hoàn thành phiên tập trung Pomodoro!', 'success');
+        }
+      }, 1000);
+    }
+  },
+
+  resetPomo() {
+    if (this.pomoTimer) clearInterval(this.pomoTimer);
+    this.pomoRunning = false;
+    this.pomoSeconds = this.pomoTotal;
+    this.updatePomoUI();
+    const startBtn = document.getElementById('c7PomoStartBtn');
+    if (startBtn) startBtn.textContent = '▶ Bắt đầu';
+    const st = document.getElementById('c7PomoStatusText');
+    if (st) st.textContent = 'Sẵn sàng tập trung cao độ';
+  },
+
+  updatePomoUI() {
+    const m = String(Math.floor(this.pomoSeconds / 60)).padStart(2, '0');
+    const s = String(this.pomoSeconds % 60).padStart(2, '0');
+    const disp = document.getElementById('c7PomoTimeDisplay');
+    if (disp) disp.textContent = `${m}:${s}`;
+    const circle = document.getElementById('c7PomoCircle');
+    if (circle) {
+      const circumference = 314.16;
+      const offset = circumference - (this.pomoSeconds / this.pomoTotal) * circumference;
+      circle.style.strokeDashoffset = String(offset);
+    }
+  },
+
+  saveScratchpad(val) {
+    localStorage.setItem('c7aio_scratchpad_text', val);
+    const badge = document.getElementById('c7NoteSaveBadge');
+    if (badge) {
+      const now = new Date();
+      badge.textContent = `Đã lưu ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+  },
+
+  clearScratchpad() {
+    const pad = document.getElementById('c7QuickScratchpad');
+    if (pad) pad.value = '';
+    localStorage.removeItem('c7aio_scratchpad_text');
+    const badge = document.getElementById('c7NoteSaveBadge');
+    if (badge) badge.textContent = 'Đã xóa trắng';
+  },
+
+  initScheduleEnhancements() {
+    const calSection = document.getElementById('miniCalendarSection');
+    const headerCard = document.querySelector('.schedule-header-card > div:first-child');
+    if (!calSection || !headerCard || document.getElementById('btnToggleMiniCal')) return;
+
+    // Default collapse calendar in week view so timetable is immediately above the fold
+    calSection.classList.add('c7-cal-collapsed');
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.id = 'btnToggleMiniCal';
+    toggleBtn.className = 'c7-btn c7-btn-secondary';
+    toggleBtn.innerHTML = '🗓️ Mở Lịch Tháng';
+    toggleBtn.onclick = () => {
+      const isCollapsed = calSection.classList.toggle('c7-cal-collapsed');
+      toggleBtn.innerHTML = isCollapsed ? '🗓️ Mở Lịch Tháng' : '🔼 Thu gọn Lịch Tháng';
+    };
+    headerCard.appendChild(toggleBtn);
+
+    // Session Filter (All / Morning / Afternoon)
+    const sessionBar = document.createElement('div');
+    sessionBar.className = 'view-mode-toggle-group';
+    sessionBar.innerHTML = `
+      <button type="button" class="view-mode-pill-btn active" onclick="C7ExecutiveSuite.filterScheduleSession('all', this)">⚡ Cả ngày</button>
+      <button type="button" class="view-mode-pill-btn" onclick="C7ExecutiveSuite.filterScheduleSession('morning', this)">🌅 Sáng</button>
+      <button type="button" class="view-mode-pill-btn" onclick="C7ExecutiveSuite.filterScheduleSession('afternoon', this)">🌇 Chiều</button>
+    `;
+    headerCard.appendChild(sessionBar);
+  },
+
+  filterScheduleSession(mode, btnEl) {
+    if (btnEl && btnEl.parentElement) {
+      btnEl.parentElement.querySelectorAll('.view-mode-pill-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    document.querySelectorAll('.class-card-item').forEach(card => {
+      const timeText = card.querySelector('.class-card-time')?.textContent || '';
+      const hourMatch = timeText.match(/(\d{1,2}):\d{2}/);
+      const hour = hourMatch ? parseInt(hourMatch[1], 10) : 7;
+      if (mode === 'all') {
+        card.style.display = '';
+      } else if (mode === 'morning') {
+        card.style.display = hour < 12 ? '' : 'none';
+      } else if (mode === 'afternoon') {
+        card.style.display = hour >= 12 ? '' : 'none';
+      }
+    });
+  },
+
+  initTasksEnhancements() {
+    const controlsBar = document.querySelector('.task-controls-bar');
+    const listContainer = document.getElementById('taskListContainer');
+    if (!controlsBar || !listContainer || document.getElementById('c7TaskViewSwitcher')) return;
+
+    const switcher = document.createElement('div');
+    switcher.id = 'c7TaskViewSwitcher';
+    switcher.className = 'view-mode-toggle-group';
+    switcher.innerHTML = `
+      <button type="button" class="view-mode-pill-btn active" onclick="C7ExecutiveSuite.setTaskLayout('bento', this)">🔲 Lưới Bento</button>
+      <button type="button" class="view-mode-pill-btn" onclick="C7ExecutiveSuite.setTaskLayout('kanban', this)">📋 Bảng Kanban</button>
+      <button type="button" class="view-mode-pill-btn" onclick="C7ExecutiveSuite.setTaskLayout('compact', this)">📑 Thu gọn</button>
+    `;
+    controlsBar.appendChild(switcher);
+  },
+
+  setTaskLayout(layout, btnEl) {
+    const listContainer = document.getElementById('taskListContainer');
+    if (!listContainer) return;
+    if (btnEl && btnEl.parentElement) {
+      btnEl.parentElement.querySelectorAll('.view-mode-pill-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    listContainer.classList.remove('c7-layout-compact', 'c7-layout-kanban');
+    if (layout === 'compact') {
+      listContainer.classList.add('c7-layout-compact');
+    } else if (layout === 'kanban') {
+      listContainer.classList.add('c7-layout-kanban');
+    }
+  },
+
+  initSeatingEnhancements() {
+    const sodoTabs = document.querySelector('.sodo-tabs');
+    if (!sodoTabs || document.getElementById('btnFindMySeat')) return;
+    const findBtn = document.createElement('button');
+    findBtn.type = 'button';
+    findBtn.id = 'btnFindMySeat';
+    findBtn.className = 'sodo-tab-btn c7-find-seat-btn';
+    findBtn.innerHTML = '<span class="sodo-tab-icon">🎯</span><span>Tìm chỗ của tôi</span>';
+    findBtn.onclick = () => {
+      const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+      const cells = [...document.querySelectorAll('.sodo-cell-filled')];
+      let target = cells.find(c => user && c.getAttribute('title') && c.getAttribute('title').toLowerCase().includes(user.name.toLowerCase()));
+      if (!target && cells.length > 0) target = cells[0];
+      cells.forEach(c => c.classList.remove('c7-seat-spotlight'));
+      if (target) {
+        target.classList.add('c7-seat-spotlight');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof showToast === 'function') showToast(`🎯 Đã định vị chỗ ngồi: ${target.getAttribute('title') || 'Vị trí trung tâm'}`, 'success');
+      }
+    };
+    sodoTabs.appendChild(findBtn);
+  },
+
+  initNotifEnhancements() {
+    const topBar = document.querySelector('.notif-top-bar');
+    if (!topBar || document.getElementById('btnMarkAllRead')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'btnMarkAllRead';
+    btn.className = 'c7-btn c7-btn-secondary';
+    btn.innerHTML = '✓ Đọc tất cả';
+    btn.onclick = () => {
+      document.querySelectorAll('.notif-card-item').forEach(c => c.classList.add('read'));
+      document.querySelectorAll('.notif-unread-dot').forEach(d => d.style.display = 'none');
+      if (typeof showToast === 'function') showToast('✅ Đã đánh dấu đọc toàn bộ thông báo!', 'success');
+    };
+    topBar.appendChild(btn);
+  }
+};
+window.C7ExecutiveSuite = C7ExecutiveSuite;
+
 // Main Page Initializer
 function initHubPage() {
   const user = getCurrentUser();
@@ -1271,6 +1752,7 @@ function initHubPage() {
 
   C7GitHubLibsEngine.init();
   BottomDockEngine.init();
+  C7ExecutiveSuite.init();
 
   if (user) {
     let avatarMini = document.getElementById('userAvatarMini');

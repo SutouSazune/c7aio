@@ -10,9 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/tokens.css?v=9.0.0">
-  <link rel="stylesheet" href="style/hub.css?v=9.0.0">
-  <link rel="stylesheet" href="style/login.css?v=9.0.0">
+  <link rel="stylesheet" href="style/tokens.css?v=12.0.0">
+  <link rel="stylesheet" href="style/hub.css?v=12.0.0">
+  <link rel="stylesheet" href="style/login.css?v=12.0.0">
 </head>
 <body class="login-page-body">
   <!-- Ambient Background Canvas System -->
@@ -22,76 +22,118 @@
     <div class="c7-orb c7-orb--3"></div>
   </div>
 
-  <div class="login-box">
-    <!-- Header / Brand -->
-    <div class="login-brand">
-      <div class="login-brand-icon">📚</div>
-      <h1>11C7 All In One</h1>
-      <p>Cổng thông tin & quản lý học tập lớp học</p>
-    </div>
+  <div class="login-box c7-login-split-shell">
+    <!-- Left Column: Executive Brand Showcase -->
+    <div class="c7-login-showcase">
+      <div class="c7-showcase-top">
+        <div class="c7-showcase-badge">✨ HỆ ĐIỀU HÀNH LỚP HỌC v13.0</div>
+        <div class="login-brand">
+          <div class="login-brand-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 2L17 6V14L10 18L3 14V6L10 2Z" fill="rgba(255,255,255,0.95)"/>
+              <path d="M10 6L14 8.5V13L10 15.5L6 13V8.5L10 6Z" fill="#4f46e5"/>
+            </svg>
+          </div>
+          <h1>11C7 All In One</h1>
+          <p>Không gian quản lý học tập, thời khóa biểu và dữ liệu tập thể lớp 11C7</p>
+        </div>
 
-    <!-- Student Selection Flow -->
-    <div id="studentSelectionFlow">
-      <div class="search-student-wrapper">
-        <span class="search-icon-pos">🔍</span>
-        <input type="text" id="searchStudentInput" class="search-student-input" placeholder="Tìm tên học sinh trong lớp..." oninput="filterStudents(this.value)">
-      </div>
-
-      <div class="student-select-grid" id="studentSelectGrid">
-        <!-- Rendered by JavaScript -->
-      </div>
-    </div>
-
-    <!-- Verification Card (DOB check) -->
-    <div class="verify-card" id="studentVerifyCard">
-      <div class="verify-header">
-        <div class="verify-avatar" id="verifyAvatar">HS</div>
-        <div class="verify-title">
-          <h3 id="verifyName">Họ và tên</h3>
-          <p>Xác nhận ngày sinh để đăng nhập</p>
+        <div class="c7-showcase-features">
+          <div class="c7-showcase-feat-item">
+            <span class="c7-feat-dot">📅</span>
+            <div>
+              <strong>Thời khóa biểu 7 ngày trực quan</strong>
+              <span>Theo dõi tiết học, phòng học và sự kiện tuần theo thời gian thực</span>
+            </div>
+          </div>
+          <div class="c7-showcase-feat-item">
+            <span class="c7-feat-dot">📌</span>
+            <div>
+              <strong>Quản lý nhiệm vụ Bento &amp; Kanban</strong>
+              <span>Check-in bài tập, nhắc hạn tự động và đồng hồ Pomodoro</span>
+            </div>
+          </div>
+          <div class="c7-showcase-feat-item">
+            <span class="c7-feat-dot">🪑</span>
+            <div>
+              <strong>Sơ đồ lớp &amp; Hồ sơ thông minh</strong>
+              <span>Định vị chỗ ngồi cá nhân và tra cứu danh bạ toàn lớp</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="form-group-custom">
-        <label for="inputStudentDob">Ngày sinh (Ngày / Tháng / Năm):</label>
-        <input type="date" id="inputStudentDob" class="form-control-custom">
-      </div>
-
-      <div class="btn-group-row">
-        <button class="c7-btn c7-btn-secondary" onclick="cancelStudentVerify()">← Quay lại</button>
-        <button class="c7-btn c7-btn-primary" onclick="confirmStudentLogin()">Đăng nhập →</button>
+      <!-- Admin Panel Toggle & Guest Mode -->
+      <div class="admin-toggle-panel" id="adminTogglePanel">
+        <button class="btn-guest-mode" onclick="guestLogin()">
+          <span>🚀 Khám phá nhanh (Chế độ Khách)</span>
+        </button>
+        <button class="btn-admin-mode" onclick="openAdminLogin()">
+          <span>⚡ Đăng nhập Quản trị viên (Admin)</span>
+        </button>
       </div>
     </div>
 
-    <!-- Admin Login Card -->
-    <div class="verify-card" id="adminLoginCard">
-      <div class="verify-header">
-        <div class="verify-avatar" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">⚡</div>
-        <div class="verify-title">
-          <h3>Quản trị viên (Admin)</h3>
-          <p>Nhập mã bảo mật để truy cập bảng điều khiển</p>
+    <!-- Right Column: Interactive Student Directory & Verification -->
+    <div class="c7-login-workspace">
+      <div class="c7-workspace-header">
+        <h2>Chọn tài khoản thành viên</h2>
+        <p>Tìm tên của bạn trong danh sách lớp 11C7 để tiếp tục</p>
+      </div>
+
+      <!-- Student Selection Flow -->
+      <div id="studentSelectionFlow">
+        <div class="search-student-wrapper">
+          <span class="search-icon-pos">🔍</span>
+          <input type="text" id="searchStudentInput" class="search-student-input" placeholder="Nhập tên học sinh để lọc nhanh..." oninput="filterStudents(this.value)">
+        </div>
+
+        <div class="student-select-grid" id="studentSelectGrid">
+          <!-- Rendered by JavaScript -->
         </div>
       </div>
 
-      <div class="form-group-custom">
-        <label for="inputAdminCode">Mã bảo mật Admin:</label>
-        <input type="password" id="inputAdminCode" class="form-control-custom" placeholder="Nhập mã admin...">
+      <!-- Verification Card (DOB check) -->
+      <div class="verify-card" id="studentVerifyCard">
+        <div class="verify-header">
+          <div class="verify-avatar" id="verifyAvatar">HS</div>
+          <div class="verify-title">
+            <h3 id="verifyName">Họ và tên</h3>
+            <p>Xác nhận ngày sinh để đăng nhập</p>
+          </div>
+        </div>
+
+        <div class="form-group-custom">
+          <label for="inputStudentDob">Ngày sinh (Ngày / Tháng / Năm):</label>
+          <input type="date" id="inputStudentDob" class="form-control-custom">
+        </div>
+
+        <div class="btn-group-row">
+          <button class="c7-btn c7-btn-secondary" onclick="cancelStudentVerify()">← Quay lại</button>
+          <button class="c7-btn c7-btn-primary" onclick="confirmStudentLogin()">Đăng nhập →</button>
+        </div>
       </div>
 
-      <div class="btn-group-row">
-        <button class="c7-btn c7-btn-secondary" onclick="cancelAdminLogin()">← Quay lại</button>
-        <button class="c7-btn c7-btn-primary" onclick="confirmAdminLogin()">Đăng nhập Admin</button>
-      </div>
-    </div>
+      <!-- Admin Login Card -->
+      <div class="verify-card" id="adminLoginCard">
+        <div class="verify-header">
+          <div class="verify-avatar" style="background: var(--c7-gradient-warm);">⚡</div>
+          <div class="verify-title">
+            <h3>Quản trị viên (Admin)</h3>
+            <p>Nhập mã bảo mật để truy cập bảng điều khiển</p>
+          </div>
+        </div>
 
-    <!-- Admin Panel Toggle & Guest Mode -->
-    <div class="admin-toggle-panel" id="adminTogglePanel">
-      <button class="btn-admin-mode" onclick="openAdminLogin()">
-        <span>👨‍💼 Đăng nhập với quyền Quản trị viên</span>
-      </button>
-      <button class="btn-guest-mode" onclick="guestLogin()" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.12)); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; padding: 10px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.25s var(--ease-spring);">
-        <span>🚀 Khám phá nhanh (Chế độ Trải nghiệm Khách)</span>
-      </button>
+        <div class="form-group-custom">
+          <label for="inputAdminCode">Mã bảo mật Admin:</label>
+          <input type="password" id="inputAdminCode" class="form-control-custom" placeholder="Nhập mã admin...">
+        </div>
+
+        <div class="btn-group-row">
+          <button class="c7-btn c7-btn-secondary" onclick="cancelAdminLogin()">← Quay lại</button>
+          <button class="c7-btn c7-btn-primary" onclick="confirmAdminLogin()">Đăng nhập Admin</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -101,12 +143,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="script/offline-engine.js?v=9.0.0"></script>
-  <script src="script/firebase-config.js?v=9.0.0"></script>
-  <script src="script/firebase-utils.js?v=9.0.0"></script>
-  <script src="script/students-list.js?v=9.0.0"></script>
-  <script src="script/hub.js?v=9.0.0"></script>
-  <script src="script/console.js?v=9.0.0"></script>
+  <script src="script/offline-engine.js?v=12.0.0"></script>
+  <script src="script/firebase-config.js?v=12.0.0"></script>
+  <script src="script/firebase-utils.js?v=12.0.0"></script>
+  <script src="script/students-list.js?v=12.0.0"></script>
+  <script src="script/hub.js?v=12.0.0"></script>
+  <script src="script/console.js?v=12.0.0"></script>
 
   <script>
     let selectedStudent = null;

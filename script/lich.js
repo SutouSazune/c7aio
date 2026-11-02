@@ -265,21 +265,82 @@ function saveScheduleEvents() {
   }
 }
 
+function getSchoolWeekMonday(dateObj) {
+  const d = (dateObj instanceof Date && !isNaN(dateObj)) ? dateObj : new Date();
+  const clean = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dow = clean.getDay(); // 0 (CN) .. 6 (T7)
+  // Row in calendar starts CN -> T2..T7, so on CN (dow=0) the upcoming school week Monday is +1 day
+  const diffToMon = (dow === 0) ? 1 : (1 - dow);
+  return new Date(clean.getFullYear(), clean.getMonth(), clean.getDate() + diffToMon);
+}
+
+function resolveEventReferenceMonday(ev, weekKey) {
+  if (ev && ev.targetDate) {
+    return getSchoolWeekMonday(parseLocalDate(ev.targetDate));
+  }
+  if (ev && ev.weekStartDate) {
+    return getSchoolWeekMonday(parseLocalDate(ev.weekStartDate));
+  }
+  if (ev && ev.createdAt) {
+    const cDate = new Date(ev.createdAt);
+    if (!isNaN(cDate.getTime())) return getSchoolWeekMonday(cDate);
+  }
+  const meta = weekMetadata[weekKey] || {};
+  if (meta.startDate) {
+    return getSchoolWeekMonday(parseLocalDate(meta.startDate));
+  }
+  return getSchoolWeekMonday(selectedDate);
+}
+
+function resolveEventTargetDate(ev, weekKey) {
+  if (!ev || ev.repeatWeekly === true) return null;
+  if (ev.targetDate) return ev.targetDate;
+  if (ev.day) {
+    const dayIdx = DAYS.indexOf(ev.day);
+    if (dayIdx !== -1) {
+      const refMon = resolveEventReferenceMonday(ev, weekKey);
+      const tDate = new Date(refMon.getFullYear(), refMon.getMonth(), refMon.getDate() + dayIdx);
+      return toDateStringKey(tDate);
+    }
+  }
+  return null;
+}
+
+function doesEventApplyToDate(ev, weekKey, dateKey) {
+  if (!ev || !dateKey) return false;
+  const dayDate = parseLocalDate(dateKey);
+  const dayName = getDayNameFromDate(dayDate);
+
+  if (ev.repeatWeekly === true) {
+    return !ev.day || ev.day === dayName;
+  }
+
+  const explicitTarget = resolveEventTargetDate(ev, weekKey);
+  if (explicitTarget) {
+    return explicitTarget === dateKey;
+  }
+
+  // Whole-week single-week event (!ev.day)
+  const refMon = resolveEventReferenceMonday(ev, weekKey);
+  const monKey = toDateStringKey(refMon);
+  const satKey = toDateStringKey(new Date(refMon.getFullYear(), refMon.getMonth(), refMon.getDate() + 5));
+  return dateKey >= monKey && dateKey <= satKey;
+}
+
 function getEventsForWeek(weekKey) {
   return Array.isArray(scheduleEvents[weekKey]) ? scheduleEvents[weekKey] : [];
 }
 
-function getEventsForDayInWeek(weekKey, day) {
-  return getEventsForWeek(weekKey).filter(e => !e.day || e.day === day);
+function getEventsForDayInWeek(weekKey, day, dateKey = null) {
+  const targetDateKey = dateKey || toDateStringKey(getDateForDayInWeek(weekKey, day));
+  return getEventsForWeek(weekKey).filter(ev => doesEventApplyToDate(ev, weekKey, targetDateKey));
 }
 
 function getEventsForDate(dateKey) {
   // Find which weekKey owns this date
   for (const [wKey, meta] of Object.entries(weekMetadata)) {
     if (meta && meta.startDate && meta.endDate && dateKey >= meta.startDate && dateKey <= weekEndForCompare(meta.endDate)) {
-      const dayDate = parseLocalDate(dateKey);
-      const dayName = getDayNameFromDate(dayDate);
-      return getEventsForDayInWeek(wKey, dayName);
+      return getEventsForWeek(wKey).filter(ev => doesEventApplyToDate(ev, wKey, dateKey));
     }
   }
   return [];
@@ -509,16 +570,36 @@ function getDateForDayInWeek(weekKey, dayName) {
   const dayIndex = DAYS.indexOf(dayName);
   if (dayIndex === -1) return new Date(selectedDate);
 
-  if (meta.startDate) {
-    const sDate = parseLocalDate(meta.startDate);
-    return new Date(sDate.getFullYear(), sDate.getMonth(), sDate.getDate() + dayIndex);
+  const selKey = toDateStringKey(selectedDate);
+  if (meta.startDate && meta.endDate && selKey >= meta.startDate && selKey <= weekEndForCompare(meta.endDate)) {
+    const mon = getSchoolWeekMonday(selectedDate);
+    return new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + dayIndex);
   }
 
-  // Fallback: tính theo ngày trong tuần chứa selectedDate
-  const currDayName = getDayNameFromDate(selectedDate);
-  const currDayIdx = DAYS.indexOf(currDayName);
-  const diff = dayIndex - (currDayIdx !== -1 ? currDayIdx : 0);
-  return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + diff);
+  if (meta.startDate) {
+    const mon = getSchoolWeekMonday(parseLocalDate(meta.startDate));
+    return new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + dayIndex);
+  }
+
+  const mon = getSchoolWeekMonday(selectedDate);
+  return new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + dayIndex);
+}
+
+function shiftSelectedWeek(deltaWeeks) {
+  const baseMon = getDateForDayInWeek(currentWeekKey, 'monday');
+  const nextDate = new Date(baseMon.getFullYear(), baseMon.getMonth(), baseMon.getDate() + (deltaWeeks * 7));
+  selectedDate = nextDate;
+  currentDate = new Date(nextDate);
+  resolveWeekFromDate(selectedDate);
+  renderAll();
+}
+
+let _c7MiniCalOpen = false;
+function toggleMiniCalendar() {
+  _c7MiniCalOpen = !_c7MiniCalOpen;
+  const btn = document.getElementById('btnToggleMiniCal');
+  if (btn) btn.classList.toggle('active', _c7MiniCalOpen);
+  renderAll();
 }
 
 function resolveInitialWeek() {
@@ -596,7 +677,15 @@ function _doRender({ scrollToActive = false } = {}) {
   const weekChipsSec = document.getElementById('weekChipsSection');
 
   const isMonthOrYear = (scheduleViewMode === 'month' || scheduleViewMode === 'year');
-  if (miniCalCard) miniCalCard.style.display = isMonthOrYear ? 'none' : 'block';
+  if (miniCalCard) {
+    if (isMonthOrYear) {
+      miniCalCard.style.display = 'none';
+    } else if (scheduleViewMode === 'day') {
+      miniCalCard.style.display = _c7MiniCalOpen ? 'block' : 'none';
+    } else {
+      miniCalCard.style.display = _c7MiniCalOpen ? 'block' : 'none';
+    }
+  }
   if (weekChipsSec) weekChipsSec.style.display = isMonthOrYear ? 'none' : 'block';
 
   if (weekGrid) weekGrid.style.display = scheduleViewMode === 'week' ? 'grid' : 'none';
@@ -958,8 +1047,10 @@ function renderDayView() {
     ? classesWithIndex.filter(c => !c.className || c.className === selectedClassFilter)
     : classesWithIndex;
 
-  // Events cho ngày này
-  const dayEventsAll = matchedWeekKey ? getEventsForDayInWeek(matchedWeekKey, dayName) : getEventsForDate(selectedDateKey);
+  // Events cho ngày này (lọc chính xác theo ngày selectedDateKey)
+  const dayEventsAll = matchedWeekKey
+    ? getEventsForDayInWeek(matchedWeekKey, dayName, selectedDateKey)
+    : getEventsForDate(selectedDateKey);
 
   let emptyMessageTitle = 'Không có tiết học';
   let emptyMessageDesc = 'Ngày này không có tiết học hoặc chưa được xếp thời khóa biểu.';
@@ -1011,10 +1102,9 @@ function renderDayView() {
       </div>`
     : `<div class="day-classes-list-grid" style="width: 100%;">` + classes.map(c => {
         const color = getSubjectColor(c.name || c.subject);
-        // Find events specifically for this period
+        // Find events specifically for this period on selectedDateKey
         const periodEvents = matchedWeekKey
-          ? getEventsForWeek(matchedWeekKey).filter(e =>
-              (!e.day || e.day === dayName) &&
+          ? dayEventsAll.filter(e =>
               (e.periodIndex !== null && e.periodIndex !== undefined && parseInt(e.periodIndex) === c.originalIndex)
             )
           : [];
@@ -1148,14 +1238,32 @@ function renderTimetable() {
       ? classesWithIndex.filter(c => !c.className || c.className === selectedClassFilter)
       : classesWithIndex;
 
-    const dayEventsInWeek = getEventsForDayInWeek(currentWeekKey, day);
+    const dayEventsInWeek = getEventsForDayInWeek(currentWeekKey, day, dayDateKey);
 
+    const wholeDayEventsHtml = dayEventsInWeek
+      .filter(e => (e.periodIndex === null || e.periodIndex === undefined || e.periodIndex === '') && e.type !== 'extra_class')
+      .map(ev => `
+        <div class="c7-col-day-event-pill ${ev.severity === 'danger' || ev.type === 'day_off' ? 'danger' : ''}" onclick="editEvent('${currentWeekKey}','${ev.id}')" title="Click để sửa thông báo này">
+          <span>${EVENT_TYPE_ICONS[ev.type] || '📋'} <strong>${escapeHtml(ev.title)}</strong></span>
+          ${ev.note ? `<small>${escapeHtml(ev.note)}</small>` : ''}
+        </div>
+      `).join('');
+
+    let shownAfternoonDivider = false;
     const classesHtml = classes.length === 0
-      ? '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 14px 0;">Không có tiết học</div>'
+      ? '<div style="color: var(--text-muted); font-size: 0.8rem; font-style: italic; padding: 10px 0; text-align: center;">Trống tiết</div>'
       : classes.map(c => {
           const color = getSubjectColor(c.name || c.subject);
+          const timeText = String(c.time || '');
+          const isAfternoon = c.originalIndex >= 5 || /chiều|tiết\s*[6-9]|tiết\s*10|1[3-7]:/i.test(timeText);
+          let dividerHtml = '';
+          if (isAfternoon && !shownAfternoonDivider) {
+            shownAfternoonDivider = true;
+            dividerHtml = `<div class="c7-session-divider"><span>🌤️ Buổi chiều</span></div>`;
+          }
+
           const periodEvts = dayEventsInWeek.filter(e =>
-            (e.periodIndex !== null && e.periodIndex !== undefined && parseInt(e.periodIndex) === c.originalIndex)
+            (e.periodIndex !== null && e.periodIndex !== undefined && e.periodIndex !== '' && parseInt(e.periodIndex) === c.originalIndex)
           );
           const isCancelled = periodEvts.some(e => e.type === 'day_off');
           const isChanged = periodEvts.some(e => e.type === 'schedule_change');
@@ -1164,24 +1272,26 @@ function renderTimetable() {
           ).join('');
 
           return `
-            <div class="class-card-item ${isCancelled ? 'period-cancelled' : ''} ${isChanged ? 'period-changed' : ''}" style="border-left-color: ${color}">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="class-card-time">⏰ ${escapeHtml(c.time || '')}</span>
-                ${c.className ? `<span class="class-card-grade-badge">🏫 ${escapeHtml(c.className)}</span>` : ''}
+            ${dividerHtml}
+            <div class="class-card-item c7-ergonomic-period-card ${isCancelled ? 'period-cancelled' : ''} ${isChanged ? 'period-changed' : ''}" style="border-left-color: ${color}">
+              <div class="c7-period-top-row">
+                <span class="class-card-time">${escapeHtml(c.time || '')}</span>
+                <div class="c7-period-hover-actions">
+                  <button type="button" class="c7-mini-act-btn" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'schedule_change', 'Đổi lịch môn ${escapeHtml(c.name || '')}', '${dayDateKey}')" title="Đổi lịch tiết này (${dateFormatted})">🔄</button>
+                  <button type="button" class="c7-mini-act-btn danger" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'day_off', 'Nghỉ tiết ${escapeHtml(c.name || '')}', '${dayDateKey}')" title="Báo nghỉ tiết này (${dateFormatted})">🚫</button>
+                  ${checkPermission('manage_schedule') ? `
+                    <button type="button" class="c7-mini-act-btn" onclick="editClass('${day}', ${c.originalIndex})" title="Sửa TKB gốc">✏️</button>
+                  ` : ''}
+                </div>
               </div>
-              <div class="class-card-name">
-                ${isCancelled ? `<s>${escapeHtml(c.name || '')}</s> <span style="font-size:0.75rem;color:#ef4444;font-weight:700;">(Đã báo nghỉ)</span>` : escapeHtml(c.name || '')}
+              <div class="c7-period-main-row">
+                <div class="class-card-name">
+                  ${isCancelled ? `<s>${escapeHtml(c.name || '')}</s> <span style="font-size:0.7rem;color:#ef4444;font-weight:700;">(Nghỉ)</span>` : escapeHtml(c.name || '')}
+                </div>
+                <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
               </div>
               ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
-              ${pBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;">${pBadges}</div>` : ''}
-              <div class="class-card-room">📍 ${escapeHtml(c.room || 'Chưa rõ')}</div>
-              <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
-                <button type="button" class="btn-action-pill" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'schedule_change', 'Đổi lịch môn ${escapeHtml(c.name || '')}')" title="Đổi lịch/phòng cho tiết này trong tuần (tính vào log thay đổi)">🔄 Đổi</button>
-                <button type="button" class="btn-action-pill danger" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'day_off', 'Nghỉ tiết ${escapeHtml(c.name || '')}')" title="Báo nghỉ/bỏ tiết này trong tuần (tính vào log thay đổi)">🚫 Bỏ tiết</button>
-                ${checkPermission('manage_schedule') ? `
-                  <button type="button" class="btn-action-pill" onclick="editClass('${day}', ${c.originalIndex})" title="Sửa TKB gốc">✏️ Gốc</button>
-                ` : ''}
-              </div>
+              ${pBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;">${pBadges}</div>` : ''}
             </div>
           `;
         }).join('');
@@ -1215,11 +1325,12 @@ function renderTimetable() {
             <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 700;">${classes.length} tiết 🔍</span>
           </div>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          ${wholeDayEventsHtml}
           ${classesHtml}
           ${extraClassesColHtml}
-          <button type="button" class="btn-add-period-col" onclick="openEventModal('${currentWeekKey}', '${day}', null, 'extra_class', 'Thêm tiết học ${DAY_LABELS[day]}')" title="Thêm tiết học bù / tăng cường cho thứ này trong tuần (tính vào log thay đổi)">
-            + Thêm tiết tuần này
+          <button type="button" class="btn-add-period-col" onclick="openEventModal('${currentWeekKey}', '${day}', null, 'extra_class', 'Thêm tiết học ${DAY_LABELS[day]}', '${dayDateKey}')" title="Thêm tiết học bù / tăng cường cho ngày ${dateFormatted}">
+            + Thêm tiết (${dateFormatted})
           </button>
         </div>
       </div>
@@ -1485,14 +1596,18 @@ function renderMonthView() {
     const wKey = getWeekKeyForDate(dateObj);
 
     let classChips = '';
+    let manyPeriodsClass = '';
     if (wKey) {
       const sched = getEffectiveSchedule(wKey);
       let dayList = (sched[dayName] || []);
       if (selectedClassFilter) dayList = dayList.filter(c => !c.className || c.className === selectedClassFilter);
+      if (dayList.length > 5) manyPeriodsClass = 'has-many-periods';
       dayList.forEach((c, i) => {
         const col = getSubjectColor(c.name || c.subject) || CHIP_COLORS[i % CHIP_COLORS.length];
-        const timeShort = c.time ? `[${c.time.split(' ')[0]}] ` : '';
-        classChips += `<div class="month-class-chip" style="background:${col};" title="${escapeHtml(c.name || '')} (${c.time || ''} - ${c.room || ''})">${timeShort}${escapeHtml(c.name || '')}</div>`;
+        const cleanName = String(c.name || '').replace(/^Tiết\s*\d+\s*(\(Chiều\))?\s*:\s*/i, '');
+        const pMatch = String(c.name || c.time || '').match(/Tiết\s*(\d+)/i);
+        const pLabel = pMatch ? `T${pMatch[1]}: ` : `${i + 1}. `;
+        classChips += `<div class="month-class-chip" style="background:${col};" title="${escapeHtml(c.name || '')} (${c.time || ''} - ${c.room || ''})">${pLabel}${escapeHtml(cleanName)}</div>`;
       });
     }
 
@@ -1506,7 +1621,8 @@ function renderMonthView() {
       <div class="month-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}"
            onclick="selectedDate=new Date(${year},${month},${d});currentDate=new Date(selectedDate);resolveWeekFromDate(selectedDate);scheduleViewMode='day';renderAll();">
         <div class="month-cell-num">${d}</div>
-        <div class="month-cell-class-chips">${classChips}${eventChips}</div>
+        <div class="month-cell-class-chips ${manyPeriodsClass}">${classChips}</div>
+        ${eventChips ? `<div class="month-cell-events-stack">${eventChips}</div>` : ''}
       </div>`;
   }
 
@@ -1626,6 +1742,10 @@ function renderWeekEventsLogCard() {
   const itemsHtml = events.map(ev => {
     const icon = EVENT_TYPE_ICONS[ev.type] || '📋';
     const dayLabel = ev.day ? (DAY_LABELS[ev.day] || ev.day) : 'Cả tuần';
+    const resolvedDate = resolveEventTargetDate(ev, currentWeekKey);
+    const dateBadge = ev.repeatWeekly
+      ? '🔁 Hàng tuần'
+      : (resolvedDate ? `(${formatDateDisplay(resolvedDate)})` : '');
     const periodLabel = (ev.periodIndex !== null && ev.periodIndex !== undefined && ev.periodIndex !== '') 
       ? `Tiết ${parseInt(ev.periodIndex) + 1}` 
       : 'Tất cả tiết';
@@ -1635,7 +1755,7 @@ function renderWeekEventsLogCard() {
       <div class="week-event-item ${isDanger ? 'danger' : ''}">
         <div class="week-event-info">
           <span class="week-event-title-text">${icon} ${escapeHtml(ev.title)}</span>
-          <span class="week-event-sub-text">📅 ${dayLabel} • ⏰ ${periodLabel} ${ev.note ? `• <em>${escapeHtml(ev.note)}</em>` : ''}</span>
+          <span class="week-event-sub-text">📅 ${dayLabel} ${dateBadge} • ⏰ ${periodLabel} ${ev.note ? `• <em>${escapeHtml(ev.note)}</em>` : ''}</span>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button type="button" class="btn-action-pill" onclick="editEvent('${currentWeekKey}','${ev.id}')" title="Chỉnh sửa">✏️ Sửa</button>
@@ -1672,7 +1792,29 @@ function deleteEventById(weekKey, eventId) {
 }
 
 // ============= EVENT MODAL FUNCTIONS =============
-function openEventModal(weekKey = null, day = null, periodIndex = null, defaultType = 'schedule_change', defaultTitle = '') {
+function syncEventDayFromDate(dateStr) {
+  if (!dateStr) return;
+  const d = parseLocalDate(dateStr);
+  const dayName = getDayNameFromDate(d);
+  const daySel = document.getElementById('inputEventDay');
+  if (daySel && dayName && dayName !== 'sunday') {
+    daySel.value = dayName;
+  }
+}
+
+function syncEventDateFromDay(dayName) {
+  const dateInp = document.getElementById('inputEventDate');
+  if (!dateInp) return;
+  if (!dayName) {
+    dateInp.value = '';
+    return;
+  }
+  const wk = editingEventWeekKey || currentWeekKey;
+  const dObj = getDateForDayInWeek(wk, dayName);
+  dateInp.value = toDateStringKey(dObj);
+}
+
+function openEventModal(weekKey = null, day = null, periodIndex = null, defaultType = 'schedule_change', defaultTitle = '', defaultDateKey = null) {
   editingEventWeekKey = weekKey || currentWeekKey;
   editingEventId = null;
 
@@ -1685,6 +1827,20 @@ function openEventModal(weekKey = null, day = null, periodIndex = null, defaultT
   document.getElementById('inputEventNote').value = '';
   document.getElementById('inputEventDay').value = day || '';
   document.getElementById('inputEventPeriod').value = (periodIndex !== null && periodIndex !== undefined) ? String(periodIndex) : '';
+
+  const scopeEl = document.getElementById('inputEventScope');
+  if (scopeEl) scopeEl.value = 'single';
+
+  const dateEl = document.getElementById('inputEventDate');
+  if (dateEl) {
+    if (defaultDateKey) {
+      dateEl.value = defaultDateKey;
+    } else if (day) {
+      dateEl.value = toDateStringKey(getDateForDayInWeek(editingEventWeekKey, day));
+    } else {
+      dateEl.value = '';
+    }
+  }
 
   const deleteBtn = document.getElementById('btnDeleteEvent');
   if (deleteBtn) deleteBtn.style.display = 'none';
@@ -1707,6 +1863,14 @@ function editEvent(weekKey, eventId) {
   document.getElementById('inputEventNote').value = ev.note || '';
   document.getElementById('inputEventDay').value = ev.day || '';
   document.getElementById('inputEventPeriod').value = (ev.periodIndex !== null && ev.periodIndex !== undefined) ? String(ev.periodIndex) : '';
+
+  const scopeEl = document.getElementById('inputEventScope');
+  if (scopeEl) scopeEl.value = ev.repeatWeekly ? 'repeat' : 'single';
+
+  const dateEl = document.getElementById('inputEventDate');
+  if (dateEl) {
+    dateEl.value = ev.targetDate || resolveEventTargetDate(ev, weekKey) || '';
+  }
 
   const deleteBtn = document.getElementById('btnDeleteEvent');
   if (deleteBtn) deleteBtn.style.display = 'block';
@@ -1731,9 +1895,23 @@ async function submitEventForm() {
   const type = document.getElementById('inputEventType').value;
   const severity = document.getElementById('inputEventSeverity').value;
   const note = document.getElementById('inputEventNote').value.trim();
-  const day = document.getElementById('inputEventDay').value;
+  let day = document.getElementById('inputEventDay').value;
   const periodVal = document.getElementById('inputEventPeriod').value;
   const periodIndex = periodVal !== '' ? parseInt(periodVal) : null;
+
+  const scopeEl = document.getElementById('inputEventScope');
+  const repeatWeekly = scopeEl ? (scopeEl.value === 'repeat') : false;
+
+  const dateEl = document.getElementById('inputEventDate');
+  let targetDate = (dateEl && dateEl.value) ? dateEl.value : null;
+  if (!repeatWeekly && !targetDate && day) {
+    targetDate = toDateStringKey(getDateForDayInWeek(weekKey, day));
+  }
+  if (targetDate && !day) {
+    const parsedDay = getDayNameFromDate(parseLocalDate(targetDate));
+    if (parsedDay && parsedDay !== 'sunday') day = parsedDay;
+  }
+  const weekStartDate = toDateStringKey(getDateForDayInWeek(weekKey, 'monday'));
 
   if (!scheduleEvents[weekKey]) scheduleEvents[weekKey] = [];
 
@@ -1746,6 +1924,9 @@ async function submitEventForm() {
       scheduleEvents[weekKey][idx] = {
         ...scheduleEvents[weekKey][idx],
         type, severity, title, note, day, periodIndex,
+        targetDate: repeatWeekly ? null : targetDate,
+        weekStartDate,
+        repeatWeekly,
         updatedAt: new Date().toISOString()
       };
     }
@@ -1754,6 +1935,9 @@ async function submitEventForm() {
     scheduleEvents[weekKey].push({
       id: generateEventId(),
       type, severity, title, note, day, periodIndex,
+      targetDate: repeatWeekly ? null : targetDate,
+      weekStartDate,
+      repeatWeekly,
       weekKey,
       createdAt: new Date().toISOString(),
       createdBy: user ? user.name : 'Admin'

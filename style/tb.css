@@ -1,4 +1,4 @@
-/**
+﻿/**
  * C7AIO Announcements (Thông Báo) Stylesheet — Tech Premium Design System
  */
 
@@ -85,7 +85,7 @@
 }
 
 [data-theme="dark"] .notif-icon-bubble {
-  background: rgba(14, 165, 160, 0.2);
+  background: var(--brand-glow);
 }
 
 .notif-content-area {

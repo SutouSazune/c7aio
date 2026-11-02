@@ -1,4 +1,4 @@
-/**
+﻿/**
  * C7AIO Login Page Stylesheet — Vector 8 Premium Auth Experience
  */
 
@@ -50,7 +50,7 @@
   display: grid;
   place-items: center;
   font-size: 1.6rem;
-  box-shadow: 0 4px 16px rgba(14, 165, 160, 0.35);
+  box-shadow: 0 4px 16px var(--brand-glow);
   margin-bottom: var(--sp-3);
 }
 
@@ -197,13 +197,13 @@
   font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(14, 165, 160, 0.35);
+  box-shadow: 0 4px 14px var(--brand-glow);
   transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) ease;
 }
 
 .login-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(14, 165, 160, 0.45);
+  box-shadow: 0 6px 20px var(--brand-glow);
 }
 
 .guest-btn {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * C7AIO Sơ Đồ Lớp — Seating Chart Design System
  * Glassmorphism · Drag & Drop · Dark Mode · Responsive
  */
@@ -6,7 +6,9 @@
 /* ===================== TAB NAVIGATION ===================== */
 body > .welcome-hero {
   max-width: 1320px;
-  margin: 0 auto 1.25rem !important;
+  margin: 0 auto 0.85rem !important;
+  padding: 1.1rem 1.6rem !important;
+  min-height: auto !important;
   width: calc(100% - 3rem);
 }
 
@@ -54,9 +56,9 @@ body > .welcome-hero {
 
 .sodo-tab-btn.active {
   color: #ffffff !important;
-  background: linear-gradient(135deg, #0ea5a0 0%, #0b8f8a 100%) !important;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%) !important;
   border-color: rgba(20, 200, 194, 0.4) !important;
-  box-shadow: 0 6px 18px -4px rgba(14, 165, 160, 0.45);
+  box-shadow: 0 6px 18px -4px var(--brand-glow);
   font-weight: 800;
 }
 
@@ -133,12 +135,12 @@ body > .welcome-hero {
 .sodo-btn-primary {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(14, 165, 160, 0.25);
+  box-shadow: 0 2px 8px var(--brand-glow);
 }
 .sodo-btn-primary:hover {
   background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(14, 165, 160, 0.35);
+  box-shadow: 0 6px 16px var(--brand-glow);
 }
 
 .sodo-btn-success {
@@ -174,9 +176,9 @@ body > .welcome-hero {
 
 .sodo-board-label {
   text-align: center;
-  background: linear-gradient(90deg, rgba(14, 165, 160, 0.12) 0%, rgba(14, 165, 160, 0.22) 50%, rgba(14, 165, 160, 0.12) 100%);
+  background: linear-gradient(90deg, var(--brand-dim) 0%, var(--brand-glow) 50%, var(--brand-dim) 100%);
   color: var(--brand);
-  border: 1px solid rgba(14, 165, 160, 0.35);
+  border: 1px solid var(--brand-glow);
   font-weight: 800;
   font-size: 0.82rem;
   padding: 11px 0;
@@ -184,7 +186,7 @@ body > .welcome-hero {
   margin-bottom: 28px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  box-shadow: 0 6px 20px -6px rgba(14, 165, 160, 0.25), 0 1px 0 var(--spatial-inset-top) inset;
+  box-shadow: 0 6px 20px -6px var(--brand-glow), 0 1px 0 var(--spatial-inset-top) inset;
   position: relative;
 }
 
@@ -202,8 +204,8 @@ body > .welcome-hero {
 }
 
 [data-theme="dark"] .sodo-board-label {
-  background: linear-gradient(90deg, rgba(14, 165, 160, 0.14) 0%, rgba(20, 200, 194, 0.26) 50%, rgba(14, 165, 160, 0.14) 100%);
-  color: #14c8c2;
+  background: linear-gradient(90deg, var(--brand-dim) 0%, rgba(20, 200, 194, 0.26) 50%, var(--brand-dim) 100%);
+  color: var(--brand-strong);
 }
 
 /* Seat grid — uses CSS custom prop --sodo-cols */
@@ -243,7 +245,7 @@ body > .welcome-hero {
 .sodo-cell-filled:hover {
   transform: translateY(-4px) scale(1.03);
   box-shadow: var(--spatial-shadow-hover), 0 1px 0 var(--spatial-inset-top) inset;
-  border-color: rgba(14, 165, 160, 0.5);
+  border-color: var(--brand-glow);
   z-index: 2;
 }
 
@@ -350,7 +352,7 @@ body > .welcome-hero {
   width: 24px;
   height: 3px;
   border-radius: 2px;
-  background: rgba(14, 165, 160, 0.3);
+  background: var(--brand-glow);
 }
 
 /* ===================== EMPTY / LOADING ===================== */
@@ -446,7 +448,7 @@ body > .welcome-hero {
 .sodo-custom-card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-lg);
-  border-color: rgba(14, 165, 160, 0.3);
+  border-color: var(--brand-glow);
 }
 
 .sodo-custom-card-header {
@@ -570,7 +572,7 @@ body > .welcome-hero {
   color: #fff;
   flex-shrink: 0;
   gap: 16px;
-  box-shadow: 0 4px 20px rgba(14, 165, 160, 0.35);
+  box-shadow: 0 4px 20px var(--brand-glow);
 }
 
 .sodo-editor-title {
@@ -1013,7 +1015,7 @@ body > .welcome-hero {
   background: rgba(14, 165, 160, 0.07);
   border-color: var(--primary);
   border-style: dashed;
-  box-shadow: 0 0 0 3px rgba(14, 165, 160, 0.12);
+  box-shadow: 0 0 0 3px var(--brand-dim);
 }
 
 .sodo-editor-cell-empty .sodo-empty-plus {
@@ -1038,7 +1040,7 @@ body > .welcome-hero {
 .sodo-editor-cell-filled:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
-  border-color: rgba(14, 165, 160, 0.4);
+  border-color: var(--brand-glow);
   z-index: 2;
 }
 
@@ -1048,7 +1050,7 @@ body > .welcome-hero {
   background: rgba(14, 165, 160, 0.1) !important;
   border-color: var(--primary) !important;
   border-style: solid !important;
-  box-shadow: 0 0 0 3px rgba(14, 165, 160, 0.2);
+  box-shadow: 0 0 0 3px var(--brand-glow);
   transform: scale(1.04);
 }
 
@@ -1286,7 +1288,7 @@ body > .welcome-hero {
 
 /* Right seat of double desk in editor */
 .sodo-editor-cell[data-desk-pos="right"] {
-  border-left: 2.5px solid rgba(14, 165, 160, 0.2);
+  border-left: 2.5px solid var(--brand-glow);
 }
 
 /* ===================== CONTEXT MENU ===================== */
@@ -1375,7 +1377,7 @@ body > .welcome-hero {
 
 .sodo-editor-footer input[type="text"]:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(14, 165, 160, 0.12);
+  box-shadow: 0 0 0 3px var(--brand-dim);
 }
 
 .sodo-checkbox-label {
@@ -1585,13 +1587,13 @@ body > .welcome-hero {
 .sodo-editor-cell[data-seat-type="double"][data-desk-pos="left"] {
   border-radius: 12px 4px 4px 12px !important;
   border-right-style: dashed !important;
-  border-right-color: rgba(14,165,160,0.25) !important;
+  border-right-color: var(--brand-glow) !important;
 }
 .sodo-cell[data-seat-type="double"][data-desk-pos="right"],
 .sodo-editor-cell[data-seat-type="double"][data-desk-pos="right"] {
   border-radius: 4px 12px 12px 4px !important;
   border-left-style: dashed !important;
-  border-left-color: rgba(14,165,160,0.25) !important;
+  border-left-color: var(--brand-glow) !important;
 }
 
 /* Nhãn Bàn 2 — chỉ ở bàn đầu tiên của mỗi dãy (data-dg-start="1") */
@@ -1680,7 +1682,7 @@ body > .welcome-hero {
     -45deg, transparent, transparent 5px,
     rgba(14,165,160,0.06) 5px, rgba(14,165,160,0.06) 10px
   ) !important;
-  border: 1.5px dashed rgba(14,165,160,0.45) !important;
+  border: 1.5px dashed var(--brand-glow) !important;
 }
 .sodo-editor-cell-anyone {
   background: repeating-linear-gradient(
@@ -1692,7 +1694,7 @@ body > .welcome-hero {
 }
 .sodo-editor-cell-anyone:hover {
   border-color: var(--secondary) !important;
-  box-shadow: 0 0 0 3px rgba(14,165,160,0.15);
+  box-shadow: 0 0 0 3px var(--brand-dim);
 }
 
 .sodo-avatar-anyone {
@@ -1712,7 +1714,7 @@ body > .welcome-hero {
 /* "Bất Kỳ" token in sidebar */
 .sodo-anyone-slot-row {
   padding: 8px 10px 10px;
-  border-bottom: 2px dashed rgba(14,165,160,0.2);
+  border-bottom: 2px dashed var(--brand-glow);
   background: rgba(14,165,160,0.04);
   flex-shrink: 0;
 }
@@ -1725,7 +1727,7 @@ body > .welcome-hero {
   transition: all 0.15s ease;
 }
 .sodo-anyone-token:hover {
-  background: rgba(14,165,160,0.15) !important;
+  background: var(--brand-dim) !important;
   transform: translateY(-1px);
 }
 
@@ -1773,7 +1775,7 @@ body > .welcome-hero {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
-  box-shadow: 0 3px 12px rgba(14,165,160,0.35);
+  box-shadow: 0 3px 12px var(--brand-glow);
 }
 
 /* ===================== OUTDOOR SCENARIO SELECTOR ===================== */
@@ -1842,8 +1844,8 @@ body > .welcome-hero {
 .sodo-icon-pick-btn:hover { border-color: var(--primary); transform: scale(1.12); background: rgba(14,165,160,0.08); }
 .sodo-icon-pick-btn.active {
   border-color: var(--primary);
-  background: rgba(14,165,160,0.12);
-  box-shadow: 0 0 0 2px rgba(14,165,160,0.25);
+  background: var(--brand-dim);
+  box-shadow: 0 0 0 2px var(--brand-glow);
   transform: scale(1.08);
 }
 
@@ -1854,7 +1856,7 @@ body > .welcome-hero {
     -45deg, transparent, transparent 2px,
     rgba(14,165,160,0.18) 2px, rgba(14,165,160,0.18) 4px
   ) !important;
-  border: 1px dashed rgba(14,165,160,0.4) !important;
+  border: 1px dashed var(--brand-glow) !important;
 }
 
 /* ===================== DESK TYPE CONTROLS (4 TYPES) ===================== */

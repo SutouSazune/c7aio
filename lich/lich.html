@@ -10,9 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style/tokens.css?v=9.0.0">
-  <link rel="stylesheet" href="../style/hub.css?v=9.0.0">
-  <link rel="stylesheet" href="../style/lich.css?v=9.0.0">
+  <link rel="stylesheet" href="../style/tokens.css?v=12.0.0">
+  <link rel="stylesheet" href="../style/hub.css?v=12.0.0">
+  <link rel="stylesheet" href="../style/lich.css?v=12.0.0">
 </head>
 <body>
 
@@ -81,8 +81,17 @@
           </button>
         </div>
 
+        <button class="c7-btn c7-btn-secondary" onclick="shiftSelectedWeek(-1)" title="Xem tuần liền trước">
+          ◀ Tuần trước
+        </button>
         <button class="c7-btn c7-btn-secondary" onclick="jumpToToday()">
           📍 Hôm nay
+        </button>
+        <button class="c7-btn c7-btn-secondary" onclick="shiftSelectedWeek(1)" title="Xem tuần liền sau">
+          Tuần sau ▶
+        </button>
+        <button class="c7-btn c7-btn-secondary" id="btnToggleMiniCal" onclick="toggleMiniCalendar()" title="Mở/Đóng lịch chọn ngày nhanh">
+          🗓️ Chọn ngày
         </button>
         <button class="c7-btn c7-btn-secondary" onclick="window.print()">
           🖨️ In / Xuất PDF
@@ -90,7 +99,7 @@
       </div>
 
       <div style="display: flex; gap: 10px; flex-wrap: wrap;" id="adminScheduleButtons">
-        <button class="c7-btn c7-btn-primary" onclick="openEventModal(currentWeekKey)" style="font-weight: 700; background: linear-gradient(135deg, #f97316, #ea580c); border: none; color: white;">
+        <button class="c7-btn c7-btn-primary" onclick="openEventModal(currentWeekKey)" style="font-weight: 700; background: var(--c7-gradient-warm); border: none; color: white;">
           📢 Thay Đổi Lịch Tuần Này
         </button>
         <button class="c7-btn c7-btn-secondary" id="btnAddClassTrigger" style="display: none;" onclick="openAddClassModal()">
@@ -324,12 +333,27 @@
           <input type="text" id="inputEventNote" class="form-control-custom" placeholder="vd: GV thông báo qua Zalo lúc 7h sáng">
         </div>
 
+        <!-- Specific Date & Scope -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày cụ thể áp dụng</label>
+            <input type="date" id="inputEventDate" class="form-control-custom" onchange="syncEventDayFromDate(this.value)">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Phạm vi hiệu lực</label>
+            <select id="inputEventScope" class="form-control-custom">
+              <option value="single" selected>🎯 Chỉ đúng ngày / tuần này</option>
+              <option value="repeat">🔁 Lặp lại hàng tuần (suốt TKB)</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Day & Period -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
-            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Ngày áp dụng</label>
-            <select id="inputEventDay" class="form-control-custom">
-              <option value="">-- Cả tuần --</option>
+            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-sub);">Thứ trong tuần</label>
+            <select id="inputEventDay" class="form-control-custom" onchange="syncEventDateFromDay(this.value)">
+              <option value="">-- Cả tuần (T2 → T7) --</option>
               <option value="monday">Thứ Hai</option>
               <option value="tuesday">Thứ Ba</option>
               <option value="wednesday">Thứ Tư</option>
@@ -377,12 +401,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="../script/offline-engine.js?v=9.0.0"></script>
-  <script src="../script/firebase-config.js?v=9.0.0"></script>
-  <script src="../script/firebase-utils.js?v=9.0.0"></script>
-  <script src="../script/students-list.js?v=9.0.0"></script>
-  <script src="../script/hub.js?v=9.0.0"></script>
-  <script src="../script/console.js?v=9.0.0"></script>
-  <script src="../script/lich.js?v=9.0.0"></script>
+  <script src="../script/offline-engine.js?v=12.0.0"></script>
+  <script src="../script/firebase-config.js?v=12.0.0"></script>
+  <script src="../script/firebase-utils.js?v=12.0.0"></script>
+  <script src="../script/students-list.js?v=12.0.0"></script>
+  <script src="../script/hub.js?v=12.0.0"></script>
+  <script src="../script/console.js?v=12.0.0"></script>
+  <script src="../script/lich.js?v=12.0.0"></script>
 </body>
 </html>

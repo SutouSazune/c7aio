@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style/tokens.css?v=9.0.0">
-  <link rel="stylesheet" href="style/hub.css?v=9.0.0">
+  <link rel="stylesheet" href="style/tokens.css?v=12.0.0">
+  <link rel="stylesheet" href="style/hub.css?v=12.0.0">
 </head>
 <body>
 
@@ -78,6 +78,9 @@
             </button>
             <button class="quick-hero-btn secondary" onclick="go('lich/lich.html')">
               <span>📅 Thời khóa biểu</span>
+            </button>
+            <button class="quick-hero-btn secondary" onclick="if(window.CommandPalette) CommandPalette.open()">
+              <span>🔍 Tìm nhanh (Ctrl+K)</span>
             </button>
           </div>
         </div>
@@ -146,10 +149,84 @@
       </div>
     </section>
 
+    <!-- Two Column Dashboard Grid (Moved Above Fold for Immediate Actionability) -->
+    <section class="dashboard-content-grid">
+      <!-- Left: Today Schedule Widget -->
+      <div class="dashboard-panel" id="todayScheduleWidget">
+        <div class="widget-header">
+          <h3>📅 Tiết học hôm nay</h3>
+          <a href="lich/lich.html" class="widget-link">Xem tuần →</a>
+        </div>
+        <div class="empty-widget">
+          <span>⏳</span>
+          <p>Đang tải dữ liệu thời khóa biểu...</p>
+        </div>
+      </div>
+
+      <!-- Right: Urgent Tasks Widget -->
+      <div class="dashboard-panel">
+        <div class="widget-header">
+          <h3>⏰ Nhiệm vụ cần làm</h3>
+          <a href="nhiemvu/nv.html" class="widget-link">Xem tất cả →</a>
+        </div>
+        <ul class="recent-list" id="recentTasks">
+          <!-- Rendered by hub.js -->
+        </ul>
+        <div class="empty-widget" id="emptyState" style="display: none;">
+          <span>🎉</span>
+          <p>Tuyệt vời! Không có nhiệm vụ nào gần hạn.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Smart Study Suite: Pomodoro Focus Timer & Quick Scratchpad -->
+    <section class="c7-study-suite-grid" id="c7StudySuiteSection">
+      <!-- Left: Pomodoro Focus Timer -->
+      <div class="dashboard-panel c7-pomodoro-card">
+        <div class="widget-header">
+          <h3>🍅 Đồng hồ Tập trung (Pomodoro)</h3>
+          <div class="c7-pomo-modes">
+            <button type="button" class="c7-pomo-mode-btn active" data-min="25" onclick="C7ExecutiveSuite.setPomoMode(25, this)">25p Học</button>
+            <button type="button" class="c7-pomo-mode-btn" data-min="5" onclick="C7ExecutiveSuite.setPomoMode(5, this)">5p Nghỉ</button>
+            <button type="button" class="c7-pomo-mode-btn" data-min="45" onclick="C7ExecutiveSuite.setPomoMode(45, this)">45p Ôn thi</button>
+          </div>
+        </div>
+        <div class="c7-pomo-body">
+          <div class="c7-pomo-ring-wrap">
+            <svg width="116" height="116" viewBox="0 0 116 116">
+              <circle cx="58" cy="58" r="50" fill="none" stroke="rgba(14,165,160,0.14)" stroke-width="8"/>
+              <circle id="c7PomoCircle" cx="58" cy="58" r="50" fill="none" stroke="var(--brand)" stroke-width="8" stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="0" transform="rotate(-90 58 58)"/>
+            </svg>
+            <div class="c7-pomo-time" id="c7PomoTimeDisplay">25:00</div>
+          </div>
+          <div class="c7-pomo-controls">
+            <div class="c7-pomo-status" id="c7PomoStatusText">Sẵn sàng tập trung cao độ</div>
+            <div class="c7-pomo-btn-row">
+              <button type="button" class="c7-btn c7-btn-primary" id="c7PomoStartBtn" onclick="C7ExecutiveSuite.togglePomo()">▶ Bắt đầu</button>
+              <button type="button" class="c7-btn c7-btn-secondary" onclick="C7ExecutiveSuite.resetPomo()">↺ Đặt lại</button>
+            </div>
+            <div class="c7-pomo-sessions">Đã hoàn thành hôm nay: <strong id="c7PomoCount">0</strong> phiên 🔥</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Quick Personal Scratchpad -->
+      <div class="dashboard-panel c7-scratchpad-card">
+        <div class="widget-header">
+          <h3>📝 Sổ tay Ghi chú Nhanh</h3>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="c7NoteSaveBadge" class="c7-note-save-badge">Đã lưu tự động</span>
+            <button type="button" class="btn-action-pill" onclick="C7ExecutiveSuite.clearScratchpad()">Xóa trắng</button>
+          </div>
+        </div>
+        <textarea id="c7QuickScratchpad" class="c7-scratchpad-textarea" placeholder="Ghi nhanh bài tập về nhà, lời dặn của giáo viên, công thức cần nhớ... (Tự động lưu trên trình duyệt của bạn)" oninput="C7ExecutiveSuite.saveScratchpad(this.value)"></textarea>
+      </div>
+    </section>
+
     <!-- Quick Navigation Bento Grid -->
     <section class="quick-nav-section">
       <div class="section-header-row">
-        <h2 class="section-title">Chức năng</h2>
+        <h2 class="section-title">Không gian chức năng</h2>
       </div>
       <div class="nav-grid c7-stagger-group">
         <button class="nav-btn bento-feature-card nav-card--featured c7-nav-card--featured" onclick="go('nhiemvu/nv.html')">
@@ -244,36 +321,6 @@
       </div>
     </section>
 
-    <!-- Two Column Dashboard Grid -->
-    <section class="dashboard-content-grid">
-      <!-- Left: Today Schedule Widget -->
-      <div class="dashboard-panel" id="todayScheduleWidget">
-        <div class="widget-header">
-          <h3>📅 Tiết học hôm nay</h3>
-          <a href="lich/lich.html" class="widget-link">Xem tuần →</a>
-        </div>
-        <div class="empty-widget">
-          <span>⏳</span>
-          <p>Đang tải dữ liệu thời khóa biểu...</p>
-        </div>
-      </div>
-
-      <!-- Right: Urgent Tasks Widget -->
-      <div class="dashboard-panel">
-        <div class="widget-header">
-          <h3>⏰ Nhiệm vụ cần làm</h3>
-          <a href="nhiemvu/nv.html" class="widget-link">Xem tất cả →</a>
-        </div>
-        <ul class="recent-list" id="recentTasks">
-          <!-- Rendered by hub.js -->
-        </ul>
-        <div class="empty-widget" id="emptyState" style="display: none;">
-          <span>🎉</span>
-          <p>Tuyệt vời! Không có nhiệm vụ nào gần hạn.</p>
-        </div>
-      </div>
-    </section>
-
   </main>
 
   <footer class="footer">
@@ -287,11 +334,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Core Scripts -->
-  <script src="script/offline-engine.js?v=9.0.0"></script>
-  <script src="script/firebase-config.js?v=9.0.0"></script>
-  <script src="script/firebase-utils.js?v=9.0.0"></script>
-  <script src="script/students-list.js?v=9.0.0"></script>
-  <script src="script/hub.js?v=9.0.0"></script>
-  <script src="script/console.js?v=9.0.0"></script>
+  <script src="script/offline-engine.js?v=12.0.0"></script>
+  <script src="script/firebase-config.js?v=12.0.0"></script>
+  <script src="script/firebase-utils.js?v=12.0.0"></script>
+  <script src="script/students-list.js?v=12.0.0"></script>
+  <script src="script/hub.js?v=12.0.0"></script>
+  <script src="script/console.js?v=12.0.0"></script>
 </body>
 </html>

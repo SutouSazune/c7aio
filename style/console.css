@@ -1,9 +1,9 @@
-/* Console Toggle Button — Obsidian Crystalline v6.2 */
+﻿/* Console Toggle Button — Obsidian Crystalline v6.2 */
 .console-toggle {
   padding: 0.55rem 1.1rem;
   background: var(--bg-elevated, #0d1528);
-  color: var(--brand-strong, #14c8c2);
-  border: 1px solid var(--border-brand, rgba(14, 165, 160, 0.4));
+  color: var(--brand-strong, var(--brand-strong));
+  border: 1px solid var(--border-brand, var(--brand-glow));
   border-radius: var(--r-md, 10px);
   cursor: pointer;
   font-size: 0.88rem;
@@ -17,7 +17,7 @@
 .console-toggle:hover {
   transform: translateY(-2px);
   box-shadow: var(--sh-glow);
-  background: var(--brand-dim, rgba(14, 165, 160, 0.12));
+  background: var(--brand-dim, var(--brand-dim));
 }
 
 /* Positioning for sub-pages (absolute right) */
@@ -58,7 +58,7 @@
   height: min(420px, 75vh);
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(14, 165, 160, 0.35);
+  border: 1px solid var(--brand-glow);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
   resize: both;
   overflow: hidden;
@@ -79,7 +79,7 @@
 }
 
 .console-header h2 {
-  color: #14c8c2;
+  color: var(--brand-strong);
   font-size: 0.92rem;
   font-weight: 700;
   margin: 0;
@@ -107,9 +107,9 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.console-prompt { color: #14c8c2; margin-right: 0.5rem; font-weight: 700; }
+.console-prompt { color: var(--brand-strong); margin-right: 0.5rem; font-weight: 700; }
 .console-input { flex: 1; background: transparent; border: none; color: #fff; font-family: inherit; font-size: 0.88rem; outline: none; }
-.console-action-btn { background: rgba(14, 165, 160, 0.2); color: #14c8c2; border: 1px solid rgba(14, 165, 160, 0.35); padding: 0.28rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600; margin-right: 0.75rem; transition: background 0.15s ease; }
-.console-action-btn:hover { background: rgba(14, 165, 160, 0.35); }
+.console-action-btn { background: var(--brand-glow); color: var(--brand-strong); border: 1px solid var(--brand-glow); padding: 0.28rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600; margin-right: 0.75rem; transition: background 0.15s ease; }
+.console-action-btn:hover { background: var(--brand-glow); }
 .console-close { background: none; border: none; color: #7a8ba3; font-size: 1.15rem; cursor: pointer; transition: color 0.15s ease; }
 .console-close:hover { color: #f43f5e; }
