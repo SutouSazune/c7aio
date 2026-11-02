@@ -4103,18 +4103,18 @@ body {
   top: 12px;
   left: 12px;
   bottom: 12px;
-  width: 248px;
+  width: 258px;
   z-index: 130;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 1rem 0.85rem;
+  padding: 1.1rem 0.9rem;
   border-radius: 22px;
   background: var(--spatial-header-bg);
   backdrop-filter: blur(28px) saturate(200%);
   -webkit-backdrop-filter: blur(28px) saturate(200%);
   border: 1px solid var(--spatial-border);
-  box-shadow: var(--spatial-shadow);
+  box-shadow: var(--spatial-shadow), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1), transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
 }
@@ -4132,7 +4132,8 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0.25rem 0.35rem;
+  padding: 0.2rem 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .c7-os-brand-left {
@@ -4144,44 +4145,67 @@ body {
 }
 
 .c7-os-brand-glyph {
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   background: var(--c7-gradient-primary);
   color: #ffffff;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 0.82rem;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 0.84rem;
+  letter-spacing: -0.02em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 16px -4px var(--brand-glow);
+  box-shadow: 0 8px 18px -4px var(--brand-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.c7-brand-pulse-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 8px #10b981;
 }
 
 .c7-os-brand-meta {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
 .c7-os-brand-title {
-  font-family: var(--font-display);
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-family: var(--font-sans) !important;
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.02em !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
 }
 
 .c7-os-brand-sub {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--brand);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.66rem !important;
+  font-weight: 700 !important;
+  color: var(--time-accent, var(--brand)) !important;
+  letter-spacing: 0.03em !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: var(--brand-dim) !important;
+  padding: 2px 7px !important;
+  border-radius: 99px !important;
+  width: fit-content !important;
+  line-height: 1.3 !important;
 }
 
 .c7-os-collapse-btn {
@@ -4400,16 +4424,18 @@ body {
 /* Desktop Spatial OS App Shell Layout (>= 1024px) */
 @media (min-width: 1024px) {
   body.c7-os-shell-active {
-    padding-left: 268px !important;
+    padding-left: 278px !important;
     padding-bottom: 36px !important;
     transition: padding-left 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  body.c7-os-shell-active #c7BottomDock {
-    display: none !important;
-  }
-
-  body.c7-os-shell-active .c7-exec-topnav {
+  body.c7-os-shell-active #c7BottomDockWrap,
+  body.c7-os-shell-active .c7-bottom-dock-wrap,
+  body.c7-os-shell-active #c7BottomDock,
+  body.c7-os-shell-active .c7-exec-topnav,
+  #c7BottomDockWrap,
+  .c7-bottom-dock-wrap,
+  .c7-exec-topnav {
     display: none !important;
   }
 
@@ -4705,4 +4731,253 @@ body {
   flex-direction: column;
   gap: 3px;
   margin-top: 4px;
+}
+
+/* ==========================================================================
+   27. ULTRA-SMOOTH PAGE TRANSITIONS & CHRONO TIME-PHASE AMBIENT CANVAS
+   ========================================================================== */
+
+/* 27.1 Cinematic Page Transitions */
+@keyframes c7PageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes c7PageExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.995);
+  }
+}
+
+body {
+  animation: c7PageEnter 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+body.c7-page-is-leaving {
+  animation: c7PageExit 0.12s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+  pointer-events: none;
+}
+
+/* 27.2 Dynamic Vietnam Time-Phase Ambient Canvas & Illumination */
+html[data-time-phase="morning"] .ambient-glow.glow-1 {
+  background: radial-gradient(circle, var(--time-ambient-1, rgba(6, 182, 212, 0.22)) 0%, transparent 70%) !important;
+}
+html[data-time-phase="morning"] .ambient-glow.glow-2 {
+  background: radial-gradient(circle, var(--time-ambient-2, rgba(59, 130, 246, 0.16)) 0%, transparent 70%) !important;
+}
+
+html[data-time-phase="afternoon"] .ambient-glow.glow-1 {
+  background: radial-gradient(circle, var(--time-ambient-1, rgba(79, 70, 229, 0.20)) 0%, transparent 70%) !important;
+}
+html[data-time-phase="afternoon"] .ambient-glow.glow-2 {
+  background: radial-gradient(circle, var(--time-ambient-2, rgba(245, 158, 11, 0.16)) 0%, transparent 70%) !important;
+}
+
+html[data-time-phase="sunset"] .ambient-glow.glow-1 {
+  background: radial-gradient(circle, var(--time-ambient-1, rgba(244, 63, 94, 0.22)) 0%, transparent 70%) !important;
+}
+html[data-time-phase="sunset"] .ambient-glow.glow-2 {
+  background: radial-gradient(circle, var(--time-ambient-2, rgba(249, 115, 22, 0.18)) 0%, transparent 70%) !important;
+}
+
+html[data-time-phase="night"] .ambient-glow.glow-1 {
+  background: radial-gradient(circle, var(--time-ambient-1, rgba(124, 58, 237, 0.24)) 0%, transparent 70%) !important;
+}
+html[data-time-phase="night"] .ambient-glow.glow-2 {
+  background: radial-gradient(circle, var(--time-ambient-2, rgba(59, 130, 246, 0.18)) 0%, transparent 70%) !important;
+}
+
+/* 27.3 Anti-Monotony Multi-Layer Depth (Card Border Specular Inner Glow) */
+.bento-card, .stat-card, .c7-card, .academic-year-card, .schedule-header-card,
+.day-timetable-col, .schedule-day-view-card, .login-box {
+  box-shadow: var(--spatial-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid var(--spatial-border) !important;
+}
+
+[data-theme="dark"] .bento-card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .c7-card,
+[data-theme="dark"] .academic-year-card,
+[data-theme="dark"] .schedule-header-card,
+[data-theme="dark"] .day-timetable-col,
+[data-theme="dark"] .schedule-day-view-card,
+[data-theme="dark"] .login-box {
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ==========================================================================
+   28. ERGONOMIC & HIGH-LEGIBILITY TIMETABLE REDESIGN (CHỐNG ĐAU MẮT)
+   Breathing room, soothing pastel accents, legible typography, balanced layout
+   ========================================================================== */
+
+.timetable-grid-week {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 14px !important;
+  align-items: start !important;
+}
+
+.day-timetable-col {
+  padding: 1rem 0.9rem !important;
+  border-radius: 20px !important;
+  gap: 0.75rem !important;
+  background: var(--spatial-card-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  min-width: 195px !important;
+}
+
+.day-col-header {
+  padding-bottom: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+.day-col-title {
+  font-size: 0.96rem !important;
+  font-weight: 800 !important;
+  color: var(--text-primary) !important;
+}
+
+.day-col-title small {
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+}
+
+/* Thẻ tiết học: Thoáng đãng, dễ đọc, êm mắt */
+.class-card-item.c7-ergonomic-period-card {
+  position: relative !important;
+  padding: 0.85rem 0.9rem !important;
+  border-radius: 14px !important;
+  border-left-width: 5px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  background: var(--bg-card) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  border-top: 1px solid var(--border-subtle) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.class-card-item.c7-ergonomic-period-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 24px -6px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border-color: var(--brand) !important;
+}
+
+.c7-period-top-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+}
+
+.c7-ergonomic-period-card .class-card-time {
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+  background: var(--bg-soft) !important;
+  padding: 2px 7px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.c7-period-main-row {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+.c7-ergonomic-period-card .class-card-name {
+  font-size: 0.96rem !important;
+  font-weight: 800 !important;
+  line-height: 1.3 !important;
+  color: var(--text-primary) !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.c7-ergonomic-period-card .class-card-room {
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  color: var(--brand) !important;
+  background: var(--brand-dim) !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  white-space: nowrap !important;
+}
+
+.c7-ergonomic-period-card .class-card-sub {
+  font-size: 0.78rem !important;
+  color: var(--text-muted) !important;
+  line-height: 1.35 !important;
+}
+
+/* Thanh nút thao tác: rõ ràng, không giấu cụt ngủn */
+.c7-period-hover-actions {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  opacity: 0.75 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.class-card-item.c7-ergonomic-period-card:hover .c7-period-hover-actions {
+  opacity: 1 !important;
+}
+
+.c7-mini-act-btn {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 7px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--bg-soft) !important;
+  font-size: 0.75rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: all 0.15s ease !important;
+}
+
+.c7-mini-act-btn:hover {
+  border-color: var(--brand) !important;
+  background: var(--brand-dim) !important;
+  transform: scale(1.1) !important;
+}
+
+.c7-session-divider {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 10px 0 4px !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.07em !important;
+  color: var(--brand) !important;
+}
+
+.c7-session-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
 }

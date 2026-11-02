@@ -8,8 +8,8 @@
 
 :root {
   /* ====== TYPOGRAPHY — BESPOKE ARTISANAL EDITORIAL ====== */
-  --font-sans:    'DM Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: 'Cinzel', 'DM Sans', serif;
+  --font-sans:    'Plus Jakarta Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono:    ui-monospace, 'Cascadia Code', Menlo, monospace;
 
   --text-2xs: 0.625rem;
@@ -296,6 +296,63 @@ html[data-skin="ocean"] {
   --c7-gradient-primary: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
   --c7-gradient-warm: linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
   --c7-gradient-hero: linear-gradient(145deg, #075985 0%, #0284c7 45%, #3b82f6 100%);
+}
+
+/* ====== DYNAMIC VIETNAM TIME-PHASE ENGINE (UTC+7 CHRONO ENGINE) ====== */
+/* 1. Morning (05:00 - 11:29) — Azure Dawn Clarity */
+html[data-time-phase="morning"] {
+  --time-ambient-1: rgba(6, 182, 212, 0.16);
+  --time-ambient-2: rgba(59, 130, 246, 0.12);
+  --time-glow: rgba(14, 165, 233, 0.28);
+  --time-accent: #0284c7;
+}
+html[data-theme="dark"][data-time-phase="morning"] {
+  --time-ambient-1: rgba(6, 182, 212, 0.20);
+  --time-ambient-2: rgba(99, 102, 241, 0.18);
+  --time-glow: rgba(56, 189, 248, 0.32);
+  --time-accent: #38bdf8;
+}
+
+/* 2. Afternoon (11:30 - 16:59) — High Focus Warm Indigo & Amber */
+html[data-time-phase="afternoon"] {
+  --time-ambient-1: rgba(79, 70, 229, 0.14);
+  --time-ambient-2: rgba(245, 158, 11, 0.12);
+  --time-glow: rgba(99, 102, 241, 0.30);
+  --time-accent: #6366f1;
+}
+html[data-theme="dark"][data-time-phase="afternoon"] {
+  --time-ambient-1: rgba(99, 102, 241, 0.22);
+  --time-ambient-2: rgba(245, 158, 11, 0.16);
+  --time-glow: rgba(129, 140, 248, 0.35);
+  --time-accent: #818cf8;
+}
+
+/* 3. Sunset (17:00 - 18:59) — Warm Twilight Coral & Rose */
+html[data-time-phase="sunset"] {
+  --time-ambient-1: rgba(244, 63, 94, 0.16);
+  --time-ambient-2: rgba(249, 115, 22, 0.14);
+  --time-glow: rgba(251, 113, 133, 0.32);
+  --time-accent: #f43f5e;
+}
+html[data-theme="dark"][data-time-phase="sunset"] {
+  --time-ambient-1: rgba(244, 63, 94, 0.22);
+  --time-ambient-2: rgba(168, 85, 247, 0.18);
+  --time-glow: rgba(244, 63, 94, 0.36);
+  --time-accent: #fb7185;
+}
+
+/* 4. Night (19:00 - 04:59) — Midnight Obsidian & Deep Violet */
+html[data-time-phase="night"] {
+  --time-ambient-1: rgba(99, 102, 241, 0.14);
+  --time-ambient-2: rgba(139, 92, 246, 0.12);
+  --time-glow: rgba(129, 140, 248, 0.30);
+  --time-accent: #8b5cf6;
+}
+html[data-theme="dark"][data-time-phase="night"] {
+  --time-ambient-1: rgba(124, 58, 237, 0.24);
+  --time-ambient-2: rgba(59, 130, 246, 0.18);
+  --time-glow: rgba(139, 92, 246, 0.38);
+  --time-accent: #a78bfa;
 }
 
 /* ====== VIEW TRANSITIONS ENGINE ====== */

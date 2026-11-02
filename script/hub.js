@@ -66,13 +66,19 @@ if (typeof window !== 'undefined') {
 
 function go(page) {
   const target = buildUrl(page);
-  if (!document.startViewTransition) {
-    window.location.href = target;
-    return;
+  if (document.body) {
+    document.body.classList.add('c7-page-is-leaving');
   }
-  document.startViewTransition(() => {
-    window.location.href = target;
-  });
+  const doNav = () => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        window.location.href = target;
+      });
+    } else {
+      window.location.href = target;
+    }
+  };
+  setTimeout(doNav, 110);
 }
 
 // Hub State (Namespaced to avoid duplicate global let collision)
@@ -1266,6 +1272,8 @@ const C7ExecutiveSuite = {
   init() {
     const savedSkin = localStorage.getItem('c7aio_skin') || 'aurora';
     document.documentElement.setAttribute('data-skin', savedSkin);
+    this.applyTimePhase();
+    setInterval(() => this.applyTimePhase(), 60000);
     this.injectExecutiveHeader();
     this.upgradeIconsToVectors();
     this.initHomeSuite();
@@ -1315,6 +1323,34 @@ const C7ExecutiveSuite = {
   toggleSidebar() {
     const collapsed = document.body.classList.toggle('c7-sidebar-collapsed');
     localStorage.setItem('c7aio_sidebar_collapsed', collapsed ? '1' : '0');
+  },
+
+  getTimePhase() {
+    // Vietnam Timezone UTC+7
+    const now = new Date();
+    const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const vnDate = new Date(utcMs + (7 * 3600000));
+    const h = vnDate.getHours();
+    const m = vnDate.getMinutes();
+    const timeNum = h + (m / 60);
+
+    if (timeNum >= 5 && timeNum < 11.5) {
+      return { phase: 'morning', label: '🌅 Sáng tươi mới', sub: 'Giờ học sáng' };
+    }
+    if (timeNum >= 11.5 && timeNum < 17) {
+      return { phase: 'afternoon', label: '☀️ Chiều tập trung', sub: 'Giờ học chiều' };
+    }
+    if (timeNum >= 17 && timeNum < 19) {
+      return { phase: 'sunset', label: '🌆 Hoàng hôn ấm', sub: 'Giờ tự học' };
+    }
+    return { phase: 'night', label: '🌙 Đêm sâu lắng', sub: 'Nghỉ ngơi' };
+  },
+
+  applyTimePhase() {
+    const tp = this.getTimePhase();
+    document.documentElement.setAttribute('data-time-phase', tp.phase);
+    const badge = document.getElementById('c7TimePhaseBadge');
+    if (badge) badge.textContent = tp.label;
   },
 
   getPeriodStatus() {
@@ -1429,6 +1465,7 @@ const C7ExecutiveSuite = {
         }
       ];
 
+      const timePhase = this.getTimePhase();
       const sidebar = document.createElement('aside');
       sidebar.id = 'c7AppSidebar';
       sidebar.className = 'c7-os-sidebar';
@@ -1437,14 +1474,17 @@ const C7ExecutiveSuite = {
         <div class="c7-os-sidebar-top">
           <div class="c7-os-brand-row">
             <div class="c7-os-brand-left" onclick="go('index.html')" role="button" tabindex="0">
-              <div class="c7-os-brand-glyph">11C7</div>
+              <div class="c7-os-brand-glyph">
+                <span>11C7</span>
+                <span class="c7-brand-pulse-dot" title="Hệ thống trực tuyến"></span>
+              </div>
               <div class="c7-os-brand-meta">
-                <span class="c7-os-brand-title">C7AIO Workspace</span>
-                <span class="c7-os-brand-sub">Spatial OS v13.0</span>
+                <span class="c7-os-brand-title">Lớp 11C7 OS</span>
+                <span class="c7-os-brand-sub" id="c7TimePhaseBadge">${timePhase.label}</span>
               </div>
             </div>
             <button type="button" class="c7-os-collapse-btn" onclick="C7ExecutiveSuite.toggleSidebar()" title="Thu gọn / Mở rộng thanh bên">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="9" y1="3" x2="9" y2="21"/><path d="M14 9l-3 3 3 3"/></svg>
             </button>
           </div>
 

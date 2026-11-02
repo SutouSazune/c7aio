@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v14.0.0-timetable-pro';
+const CACHE_NAME = 'c7aio-v15.0.0-chrono-polish';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
