@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v21.0.0-spacious-tkb';
+const CACHE_NAME = 'c7aio-v22.0.0-room-p8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

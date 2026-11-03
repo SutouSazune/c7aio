@@ -52,6 +52,13 @@ const STANDARD_CLASSES = [
   ...Array.from({ length: 12 }, (_, i) => `12A${i + 1}`)
 ];
 
+function getDisplayRoom(room, className = '11C7') {
+  if (!room || room === 'P.204' || room.toLowerCase() === 'phòng 204') {
+    return 'P.8';
+  }
+  return room;
+}
+
 function getSubjectColor(name) {
   const n = (name || '').toLowerCase();
   if (n.includes('toán')) return '#3b82f6';
@@ -413,32 +420,32 @@ function initDefaultScheduleIfEmpty() {
     schedules['week-1'] = {
       monday: [
         { name: 'Chào cờ / Sinh hoạt', time: '07:00 - 07:45', room: 'Sân trường', subject: 'Hoạt động trải nghiệm' },
-        { name: 'Toán học', time: '07:50 - 08:35', room: 'P.204', subject: 'Đại số 10' },
-        { name: 'Toán học', time: '08:50 - 09:35', room: 'P.204', subject: 'Đại số 10' },
-        { name: 'Ngữ văn', time: '09:40 - 10:25', room: 'P.204', subject: 'Văn học dân gian' }
+        { name: 'Toán học', time: '07:50 - 08:35', room: 'P.8', subject: 'Đại số 10' },
+        { name: 'Toán học', time: '08:50 - 09:35', room: 'P.8', subject: 'Đại số 10' },
+        { name: 'Ngữ văn', time: '09:40 - 10:25', room: 'P.8', subject: 'Văn học dân gian' }
       ],
       tuesday: [
-        { name: 'Tiếng Anh', time: '07:00 - 07:45', room: 'P.204', subject: 'Unit 1: Family Life' },
-        { name: 'Vật lí', time: '07:50 - 08:35', room: 'P.204', subject: 'Động học chất điểm' },
-        { name: 'Hóa học', time: '08:50 - 09:35', room: 'P.204', subject: 'Cấu tạo nguyên tử' }
+        { name: 'Tiếng Anh', time: '07:00 - 07:45', room: 'P.8', subject: 'Unit 1: Family Life' },
+        { name: 'Vật lí', time: '07:50 - 08:35', room: 'P.8', subject: 'Động học chất điểm' },
+        { name: 'Hóa học', time: '08:50 - 09:35', room: 'P.8', subject: 'Cấu tạo nguyên tử' }
       ],
       wednesday: [
-        { name: 'Lịch sử', time: '07:00 - 07:45', room: 'P.204', subject: 'Lịch sử thế giới' },
-        { name: 'Địa lí', time: '07:50 - 08:35', room: 'P.204', subject: 'Bản đồ & Trái đất' },
+        { name: 'Lịch sử', time: '07:00 - 07:45', room: 'P.8', subject: 'Lịch sử thế giới' },
+        { name: 'Địa lí', time: '07:50 - 08:35', room: 'P.8', subject: 'Bản đồ & Trái đất' },
         { name: 'Tin học', time: '08:50 - 09:35', room: 'Phòng Máy 1', subject: 'Python cơ bản' }
       ],
       thursday: [
-        { name: 'Ngữ văn', time: '07:00 - 07:45', room: 'P.204', subject: 'Đọc hiểu văn bản' },
-        { name: 'Toán học', time: '07:50 - 08:35', room: 'P.204', subject: 'Hình học tọa độ' },
-        { name: 'Sinh học', time: '08:50 - 09:35', room: 'P.204', subject: 'Tế bào học' }
+        { name: 'Ngữ văn', time: '07:00 - 07:45', room: 'P.8', subject: 'Đọc hiểu văn bản' },
+        { name: 'Toán học', time: '07:50 - 08:35', room: 'P.8', subject: 'Hình học tọa độ' },
+        { name: 'Sinh học', time: '08:50 - 09:35', room: 'P.8', subject: 'Tế bào học' }
       ],
       friday: [
-        { name: 'Tiếng Anh', time: '07:00 - 07:45', room: 'P.204', subject: 'Listening & Speaking' },
+        { name: 'Tiếng Anh', time: '07:00 - 07:45', room: 'P.8', subject: 'Listening & Speaking' },
         { name: 'Giáo dục thể chất', time: '07:50 - 08:35', room: 'Nhà đa năng', subject: 'Bóng rổ' },
         { name: 'GDQP & AN', time: '08:50 - 09:35', room: 'Sân tập', subject: 'Điều lệnh đội ngũ' }
       ],
       saturday: [
-        { name: 'Sinh hoạt lớp', time: '07:00 - 07:45', room: 'P.204', subject: 'Tổng kết tuần' }
+        { name: 'Sinh hoạt lớp', time: '07:00 - 07:45', room: 'P.8', subject: 'Tổng kết tuần' }
       ],
       sunday: []
     };
@@ -1125,7 +1132,7 @@ function renderDayView() {
             ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
             ${periodBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;">${periodBadges}</div>` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-              <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
+              <span class="class-card-room">📍 ${escapeHtml(getDisplayRoom(c.room, c.className))}</span>
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 <button type="button" class="btn-action-pill" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', ${c.originalIndex}, 'schedule_change', 'Đổi lịch môn ${escapeHtml(c.name || '')}')" title="Đổi lịch/phòng cho tiết này trong tuần (tính vào log thay đổi)">🔄 Đổi lịch</button>
                 <button type="button" class="btn-action-pill danger" onclick="openEventModal('${matchedWeekKey || currentWeekKey}', '${dayName}', ${c.originalIndex}, 'day_off', 'Nghỉ tiết ${escapeHtml(c.name || '')}')" title="Báo nghỉ/bỏ tiết này trong tuần (tính vào log thay đổi)">🚫 Bỏ tiết</button>
@@ -1277,7 +1284,7 @@ function renderTimetable() {
             <div class="class-card-item c7-ergonomic-period-card ${isCancelled ? 'period-cancelled' : ''} ${isChanged ? 'period-changed' : ''}" style="border-left-color: ${color}">
               <div class="c7-period-top-row">
                 <span class="class-card-time">${escapeHtml(c.time || '')}</span>
-                <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
+                <span class="class-card-room">📍 ${escapeHtml(getDisplayRoom(c.room, c.className))}</span>
                 <div class="c7-period-hover-actions">
                   <button type="button" class="c7-mini-act-btn" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'schedule_change', 'Đổi lịch môn ${escapeHtml(c.name || '')}', '${dayDateKey}')" title="Đổi lịch tiết này (${dateFormatted})">🔄</button>
                   <button type="button" class="c7-mini-act-btn danger" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'day_off', 'Nghỉ tiết ${escapeHtml(c.name || '')}', '${dayDateKey}')" title="Báo nghỉ tiết này (${dateFormatted})">🚫</button>
@@ -1357,7 +1364,7 @@ function openAddClassModal(defaultDay = null) {
   const gradeInput = document.getElementById('inputClassGrade');
   if (gradeInput) gradeInput.value = selectedClassFilter || '11C7';
   document.getElementById('inputClassTime').value = '';
-  document.getElementById('inputClassRoom').value = 'P.204';
+  document.getElementById('inputClassRoom').value = 'P.8';
 
   const targetDay = defaultDay || getDayNameFromDate(selectedDate) || 'monday';
   const selectDay = document.getElementById('selectClassDay');
@@ -1435,7 +1442,7 @@ async function submitClassForm() {
   }
   if (!schedules[currentWeekKey][day]) schedules[currentWeekKey][day] = [];
 
-  const classData = { name, subject, time, room: room || 'P.204', className };
+  const classData = { name, subject, time, room: room || 'P.8', className };
 
   if (editingClassDay !== null && editingClassIndex !== null) {
     if (editingClassDay !== day) {

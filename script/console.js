@@ -413,7 +413,7 @@
               name: p.name || p.subject || 'Tiết học',
               subject: p.subject || p.name || '',
               time: p.time || '',
-              room: p.room || 'P.204',
+              room: p.room || 'P.8',
               note: p.note || '',
               className: p.className || p.class || className || '11C7'
             }));
@@ -466,7 +466,7 @@
           name: p.name || p.subject || 'Tiết học',
           subject: p.subject || p.name || '',
           time: p.time || '',
-          room: p.room || 'P.204',
+          room: p.room || 'P.8',
           note: p.note || '',
           className: p.className || p.class || className || '11C7'
         })) : [];
@@ -515,7 +515,7 @@
           name: periodObj.name || 'Tiết học',
           subject: periodObj.subject || periodObj.name || '',
           time: periodObj.time || '',
-          room: periodObj.room || 'P.204',
+          room: periodObj.room || 'P.8',
           note: periodObj.note || '',
           className: periodObj.className || periodObj.class || className || '11C7'
         };
@@ -967,7 +967,7 @@
 3. Thời khóa biểu & Niên khóa (Schedules & Academic Years):
    • C7_CONSOLE.updateSchedule({ T2: [...], T3: [...] }, 'week-1', '11C7')
    • C7_CONSOLE.updateDaySchedule('T2', [...], 'week-1', '11C7')  // hoặc ngày '2026-09-08'
-   • C7_CONSOLE.addClassPeriod('T2', { name: 'Toán', time: '07:00 - 07:45', room: 'P.204' }, 'week-1', '11C7')
+   • C7_CONSOLE.addClassPeriod('T2', { name: 'Toán', time: '07:00 - 07:45', room: 'P.8' }, 'week-1', '11C7')
    • C7_CONSOLE.removeClassPeriod('T2', 0) // xóa theo index hoặc tên môn
    • C7_CONSOLE.clearDaySchedule('T2') // xóa sạch tiết của 1 ngày (ví dụ nghỉ lễ)
    • C7_CONSOLE.getDaySchedule('T2', 'week-1', '11C7')
