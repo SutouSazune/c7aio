@@ -534,17 +534,40 @@ async function updateSharedNotificationCompletion(notifId, completions, userId, 
 }
 
 // --- SHARED SCHEDULES (LỊCH HỌC) ---
+function normalizeScheduleRooms(data) {
+  if (!data || typeof data !== 'object') return data;
+  try {
+    for (const weekKey of Object.keys(data)) {
+      const week = data[weekKey];
+      if (!week || typeof week !== 'object') continue;
+      for (const dayKey of Object.keys(week)) {
+        const periods = week[dayKey];
+        if (Array.isArray(periods)) {
+          periods.forEach(p => {
+            if (p && (!p.room || p.room === 'P.204' || (typeof p.room === 'string' && p.room.toLowerCase() === 'phòng 204'))) {
+              p.room = 'P.8';
+            }
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error normalizing schedule rooms:', e);
+  }
+  return data;
+}
+
 function onSharedSchedulesChanged(callback) {
   const db = getDb();
   if (!db) {
-    const cached = JSON.parse(localStorage.getItem('c7aio_schedules_cache') || '{}');
+    const cached = normalizeScheduleRooms(JSON.parse(localStorage.getItem('c7aio_schedules_cache') || '{}'));
     callback(cached);
     return () => {};
   }
 
   const ref = db.ref('shared/schedules');
   const listener = ref.on('value', snapshot => {
-    const data = snapshot.val() || {};
+    const data = normalizeScheduleRooms(snapshot.val() || {});
     localStorage.setItem('c7aio_schedules_cache', JSON.stringify(data));
     callback(data);
   }, (error) => {
@@ -555,7 +578,7 @@ function onSharedSchedulesChanged(callback) {
 }
 
 async function saveSharedSchedules(schedules) {
-  const cleanSchedules = sanitizeForFirebase(schedules || {});
+  const cleanSchedules = sanitizeForFirebase(normalizeScheduleRooms(schedules || {}));
   localStorage.setItem('c7aio_schedules_cache', JSON.stringify(cleanSchedules));
 
   const db = getDb();

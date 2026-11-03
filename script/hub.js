@@ -456,7 +456,7 @@ function updateDashboardScheduleWidget() {
             <span class="today-class-name">${escapeHtml(cls.name)}</span>
             ${cls.subject ? `<span class="today-class-sub">${escapeHtml(cls.subject)}</span>` : ''}
           </div>
-          <div class="today-class-room">📍 ${escapeHtml(cls.room || 'Phòng ?')}</div>
+          <div class="today-class-room">📍 ${escapeHtml(getDisplayRoom(cls.room, cls.className || userClass))}</div>
         </div>
       `;
     });
@@ -464,6 +464,13 @@ function updateDashboardScheduleWidget() {
   }
 
   container.innerHTML = html;
+}
+
+function getDisplayRoom(room, className = '11C7') {
+  if (!room || room === 'P.204' || (typeof room === 'string' && room.toLowerCase() === 'phòng 204') || room === 'Phòng ?') {
+    return 'P.8';
+  }
+  return room;
 }
 
 function getSubjectColor(name) {
