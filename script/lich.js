@@ -1255,7 +1255,7 @@ function renderTimetable() {
       : classes.map(c => {
           const color = getSubjectColor(c.name || c.subject);
           const timeText = String(c.time || '');
-          const isAfternoon = c.originalIndex >= 5 || /chiều|tiết\s*[6-9]|tiết\s*10|1[3-7]:/i.test(timeText);
+          const isAfternoon = /chiều|tiết\s*([6-9]|10)/i.test(timeText) || /^(1[2-9]|2[0-3]):/.test(timeText);
           let dividerHtml = '';
           if (isAfternoon && !shownAfternoonDivider) {
             shownAfternoonDivider = true;
@@ -1270,6 +1270,7 @@ function renderTimetable() {
           const pBadges = periodEvts.map(ev =>
             `<span class="event-inline-badge ${ev.severity === 'danger' || ev.type === 'day_off' ? 'danger' : ''}">${EVENT_TYPE_ICONS[ev.type] || '📋'} ${escapeHtml(ev.title)}</span>`
           ).join('');
+          const showSub = c.subject && c.subject.trim() && !c.name.toLowerCase().includes(c.subject.toLowerCase());
 
           return `
             ${dividerHtml}
@@ -1290,7 +1291,7 @@ function renderTimetable() {
                 </div>
                 <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
               </div>
-              ${c.subject ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
+              ${showSub ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
               ${pBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;">${pBadges}</div>` : ''}
             </div>
           `;

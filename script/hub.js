@@ -676,7 +676,10 @@ const CommandPalette = {
           title: s.name,
           desc: `Học sinh 11C7 • Tổ ${s.group || 1} ${s.previousClass ? '(' + s.previousClass + ')' : ''}`,
           icon: '🎓',
-          url: prefix + 'hoso/hs.html?search=' + encodeURIComponent(s.name),
+          action: 'open_student',
+          targetId: s.id,
+          targetName: s.name,
+          url: prefix + 'hoso/hs.html',
           category: 'Thành viên'
         });
       }
@@ -891,8 +894,20 @@ const CommandPalette = {
 
   select(index) {
     const item = this.items[index];
-    if (item && item.url) {
-      this.close();
+    if (!item) return;
+    this.close();
+
+    if (item.action === 'open_student' && item.targetId) {
+      if (typeof window.highlightStudentRow === 'function') {
+        window.highlightStudentRow(item.targetId);
+        return;
+      }
+      sessionStorage.setItem('c7_direct_student_id', String(item.targetId));
+      window.location.href = item.url;
+      return;
+    }
+
+    if (item.url) {
       window.location.href = item.url;
     }
   }
@@ -1452,17 +1467,6 @@ const C7ExecutiveSuite = {
       radarBtn.onclick = () => go('lich/lich.html');
       radarBtn.innerHTML = `<span class="c7-radar-dot">${status.icon}</span><span class="c7-radar-text">${status.text}</span>`;
 
-      const curSkinKey = document.documentElement.getAttribute('data-skin') || 'aurora';
-      const curSkinObj = this.skins.find(s => s.key === curSkinKey) || this.skins[0];
-      const skinBtn = document.createElement('button');
-      skinBtn.type = 'button';
-      skinBtn.id = 'c7SkinSwitcherBtn';
-      skinBtn.className = 'c7-cmd-trigger-pill';
-      skinBtn.title = 'Đổi bảng màu chủ đề toàn hệ thống (Aurora / Sunset / Emerald / Ocean)';
-      skinBtn.onclick = () => this.cycleSkin();
-      skinBtn.innerHTML = `<span>🎨</span><span>${curSkinObj.label}</span>`;
-
-      headerRight.insertBefore(skinBtn, headerRight.firstChild);
       headerRight.insertBefore(radarBtn, headerRight.firstChild);
     }
 
@@ -1557,16 +1561,9 @@ const C7ExecutiveSuite = {
             </div>
           </div>
           <div class="c7-os-footer-actions">
-            <button type="button" class="c7-os-footer-btn" onclick="C7ExecutiveSuite.cycleSkin()" title="Đổi bảng màu giao diện (Aurora / Sunset / Emerald / Ocean)">
-              <span>🎨</span>
-              <span id="c7SidebarSkinLabel">${curSkinObj.label}</span>
-            </button>
-            <button type="button" class="c7-os-footer-btn" id="c7SidebarTimePhaseBtn" onclick="C7ExecutiveSuite.cycleTimePhase()" title="Đổi phong cách thời gian (Tự động giờ VN / Sáng / Chiều / Hoàng hôn / Đêm)">
-              <span>⏱️</span>
-              <span>Giờ VN</span>
-            </button>
-            <button type="button" class="c7-os-footer-btn c7-os-footer-icon-btn" onclick="if(window.ThemeEngine) ThemeEngine.toggle()" title="Đổi chế độ Sáng / Tối">
-              🌗
+            <button type="button" class="c7-os-footer-btn c7-os-footer-btn-full" onclick="if(window.ThemeEngine) ThemeEngine.toggle()" title="Đổi chế độ Sáng / Tối">
+              <span>🌗</span>
+              <span>Chế độ Sáng / Tối</span>
             </button>
           </div>
         </div>

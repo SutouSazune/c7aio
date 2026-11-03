@@ -275,10 +275,10 @@ function renderRequiredFieldCell(s, field) {
       return s.email ? `<a href="mailto:${s.email}" class="hs-quick-btn">✉️ ${escapeHtml(s.email)}</a>` : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>';
     case 'role': {
       const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
-      return roles.map(r => `<span class="user-role-pill" style="background:${ROLE_COLORS[r] || '#6366f1'}; font-size:0.75rem;">${ROLES[r] || r}</span>`).join(' ');
+      return `<div class="hs-roles-wrap">${roles.map(r => `<span class="user-role-pill" style="background:${ROLE_COLORS[r] || '#6366f1'};">${ROLES[r] || r}</span>`).join('')}</div>`;
     }
     case 'previousClass':
-      return `<span class="user-role-pill" style="background:${s.previousClass === '10C9' ? '#ec4899' : '#0284c7'}; font-size:0.75rem;">${escapeHtml(s.previousClass || '10C7')}</span>`;
+      return `<span class="user-role-pill user-class-pill" style="background:${s.previousClass === '10C9' ? '#db2777' : '#0284c7'};">${escapeHtml(s.previousClass || '10C7')}</span>`;
     case 'group':
       return `<span class="hs-meta-tag">🚩 Tổ ${s.group || 1}</span>`;
     case 'gender':
@@ -332,18 +332,18 @@ function renderTableFull(list, container, canEdit) {
 
   const tbodyHtml = list.map((s, idx) => {
     const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
-    const roleBadges = roles.map(r => `
-      <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'}; font-size: 0.75rem;">
+    const roleBadges = `<div class="hs-roles-wrap">${roles.map(r => `
+      <span class="user-role-pill" style="background: ${ROLE_COLORS[r] || '#6366f1'};">
         ${ROLES[r] || r}
       </span>
-    `).join(' ');
+    `).join('')}</div>`;
 
-    const prevBadge = `<span class="user-role-pill" style="background: ${s.previousClass === '10C9' ? '#ec4899' : '#0284c7'}; font-size: 0.75rem;">${escapeHtml(s.previousClass || '10C7')}</span>`;
+    const prevBadge = `<span class="user-role-pill user-class-pill" style="background: ${s.previousClass === '10C9' ? '#db2777' : '#0284c7'};">${escapeHtml(s.previousClass || '10C7')}</span>`;
     const phoneLink = s.phone ? `<a href="tel:${s.phone}" class="hs-quick-btn">📞 ${s.phone}</a>` : '';
     const emailLink = s.email ? `<a href="mailto:${s.email}" class="hs-quick-btn">✉️ Email</a>` : '';
 
     return `
-      <tr class="hs-student-row">
+      <tr class="hs-student-row" data-student-id="${s.id}" id="hsStudentRow_${s.id}">
         <td style="text-align: center;">${idx + 1}</td>
         <td>
           <div class="hs-avatar-cell">
@@ -442,10 +442,10 @@ function renderSplitRoles(list, container, canEdit) {
         <div class="hs-compact-list">
           ${cadres.length > 0 ? cadres.map((s, idx) => {
             const roles = Array.isArray(s.role) ? s.role : [s.role || 'student'];
-            const roleBadges = roles.map(r => `<span class="user-role-pill" style="background:${ROLE_COLORS[r] || '#6366f1'}; font-size:0.75rem;">${ROLES[r] || r}</span>`).join(' ');
+            const roleBadges = `<div class="hs-roles-wrap">${roles.map(r => `<span class="user-role-pill" style="background:${ROLE_COLORS[r] || '#6366f1'};">${ROLES[r] || r}</span>`).join('')}</div>`;
             const extraReq = (requiredField !== 'none' && requiredField !== 'role') ? renderRequiredFieldCell(s, requiredField) : '';
             return `
-              <div class="hs-compact-row">
+              <div class="hs-compact-row" id="hsCompactRow_${s.id}" data-student-id="${s.id}">
                 <div class="hs-compact-left">
                   <span class="hs-compact-stt">${idx + 1}</span>
                   <strong class="hs-compact-name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</strong>
@@ -911,3 +911,44 @@ function handleCsvFile(e) {
   reader.readAsText(file);
   e.target.value = '';
 }
+
+// ============= DIRECT CONFIDENTIAL STUDENT NAVIGATION =============
+window.highlightStudentRow = function(studentId) {
+  if (!studentId) return;
+  const s = STUDENTS.find(std => String(std.id) === String(studentId));
+  if (!s) return;
+
+  if (currentFilter !== 'all') {
+    currentFilter = 'all';
+    document.querySelectorAll('.filter-tab-pill').forEach(p => {
+      p.classList.toggle('active', p.getAttribute('onclick')?.includes("'all'"));
+    });
+  }
+  searchQuery = '';
+  const searchInput = document.getElementById('searchStudentInput');
+  if (searchInput) searchInput.value = '';
+
+  renderStudentsTable();
+
+  setTimeout(() => {
+    const row = document.getElementById(`hsStudentRow_${studentId}`) || document.getElementById(`hsCompactRow_${studentId}`) || document.querySelector(`[data-student-id="${studentId}"]`);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.add('c7-row-highlight');
+      setTimeout(() => row.classList.remove('c7-row-highlight'), 3000);
+    }
+  }, 120);
+};
+
+// Check for direct confidential student jump (NO ?search= in URL)
+try {
+  const directStdId = sessionStorage.getItem('c7_direct_student_id');
+  if (directStdId) {
+    sessionStorage.removeItem('c7_direct_student_id');
+    setTimeout(() => {
+      if (typeof window.highlightStudentRow === 'function') {
+        window.highlightStudentRow(directStdId);
+      }
+    }, 280);
+  }
+} catch (e) {}

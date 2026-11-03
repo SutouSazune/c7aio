@@ -4904,21 +4904,21 @@ html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
   font-weight: 600 !important;
 }
 
-/* Thẻ tiết học: Thoáng đãng, dễ đọc, êm mắt */
+/* Thẻ tiết học: Thoáng đãng, gọn gàng, không cuộn thừa */
 .class-card-item.c7-ergonomic-period-card {
   position: relative !important;
-  padding: 0.85rem 0.9rem !important;
-  border-radius: 14px !important;
-  border-left-width: 5px !important;
+  padding: 0.52rem 0.68rem !important;
+  border-radius: 12px !important;
+  border-left-width: 4px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
+  gap: 3px !important;
   background: var(--bg-card) !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
   border-top: 1px solid var(--border-subtle) !important;
   border-right: 1px solid var(--border-subtle) !important;
   border-bottom: 1px solid var(--border-subtle) !important;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, border-color 0.18s ease !important;
 }
 
 .class-card-item.c7-ergonomic-period-card:hover {
@@ -4935,13 +4935,16 @@ html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
 }
 
 .c7-ergonomic-period-card .class-card-time {
-  font-size: 0.76rem !important;
+  font-size: 0.72rem !important;
   font-weight: 700 !important;
   color: var(--text-muted) !important;
   background: var(--bg-soft) !important;
-  padding: 2px 7px !important;
+  padding: 2px 6px !important;
   border-radius: 6px !important;
   border: 1px solid var(--border-subtle) !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  letter-spacing: -0.01em !important;
 }
 
 .c7-period-main-row {
@@ -5029,6 +5032,57 @@ html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
   flex: 1;
   height: 1px;
   background: var(--border-subtle);
+}
+
+/* 28.3 High-Contrast Role Badges & Row Pulse Animation */
+.hs-roles-wrap {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  align-items: center !important;
+}
+
+.user-role-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  padding: 2.5px 8.5px !important;
+  border-radius: 9999px !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  letter-spacing: 0.01em !important;
+}
+
+.user-class-pill {
+  font-weight: 800 !important;
+}
+
+@keyframes c7RowPulse {
+  0% {
+    background-color: rgba(99, 102, 241, 0.35) !important;
+    box-shadow: inset 0 0 0 2px var(--brand, #6366f1) !important;
+  }
+  100% {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+.c7-row-highlight {
+  animation: c7RowPulse 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Sidebar Footer Full-Width Button */
+.c7-os-footer-btn.c7-os-footer-btn-full {
+  width: 100% !important;
+  justify-content: center !important;
+  gap: 8px !important;
 }
 
 /* ==========================================================================
