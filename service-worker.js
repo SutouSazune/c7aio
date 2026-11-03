@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v19.0.0-streamlined-tkb-badges';
+const CACHE_NAME = 'c7aio-v20.0.0-zero-flash-mount';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

@@ -125,12 +125,17 @@ function getFilteredTasks() {
   return list;
 }
 
+let lastRenderedTasksKey = '';
+
 // ============= RENDER TASKS =============
-function renderTasks() {
+function renderTasks(force = false) {
   const container = document.getElementById('taskListContainer');
   if (!container) return;
 
   const list = getFilteredTasks();
+  const currentKey = `${currentFilter}_${searchQuery}_` + list.map(t => `${t.id}:${t.status}:${t.priority}:${t.name}:${t.dueDate}`).join('|');
+  if (!force && currentKey === lastRenderedTasksKey && container.children.length > 0) return;
+  lastRenderedTasksKey = currentKey;
 
   if (list.length === 0) {
     container.innerHTML = `

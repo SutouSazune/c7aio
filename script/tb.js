@@ -96,12 +96,17 @@ function getFilteredNotifications() {
   return list;
 }
 
+let lastRenderedNotifsKey = '';
+
 // ============= RENDER NOTIFICATIONS =============
-function renderNotifications() {
+function renderNotifications(force = false) {
   const container = document.getElementById('notifListContainer');
   if (!container) return;
 
   const list = getFilteredNotifications();
+  const currentKey = `${currentFilter}_${searchQuery}_` + list.map(n => `${n.id}:${n.pinned ? 1 : 0}:${n.completions?.[currentUser?.id] ? 1 : 0}:${n.message}`).join('|');
+  if (!force && currentKey === lastRenderedNotifsKey && container.children.length > 0) return;
+  lastRenderedNotifsKey = currentKey;
 
   if (list.length === 0) {
     container.innerHTML = `

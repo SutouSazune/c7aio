@@ -77,8 +77,10 @@ window.addEventListener('load', () => {
   if (typeof onSharedStudentsChanged === 'function') {
     onSharedStudentsChanged((data) => {
       if (data && data.length > 0) {
-        STUDENTS = data;
-        requestRenderStudents(100);
+        if (JSON.stringify(data) !== JSON.stringify(STUDENTS)) {
+          STUDENTS = data;
+          requestRenderStudents(100);
+        }
       }
     });
   }
