@@ -3451,7 +3451,7 @@ body {
 
 @media (min-width: 1150px) {
   .timetable-grid-week {
-    grid-template-columns: repeat(7, minmax(185px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)) !important;
     align-items: start !important;
     overflow-x: auto;
     padding-bottom: 8px;
@@ -4872,18 +4872,27 @@ html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
 
 .timetable-grid-week {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
-  gap: 14px !important;
+  grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)) !important;
+  gap: 16px !important;
   align-items: start !important;
 }
 
 .day-timetable-col {
-  padding: 1rem 0.9rem !important;
-  border-radius: 20px !important;
-  gap: 0.75rem !important;
+  padding: 0.9rem 0.85rem !important;
+  border-radius: 18px !important;
+  gap: 0.65rem !important;
   background: var(--spatial-card-bg) !important;
   backdrop-filter: blur(20px) !important;
   min-width: 195px !important;
+}
+
+.day-timetable-col.is-empty-weekend {
+  opacity: 0.65 !important;
+  min-width: 140px !important;
+  transition: opacity 0.2s ease, min-width 0.2s ease !important;
+}
+.day-timetable-col.is-empty-weekend:hover {
+  opacity: 1 !important;
 }
 
 .day-col-header {
@@ -4932,6 +4941,7 @@ html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 6px !important;
+  position: relative !important;
 }
 
 .c7-ergonomic-period-card .class-card-time {
@@ -4955,12 +4965,14 @@ html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
 }
 
 .c7-ergonomic-period-card .class-card-name {
-  font-size: 0.96rem !important;
-  font-weight: 800 !important;
-  line-height: 1.3 !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  line-height: 1.32 !important;
   color: var(--text-primary) !important;
   margin: 0 !important;
   letter-spacing: -0.01em !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }
 
 .c7-ergonomic-period-card .class-card-room {
@@ -4979,19 +4991,27 @@ html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
   line-height: 1.35 !important;
 }
 
-/* Thanh nút thao tác: rõ ràng, không giấu cụt ngủn */
+/* Thanh nút thao tác: chỉ nổi lên mượt mà khi hover */
 .c7-period-hover-actions {
+  position: absolute !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  opacity: 0.75 !important;
-  pointer-events: auto !important;
-  transform: none !important;
-  transition: opacity 0.2s ease !important;
+  gap: 4px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  background: var(--bg-card) !important;
+  padding-left: 6px !important;
+  border-radius: 6px !important;
+  transition: opacity 0.18s ease !important;
 }
 
-.class-card-item.c7-ergonomic-period-card:hover .c7-period-hover-actions {
+.class-card-item.c7-ergonomic-period-card:hover .c7-period-hover-actions,
+.class-card-item.c7-ergonomic-period-card:focus-within .c7-period-hover-actions {
   opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .c7-mini-act-btn {

@@ -1277,6 +1277,7 @@ function renderTimetable() {
             <div class="class-card-item c7-ergonomic-period-card ${isCancelled ? 'period-cancelled' : ''} ${isChanged ? 'period-changed' : ''}" style="border-left-color: ${color}">
               <div class="c7-period-top-row">
                 <span class="class-card-time">${escapeHtml(c.time || '')}</span>
+                <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
                 <div class="c7-period-hover-actions">
                   <button type="button" class="c7-mini-act-btn" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'schedule_change', 'Đổi lịch môn ${escapeHtml(c.name || '')}', '${dayDateKey}')" title="Đổi lịch tiết này (${dateFormatted})">🔄</button>
                   <button type="button" class="c7-mini-act-btn danger" onclick="openEventModal('${currentWeekKey}', '${day}', ${c.originalIndex}, 'day_off', 'Nghỉ tiết ${escapeHtml(c.name || '')}', '${dayDateKey}')" title="Báo nghỉ tiết này (${dateFormatted})">🚫</button>
@@ -1289,7 +1290,6 @@ function renderTimetable() {
                 <div class="class-card-name">
                   ${isCancelled ? `<s>${escapeHtml(c.name || '')}</s> <span style="font-size:0.7rem;color:#ef4444;font-weight:700;">(Nghỉ)</span>` : escapeHtml(c.name || '')}
                 </div>
-                <span class="class-card-room">📍 ${escapeHtml(c.room || 'P.204')}</span>
               </div>
               ${showSub ? `<div class="class-card-sub">${escapeHtml(c.subject)}</div>` : ''}
               ${pBadges ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;">${pBadges}</div>` : ''}
@@ -1314,8 +1314,10 @@ function renderTimetable() {
         </div>
       `).join('');
 
+    const isEmptyWeekend = (day === 'saturday' || day === 'sunday') && classes.length === 0 && dayEventsInWeek.length === 0;
+
     return `
-      <div class="day-timetable-col ${isToday ? 'is-today-col' : ''} ${isSelected ? 'is-selected-col' : ''} ${dayEventsInWeek.length > 0 ? 'has-events' : ''}">
+      <div class="day-timetable-col ${isToday ? 'is-today-col' : ''} ${isSelected ? 'is-selected-col' : ''} ${dayEventsInWeek.length > 0 ? 'has-events' : ''} ${isEmptyWeekend ? 'is-empty-weekend' : ''}">
         <div class="day-col-header" style="cursor: pointer;" onclick="selectDayColumn('${day}')" title="Click để xem chi tiết ${DAY_LABELS[day]}">
           <div class="day-col-title">
             <span>${DAY_LABELS[day]} <small style="font-size: 0.8rem; font-weight: 500; opacity: 0.8;">(${dateFormatted})</small></span>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v20.0.0-zero-flash-mount';
+const CACHE_NAME = 'c7aio-v21.0.0-spacious-tkb';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
