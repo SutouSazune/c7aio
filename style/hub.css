@@ -2571,7 +2571,7 @@ body {
   background-size: 100vw 100vh !important;
   color: var(--text-primary) !important;
   min-height: 100vh;
-  padding-bottom: 112px !important;
+  padding-bottom: 0 !important;
 }
 
 /* Ambient canvas mesh */
@@ -2708,7 +2708,7 @@ body {
 /* Layout Container */
 .main-container {
   max-width: 1320px !important;
-  padding: 0 1.5rem 2.5rem !important;
+  padding: 0 1.5rem 1rem !important;
   gap: 1.8rem !important;
 }
 
@@ -4430,7 +4430,12 @@ body {
 @media (min-width: 1024px) {
   body.c7-os-shell-active {
     padding-left: 278px !important;
-    padding-bottom: 36px !important;
+    padding-right: 20px !important;
+    padding-bottom: 12px !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
     transition: padding-left 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -4746,11 +4751,9 @@ body {
 @keyframes c7PageEnter {
   0% {
     opacity: 0;
-    transform: translateY(6px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -4766,7 +4769,7 @@ body {
 }
 
 body {
-  animation: c7PageEnter 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: c7PageEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 body.c7-page-is-leaving {
@@ -4801,6 +4804,47 @@ html[data-time-phase="night"] .ambient-glow.glow-1 {
 }
 html[data-time-phase="night"] .ambient-glow.glow-2 {
   background: radial-gradient(circle, var(--time-ambient-2, rgba(59, 130, 246, 0.18)) 0%, transparent 70%) !important;
+}
+
+/* 27.4 High-Impact Visual Personality per Time Phase */
+html[data-time-phase="morning"] .welcome-hero {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.16) 0%, rgba(16, 185, 129, 0.12) 50%, var(--bg-card) 100%) !important;
+  border-color: rgba(2, 132, 199, 0.28) !important;
+}
+html[data-time-phase="morning"] .c7-btn-primary,
+html[data-time-phase="morning"] .quick-hero-btn:not(.secondary) {
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%) !important;
+  box-shadow: 0 8px 20px -6px rgba(2, 132, 199, 0.45) !important;
+}
+
+html[data-time-phase="afternoon"] .welcome-hero {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.16) 0%, rgba(245, 158, 11, 0.12) 50%, var(--bg-card) 100%) !important;
+  border-color: rgba(79, 70, 229, 0.28) !important;
+}
+html[data-time-phase="afternoon"] .c7-btn-primary,
+html[data-time-phase="afternoon"] .quick-hero-btn:not(.secondary) {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+  box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.45) !important;
+}
+
+html[data-time-phase="sunset"] .welcome-hero {
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.18) 0%, rgba(249, 115, 22, 0.14) 50%, var(--bg-card) 100%) !important;
+  border-color: rgba(225, 29, 72, 0.32) !important;
+}
+html[data-time-phase="sunset"] .c7-btn-primary,
+html[data-time-phase="sunset"] .quick-hero-btn:not(.secondary) {
+  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #f97316 100%) !important;
+  box-shadow: 0 8px 20px -6px rgba(225, 29, 72, 0.45) !important;
+}
+
+html[data-time-phase="night"] .welcome-hero {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.20) 0%, rgba(56, 189, 248, 0.12) 50%, var(--bg-card) 100%) !important;
+  border-color: rgba(124, 58, 237, 0.32) !important;
+}
+html[data-time-phase="night"] .c7-btn-primary,
+html[data-time-phase="night"] .quick-hero-btn:not(.secondary) {
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%) !important;
+  box-shadow: 0 8px 20px -6px rgba(124, 58, 237, 0.45) !important;
 }
 
 /* 27.3 Anti-Monotony Multi-Layer Depth (Card Border Specular Inner Glow) */
@@ -4992,21 +5036,25 @@ html[data-time-phase="night"] .ambient-glow.glow-2 {
    ========================================================================== */
 
 main,
+.main-container,
 .schedule-page-container,
 .home-dashboard-container,
 .hs-page-container,
 .tb-container,
 .nv-container,
 .tk-container {
-  margin-bottom: 2.2rem !important;
+  flex: 1 0 auto !important;
+  margin-bottom: 0.8rem !important;
   position: relative !important;
   z-index: 2 !important;
 }
 
 .footer {
-  max-width: 100% !important;
-  width: 100% !important;
-  margin: 2rem 0 1.25rem 0 !important;
+  max-width: 1320px !important;
+  width: calc(100% - 3rem) !important;
+  margin: auto auto 12px auto !important;
+  margin-top: auto !important;
+  margin-bottom: 12px !important;
   padding: 0.85rem 1.4rem !important;
   border-radius: 16px !important;
   background: var(--spatial-card-bg) !important;
@@ -5023,8 +5071,16 @@ main,
 }
 
 body.c7-os-shell-active .footer {
-  margin-top: 2rem !important;
+  margin-top: auto !important;
+  margin-bottom: 12px !important;
   padding-bottom: 0.85rem !important;
+}
+
+@media (max-width: 640px) {
+  .footer {
+    width: calc(100% - 2rem) !important;
+    margin-bottom: 84px !important;
+  }
 }
 
 /* Sidebar Footer Actions: 3 balanced buttons */
