@@ -1,3 +1,9 @@
+
+/* Tắt các nhãn bàn hiển thị đè lên avatar của ghế ngồi */
+.sodo-cell[data-dg-start="1"]::before,
+.sodo-editor-cell[data-dg-start="1"]::before {
+  display: none !important;
+}
 ﻿/**
  * C7AIO Sơ Đồ Lớp — Seating Chart Design System
  * Glassmorphism · Drag & Drop · Dark Mode · Responsive
@@ -1628,6 +1634,15 @@ body > .welcome-hero {
   border-radius: 4px 14px 14px 4px !important;
   border-left-style: dashed !important;
 }
+.sodo-cell[data-seat-type="quad_h"][data-quad-idx="1"],
+.sodo-editor-cell[data-seat-type="quad_h"][data-quad-idx="1"],
+.sodo-cell[data-seat-type="quad_h"][data-quad-idx="2"],
+.sodo-editor-cell[data-seat-type="quad_h"][data-quad-idx="2"] {
+  border-radius: 4px !important;
+  border-left-style: dashed !important;
+  border-right-style: dashed !important;
+}
+
 
 .sodo-cell[data-seat-type="quad_h"][data-dg-start="1"]::before,
 .sodo-editor-cell[data-seat-type="quad_h"][data-dg-start="1"]::before {
@@ -2023,3 +2038,25 @@ body > .welcome-hero {
   }
 }
 
+
+/* Lối đi giữa (Aisle) */
+.sodo-cell-aisle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 0.55;
+  min-width: 36px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.sodo-cell-aisle:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+.sodo-aisle-marker {
+  width: 2px;
+  height: 65%;
+  background: repeating-linear-gradient(to bottom, var(--spatial-border) 0, var(--spatial-border) 6px, transparent 6px, transparent 12px);
+}

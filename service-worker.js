@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v23.0.0-dashboard-room-p8';
+const CACHE_NAME = 'c7aio-v24.0.0-sodo-overhaul';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

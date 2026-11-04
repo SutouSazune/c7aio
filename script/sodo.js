@@ -189,7 +189,7 @@ function renderInClassTab() {
     </div>
     <div id="sodo-default-grid" class="sodo-grid-container"></div>
     ${d ? sodoLegendHTML() : ''}`;
-  renderSeatingGrid('sodo-default-grid', d ? d.layout : null);
+  renderSeatingGrid('sodo-default-grid', d ? d.layout : null, { rowGroups: d?.rowGroups });
 }
 
 function sodoLegendHTML() {
@@ -241,7 +241,7 @@ function renderSubjectContent() {
         onclick="openEditor('subject','${sodoActiveSubject}')">✏️ Chỉnh Sửa</button>` : ''}
     </div>
     <div id="sodo-subject-grid" class="sodo-grid-container"></div>`;
-  renderSeatingGrid('sodo-subject-grid', layout);
+  renderSeatingGrid('sodo-subject-grid', layout, { rowGroups: sd?.rowGroups || sodoData.default?.rowGroups });
 }
 
 // ============= TAB: NGOÀI SÂN =============
@@ -308,7 +308,7 @@ function renderOutdoorPresetContent() {
         onclick="openEditor('outdoor','${sodoActiveOutdoor}')">✏️ Chỉnh Sửa</button>` : ''}
     </div>
     <div id="sodo-outdoor-grid" class="sodo-grid-container sodo-outdoor-grid-view"></div>`;
-  renderSeatingGrid('sodo-outdoor-grid', od ? od.layout : null, { seatType: o.seatType, frontLabel: o.frontLabel });
+  renderSeatingGrid('sodo-outdoor-grid', od ? od.layout : null, { seatType: o.seatType, frontLabel: o.frontLabel, rowGroups: od?.rowGroups });
 }
 
 function renderOutdoorCustom(container) {
@@ -408,7 +408,7 @@ function openFullscreenView(icon, title, layout, canEdit, onEdit) {
     </div>`;
   ov.classList.add('active');
   document.body.style.overflow = 'hidden';
-  renderSeatingGrid('fullscreen-sodo-grid', layout);
+  renderSeatingGrid('fullscreen-sodo-grid', layout, { rowGroups: currentChart?.rowGroups });
   window._sodoOverlayOnEdit = onEdit;
 }
 
@@ -444,12 +444,51 @@ function renderSeatingGrid(containerId, layout, opts = {}) {
 
   let html = `<div class="sodo-board-label">${frontLabel}</div><div class="sodo-grid" style="--sodo-cols:${cols}">`;
 
+  // Xác định các cột là lối đi giữa (hoàn toàn trống từ trên xuống dưới nằm giữa 2 cột có người)
+  const isAisleCol = (cIdx) => {
+    if (cols <= 2) return false;
+    for (let r = 0; r < rows; r++) {
+      const cl = layout[r]?.[cIdx];
+      if (cl && !cl.empty && (cl.studentId || cl.label || cl.type === 'anyone')) return false;
+    }
+    const hasLeft = cIdx > 0 && layout.some(r => r[cIdx - 1] && (!r[cIdx - 1].empty || r[cIdx - 1].studentId));
+    const hasRight = cIdx < cols - 1 && layout.some(r => r[cIdx + 1] && (!r[cIdx + 1].empty || r[cIdx + 1].studentId));
+    return hasLeft && hasRight;
+  };
+
+  const aisleCols = new Set();
+  for (let c = 0; c < cols; c++) {
+    if (isAisleCol(c)) aisleCols.add(c);
+  }
+
+  const getColStart = (cIdx) => {
+    if (opts.rowGroups && Array.isArray(opts.rowGroups)) {
+      const rg = opts.rowGroups.find(g => {
+        const shape = getTableShape(g.deskType || opts.seatType || 'double');
+        const w = (g.width || 1) * shape.width;
+        return cIdx >= g.startCol && cIdx < (g.startCol + w);
+      });
+      if (rg) return rg.startCol;
+    }
+    let sc = 0;
+    for (let c = 0; c <= cIdx; c++) {
+      if (aisleCols.has(c)) sc = c + 1;
+    }
+    return sc;
+  };
+
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
+      if (aisleCols.has(c)) {
+        html += `<div class="sodo-cell sodo-cell-aisle" data-col="${c}" data-row="${r}" title="Lối đi giữa"><span class="sodo-aisle-marker"></span></div>`;
+        continue;
+      }
+
       const cell = layout[r]?.[c];
       const seatType = cell?.seatType || opts.seatType || 'double';
-      // Tính vị trí trong nhóm bàn
-      const { deskPos, deskQuadIdx } = getDeskPosition(r, c, seatType);
+      const startCol = getColStart(c);
+      // Tính vị trí trong nhóm bàn chuẩn xác theo từng dãy
+      const { deskPos, deskQuadIdx } = getDeskPosition(r, c, seatType, startCol);
       // First seat of each desk carries the "Bàn 2 / Bàn 4" label.
       const dgStart = deskQuadIdx === 0 ? '1' : '';
       const deskAttrs = `data-col="${c}" data-row="${r}" data-desk-pos="${deskPos}" data-seat-type="${seatType}" data-quad-idx="${deskQuadIdx}" ${dgStart ? 'data-dg-start="1"' : ''}`;
