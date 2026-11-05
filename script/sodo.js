@@ -174,6 +174,13 @@ function sodoRenderActiveTab() {
 }
 
 // ============= TAB: TRONG LỚP =============
+function openDefaultFullscreen() {
+  const d = sodoData.default;
+  if (!d) return;
+  const canEdit = checkPermission('manage_seating');
+  openFullscreenView('🏫', 'Sơ Đồ Lớp Hiện Tại', d.layout, canEdit, () => openEditor('default'), d.rowGroups);
+}
+
 function renderInClassTab() {
   const panel = document.getElementById('panel-tronglop');
   if (!panel) return;
@@ -186,7 +193,7 @@ function renderInClassTab() {
         <p class="sodo-meta">${d ? `Cập nhật ${sodoRelTime(d.updatedAt)}${d.updatedBy ? ' · ' + d.updatedBy : ''}` : 'Chưa có sơ đồ — người có quyền có thể tạo sơ đồ'}</p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <button type="button" class="sodo-btn sodo-btn-secondary" onclick="openFullscreenView('🏫', 'Sơ Đồ Lớp Hiện Tại', sodoData.default?.layout, canEdit, () => openEditor('default'))" title="Xem toàn màn hình">⛶ Toàn màn hình</button>
+        <button type="button" class="sodo-btn sodo-btn-secondary" onclick="openDefaultFullscreen()" title="Xem toàn màn hình">⛶ Toàn màn hình</button>
         ${canEdit ? `<button type="button" class="sodo-btn sodo-btn-primary" onclick="openEditor('default')">✏️ Chỉnh Sửa</button>` : ''}
       </div>
     </div>
@@ -390,10 +397,10 @@ function viewChart(col, id) {
   if (!chart) return;
   const user = getCurrentUser();
   const canEdit = isAdmin() || (user && chart.createdBy === user.name);
-  openFullscreenView(chart.icon||'🪑', chart.name||'Sơ đồ', chart.layout, canEdit, () => openEditor(col, id));
+  openFullscreenView(chart.icon||'🪑', chart.name||'Sơ đồ', chart.layout, canEdit, () => openEditor(col, id), chart.rowGroups);
 }
 
-function openFullscreenView(icon, title, layout, canEdit, onEdit) {
+function openFullscreenView(icon, title, layout, canEdit, onEdit, rowGroups = null) {
   const ov = document.getElementById('sodo-editor-overlay');
   if (!ov) return;
   ov.innerHTML = `
@@ -411,7 +418,7 @@ function openFullscreenView(icon, title, layout, canEdit, onEdit) {
     </div>`;
   ov.classList.add('active');
   document.body.style.overflow = 'hidden';
-  renderSeatingGrid('fullscreen-sodo-grid', layout, { rowGroups: currentChart?.rowGroups });
+  renderSeatingGrid('fullscreen-sodo-grid', layout, { rowGroups: rowGroups || sodoData.default?.rowGroups });
   window._sodoOverlayOnEdit = onEdit;
 }
 

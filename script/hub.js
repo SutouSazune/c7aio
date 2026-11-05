@@ -25,8 +25,11 @@ function getBasePath() {
 const BASE_PATH = getBasePath();
 
 function buildUrl(relativePath) {
-  const path = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
-  return BASE_PATH === '/' ? path : BASE_PATH + path;
+  if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) return relativePath;
+  if (relativePath.startsWith('../')) return relativePath;
+  const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+  const base = BASE_PATH.endsWith('/') ? BASE_PATH : BASE_PATH + '/';
+  return base + cleanPath;
 }
 
 // Global Cursor & Dynamic Card Spotlight Tracker (60fps rAF throttled)

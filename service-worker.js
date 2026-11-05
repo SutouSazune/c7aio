@@ -1,4 +1,4 @@
-const CACHE_NAME = 'c7aio-v25.0.0-sodo-nofit-scroll';
+const CACHE_NAME = 'c7aio-v26.0.0-sodo-fullscreen-fix';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
