@@ -185,7 +185,10 @@ function renderInClassTab() {
         <h3>🏫 Sơ Đồ Lớp Hiện Tại</h3>
         <p class="sodo-meta">${d ? `Cập nhật ${sodoRelTime(d.updatedAt)}${d.updatedBy ? ' · ' + d.updatedBy : ''}` : 'Chưa có sơ đồ — người có quyền có thể tạo sơ đồ'}</p>
       </div>
-      ${canEdit ? `<button class="sodo-btn sodo-btn-primary" onclick="openEditor('default')">✏️ Chỉnh Sửa</button>` : ''}
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button type="button" class="sodo-btn sodo-btn-secondary" onclick="openFullscreenView('🏫', 'Sơ Đồ Lớp Hiện Tại', sodoData.default?.layout, canEdit, () => openEditor('default'))" title="Xem toàn màn hình">⛶ Toàn màn hình</button>
+        ${canEdit ? `<button type="button" class="sodo-btn sodo-btn-primary" onclick="openEditor('default')">✏️ Chỉnh Sửa</button>` : ''}
+      </div>
     </div>
     <div id="sodo-default-grid" class="sodo-grid-container"></div>
     ${d ? sodoLegendHTML() : ''}`;
