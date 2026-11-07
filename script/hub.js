@@ -364,56 +364,60 @@ function updateNotificationReminders(notifs) {
   if (typeof BottomDockEngine !== 'undefined') BottomDockEngine.updateBadges();
 }
 
+// Lấy danh sách tiết học thực tế của hôm nay
+function getTodayScheduleClasses(today = new Date()) {
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDayName = dayNames[today.getDay()];
+  if (currentDayName === 'sunday') return [];
+
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  const todayKey = `${y}-${m}-${d}`;
+
+  let schedules = hubSchedules;
+  if (!schedules || Object.keys(schedules).length === 0) {
+    try {
+      schedules = JSON.parse(localStorage.getItem('c7aio_schedules_cache') || '{}');
+    } catch (e) {
+      schedules = {};
+    }
+  }
+
+  let currentWeekKey = null;
+  for (const [key, meta] of Object.entries(hubWeekMetadata || {})) {
+    if (meta && meta.startDate) {
+      if (meta.infinite) { currentWeekKey = key; break; }
+      if (meta.endDate && todayKey >= meta.startDate && todayKey <= meta.endDate) { currentWeekKey = key; break; }
+    }
+  }
+  if (!currentWeekKey && schedules && schedules['week-1']) currentWeekKey = 'week-1';
+
+  let todayClasses = [];
+  if (currentWeekKey && schedules[currentWeekKey]) {
+    todayClasses = schedules[currentWeekKey][currentDayName] || [];
+  }
+  if (todayClasses.length === 0 && schedules['week-1']) {
+    todayClasses = schedules['week-1'][currentDayName] || [];
+  }
+
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const userClass = (user && (user.class || user.previousClass)) ? (user.class || user.previousClass) : '11C7';
+  if (userClass && todayClasses.length > 0) {
+    const classFiltered = todayClasses.filter(c => !c.className || c.className === userClass);
+    if (classFiltered.length > 0) todayClasses = classFiltered;
+  }
+  return todayClasses;
+}
+
 // Widget thời khóa biểu hôm nay trên Dashboard
 function updateDashboardScheduleWidget() {
   const container = document.getElementById('todayScheduleWidget');
   if (!container) return;
 
   const today = new Date();
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayDisplay = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-  const currentDayName = dayNames[today.getDay()];
-
-  // Format local YYYY-MM-DD để tránh lệch múi giờ UTC
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, '0');
-  const d = String(today.getDate()).padStart(2, '0');
-  const todayKey = `${y}-${m}-${d}`;
-
-  // Tìm week key hiện tại chuẩn theo chuỗi ngày địa phương
-  let currentWeekKey = null;
-  for (const [key, meta] of Object.entries(hubWeekMetadata)) {
-    if (meta && meta.startDate) {
-      if (meta.infinite) {
-        currentWeekKey = key;
-        break;
-      }
-      if (meta.endDate && todayKey >= meta.startDate && todayKey <= meta.endDate) {
-        currentWeekKey = key;
-        break;
-      }
-    }
-  }
-
-  // Kế thừa TKB số 1 nếu tuần hiện tại chưa có dữ liệu riêng
-  let todayClasses = [];
-  if (currentWeekKey) {
-    let weekSchedule = hubSchedules[currentWeekKey] || {};
-    todayClasses = weekSchedule[currentDayName] || [];
-    if (todayClasses.length === 0 && currentWeekKey !== 'week-1' && hubSchedules['week-1']) {
-      todayClasses = hubSchedules['week-1'][currentDayName] || [];
-    }
-  }
-
-  // Lọc theo lớp học của người dùng nếu có (mặc định 11C7)
-  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
-  const userClass = (user && (user.class || user.previousClass)) ? (user.class || user.previousClass) : '11C7';
-  if (userClass && todayClasses.length > 0) {
-    const classFiltered = todayClasses.filter(c => !c.className || c.className === userClass);
-    if (classFiltered.length > 0) {
-      todayClasses = classFiltered;
-    }
-  }
+  const todayClasses = getTodayScheduleClasses(today);
 
   let html = `
     <div class="widget-header">
@@ -1420,23 +1424,69 @@ const C7ExecutiveSuite = {
     const day = now.getDay();
     if (day === 0) return { icon: '🌴', text: 'Chủ nhật nghỉ ngơi', live: false };
     const mins = now.getHours() * 60 + now.getMinutes();
+
+    // Thứ Bảy chỉ học sáng, buổi chiều nghỉ (sau 11:15)
+    if (day === 6 && mins >= 675) {
+      return { icon: '🌴', text: 'Nghỉ chiều Thứ Bảy', live: false };
+    }
+
+    // Thử lấy danh sách tiết học thực tế từ TKB hôm nay
+    const todayClasses = typeof getTodayScheduleClasses === 'function' ? getTodayScheduleClasses(now) : [];
+    if (todayClasses && todayClasses.length > 0) {
+      for (const cls of todayClasses) {
+        if (cls.time && cls.time.includes('-')) {
+          const [sStr, eStr] = cls.time.split('-').map(s => s.trim());
+          if (sStr && eStr) {
+            const [sh, sm] = sStr.split(':').map(Number);
+            const [eh, em] = eStr.split(':').map(Number);
+            const sMin = sh * 60 + sm;
+            const eMin = eh * 60 + em;
+            if (mins >= sMin && mins <= eMin) {
+              const subjectName = cls.name ? (cls.name.length > 14 ? cls.name.substring(0, 12) + '...' : cls.name) : 'Tiết học';
+              return { icon: '🟢', text: `Đang học ${subjectName} (còn ${eMin - mins}p)`, live: true };
+            }
+          }
+        }
+      }
+      // Kiểm tra giải lao nếu trong khung giờ giữa tiết đầu và tiết cuối
+      const firstClass = todayClasses[0];
+      const lastClass = todayClasses[todayClasses.length - 1];
+      if (firstClass?.time && lastClass?.time) {
+        const [fSh, fSm] = firstClass.time.split('-')[0].split(':').map(Number);
+        const [lEh, lEm] = lastClass.time.split('-')[1].split(':').map(Number);
+        const firstMin = fSh * 60 + fSm;
+        const lastMin = lEh * 60 + lEm;
+        if (mins >= firstMin && mins <= lastMin) {
+          return { icon: '☕', text: 'Giờ giải lao', live: true };
+        }
+      }
+      return { icon: day === 6 ? '🌴' : '🌙', text: day === 6 ? 'Nghỉ chiều Thứ Bảy' : 'Ngoài giờ lên lớp', live: false };
+    }
+
+    // Fallback nếu chưa có TKB: Buổi sáng (Thứ 2 - Thứ 7)
     const periods = [
       { name: 'Tiết 1', start: 420, end: 465 },
       { name: 'Tiết 2', start: 470, end: 515 },
       { name: 'Tiết 3', start: 530, end: 575 },
       { name: 'Tiết 4', start: 580, end: 625 },
-      { name: 'Tiết 5', start: 630, end: 675 },
-      { name: 'Chiều T1', start: 780, end: 825 },
-      { name: 'Chiều T2', start: 830, end: 875 },
-      { name: 'Chiều T3', start: 890, end: 935 }
+      { name: 'Tiết 5', start: 630, end: 675 }
     ];
+    // Buổi chiều chỉ học Thứ 2 - Thứ 6, KHÔNG BAO GIỜ học chiều Thứ Bảy
+    if (day >= 1 && day <= 5) {
+      periods.push(
+        { name: 'Chiều T1', start: 780, end: 825 },
+        { name: 'Chiều T2', start: 830, end: 875 },
+        { name: 'Chiều T3', start: 890, end: 935 }
+      );
+    }
     for (const p of periods) {
       if (mins >= p.start && mins <= p.end) {
         return { icon: '🟢', text: `Đang học ${p.name} (còn ${p.end - mins}p)`, live: true };
       }
     }
     if (mins >= 420 && mins <= 675) return { icon: '☕', text: 'Giờ giải lao sáng', live: true };
-    if (mins >= 780 && mins <= 940) return { icon: '☕', text: 'Giờ giải lao chiều', live: true };
+    if (day >= 1 && day <= 5 && mins >= 780 && mins <= 940) return { icon: '☕', text: 'Giờ giải lao chiều', live: true };
+    if (day === 6) return { icon: '🌴', text: 'Nghỉ chiều Thứ Bảy', live: false };
     return { icon: '🌙', text: 'Ngoài giờ lên lớp', live: false };
   },
 
